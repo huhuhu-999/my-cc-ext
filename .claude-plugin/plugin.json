@@ -1,0 +1,11 @@
+{
+  "name": "db-ops",
+  "displayName": "Database Operations Agent",
+  "version": "1.0.0",
+  "description": "数据库操作专家代理。负责 DDL 生成、DML 编写、ORM Entity/Mapper 实现、分页查询、批量操作和 SQL 性能审查。自动探查项目技术栈并适配 PostgreSQL/MySQL/SQL Server/Oracle 及 MyBatis-Plus/JPA 等多种框架。",
+  "author": {
+    "name": "yuanziquan"
+  },
+  "license": "MIT",
+  "keywords": ["database", "sql", "ddl", "dml", "orm", "mybatis", "jpa", "postgresql", "mysql"]
+}
