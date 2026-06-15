@@ -9,10 +9,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 目录结构
 
 ```
-.claude-plugin/plugin.json        # 插件元数据（名称、版本、描述）
-agents/db-ops/AGENT.md            # Agent: 数据库操作专家
-agents/cc-ext-dev/AGENT.md        # Agent: Claude Code 扩展开发专家
-skills/gen-pgsql-ddl/SKILL.md     # Skill: PostgreSQL DDL 生成
+.claude-plugin/plugin.json              # 插件元数据（名称、版本、描述）
+agents/db-ops/AGENT.md                  # Agent: 数据库操作专家
+agents/cc-ext-dev/AGENT.md              # Agent: Claude Code 扩展开发专家
+agents/feature-dev/AGENT.md             # Agent: 功能开发流水线编排
+agents/superpowers-planner/AGENT.md     # Agent: 设计+计划流水线
+skills/gen-pgsql-ddl/SKILL.md           # Skill: PostgreSQL DDL 生成
+skills/gen-java-enum/SKILL.md           # Skill: Java 枚举生成
+skills/code-reviewer/SKILL.md           # Skill: Java 代码审查
+skills/implement-from-design/SKILL.md   # Skill: 按设计文档编码
+skills/fix/SKILL.md                     # Skill: 系统化缺陷修复
 ```
 
 - **Agent** (`agents/<name>/AGENT.md`): 带 YAML frontmatter 定义工具集、模型、权限模式；正文为系统提示词
@@ -65,6 +71,42 @@ Claude Code 扩展开发专家。覆盖 Claude Code 全部扩展机制：Skill�
 - **Workflow 开发** — agent/parallel/pipeline/phase API 及常见编排模式
 
 详细规范见 `agents/cc-ext-dev/AGENT.md`。
+
+### Agent: feature-dev
+
+功能开发流水线编排者。串联 **设计文档定位 → Worktree 确认 → implement-from-design 编码 → code-reviewer 审查 → 修复 CRITICAL → 开发报告** 的完整流程。
+
+详细流程见 `agents/feature-dev/AGENT.md`。
+
+### Agent: superpowers-planner
+
+设计+计划流水线。三个阶段：**头脑风暴（需求澄清 + 方案对比）→ 设计规范 Spec → 实施计划 Plan**（含 TDD 任务拆分、波次规划、依赖矩阵）。
+
+详细流程见 `agents/superpowers-planner/AGENT.md`。
+
+### Skill: gen-java-enum
+
+Java `code ↔ msg` 枚举生成模板。自动探测项目包路径，生成含 `getCodeByMsg`/`getMsgByCode` 双向查找的枚举类。
+
+详细模板见 `skills/gen-java-enum/SKILL.md`。
+
+### Skill: code-reviewer
+
+Java 代码审查。对 git diff 变更进行 7 维审查（分层架构、JPA/DB、异常处理、安全、代码质量、测试、日志），输出 CRITICAL/WARNING/INFO 三级报告。
+
+详细规则见 `skills/code-reviewer/SKILL.md`。
+
+### Skill: implement-from-design
+
+按设计文档编码。遵循分层架构和编码规范，自底向上实现：枚举/常量 → DTO → Entity → Mapper → Service → Controller → 测试。
+
+详细流程见 `skills/implement-from-design/SKILL.md`。
+
+### Skill: fix
+
+系统化缺陷修复。TDD 驱动：定位根因 → 复现测试(RED) → 最小修复(GREEN) → 验证 + code-reviewer 审查 → 修复报告。
+
+详细流程见 `skills/fix/SKILL.md`。
 
 ## 注意事项
 
