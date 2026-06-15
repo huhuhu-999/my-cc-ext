@@ -32,6 +32,12 @@ claude plugins install .
 claude plugins enable my-ext
 ```
 
+## 插件卸载
+
+```bash
+claude plugins uninstall my-ext
+```
+
 ## 现有扩展
 
 ### Agent: db-ops
