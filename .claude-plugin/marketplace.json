@@ -1,13 +1,15 @@
 {
+  "name": "my-cc-ext",
+  "owner": {
+    "name": "yuanziquan"
+  },
+  "description": "数据库操作与 Claude Code 扩展开发工具集",
   "plugins": [
     {
       "name": "db-ops",
       "displayName": "Database Operations Agent",
       "version": "1.0.0",
       "description": "数据库操作与 Claude Code 扩展开发工具集。提供 db-ops(数据库DDL/DML/ORM/SQL审查)和 cc-ext-dev(Skill/Agent/Plugin/Hook/MCP/Workflow开发)两个 Agent，以及 gen-pgsql-ddl 建表 Skill。",
-      "author": {
-        "name": "yuanziquan"
-      },
       "source": ".",
       "license": "MIT",
       "keywords": ["database", "sql", "ddl", "postgresql", "mysql", "claude-code", "agent", "skill", "extension"]
