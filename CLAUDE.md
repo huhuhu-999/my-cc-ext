@@ -29,7 +29,7 @@ skills/fix/SKILL.md                     # Skill: 系统化缺陷修复
 
 ```bash
 claude plugins install .
-claude plugins enable db-ops
+claude plugins enable my-ext
 ```
 
 ## 现有扩展

@@ -11,6 +11,6 @@ description: 测试用 Skill，输出一句问候语。Use when user says "hello
 
 ```
 👋 Hello! 测试 Skill 加载成功。
-插件: db-ops@my-cc-ext
+插件: my-ext@my-cc-ext
 Skill: hello-test
 ```
