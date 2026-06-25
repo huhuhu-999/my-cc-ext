@@ -5,48 +5,57 @@ description: 对 Java 代码进行代码审查。检查分层架构、JPA/MyBati
 
 # Java Code Reviewer
 
-你是一名 Java 代码审查专家，面向任何 Java 项目的 git diff 变更进行多维度审查。
+对 Java 项目的 git diff 变更进行多维度审查。在当前会话内联执行。
 
-## 前置步骤：项目技术栈探测
+## Phase 1 — GATHER（收集变更 + 探测技术栈）
 
-审查前必须先了解项目上下文，避免用不匹配的约定误报。按以下顺序获取信息：
+### 1.1 获取变更
 
-### 1. 阅读 CLAUDE.md
+```bash
+git diff --name-only HEAD
+git diff --stat HEAD
+git rev-parse --abbrev-ref HEAD
+```
 
-首先读取项目根目录下的 `CLAUDE.md`，从中获取：
-- 项目定位和模块结构
-- 使用的框架和 ORM（Spring Boot / Quarkus / 纯 Java）
-- 分层约定（Controller → Service → Repository/Mapper）
-- 编码规范和特殊约定
+如果 `git diff HEAD` 为空，检查 staged：
 
-### 2. 探测 Lombok
+```bash
+git diff --cached --name-only
+```
 
-检查项目是否使用 Lombok，按优先级：
+如仍为空，终止并输出："没有待审查的变更。"
 
-1. 检查 `pom.xml` 或 `build.gradle` 中是否有 `lombok` 依赖
-2. 检查项目中是否存在 `@Slf4j`、`@Data`、`@Getter` 等 Lombok 注解的实际使用
+### 1.2 探测技术栈
 
-Lombok 使用状态会直接影响审查维度 5（代码质量）和维度 7（日志）的判定标准。
+审查前必须了解项目上下文，避免用不匹配的约定误报：
 
-### 3. 补充探测
+```bash
+# 阅读 CLAUDE.md
+cat CLAUDE.md 2>/dev/null || echo "NO_CLAUDEMD"
 
-CLAUDE.md 未覆盖的信息通过文件系统探测：
+# 检测 Lombok
+grep -l "lombok" pom.xml build.gradle* 2>/dev/null
 
-- **构建工具**：`pom.xml` → Maven，`build.gradle` → Gradle
-- **ORM 框架**：依赖中查找 JPA/Hibernate、MyBatis/MyBatis-Plus、JdbcTemplate 等
-- **DI 容器**：依赖中查找 Spring、Guice、Quarkus 等
+# 检测 ORM
+grep -E "mybatis-plus|spring-boot-starter-data-jpa|mybatis-spring" pom.xml build.gradle* 2>/dev/null
 
-> **核心原则**：CLAUDE.md > 依赖探测 > 通用规则。审查结论应与项目实际技术栈一致，不要对未使用的框架提出要求。
+# 检测构建工具
+ls pom.xml 2>/dev/null && echo "MAVEN"
+ls build.gradle* 2>/dev/null && echo "GRADLE"
+```
 
-## 审查工作流
+> **核心原则**：CLAUDE.md > 依赖探测 > 通用规则。审查结论应与项目实际技术栈一致。
 
-1. 运行 `git diff` 或 `git diff --cached` 获取本次变更内容
-2. 逐文件审查，按严重程度分类
-3. 输出结构化审查报告
+---
 
-## 审查维度
+## Phase 2 — REVIEW（逐文件审查）
 
-### 1. 分层架构（CRITICAL）
+### 2.1 分层架构（CRITICAL）
+
+```bash
+# 检查 Controller 是否直接调用 Mapper
+grep -rn "Mapper\|Repository" --include="*Controller.java" src/main 2>/dev/null
+```
 
 - Controller/Resource 层不应直接访问 DAO/Repository/Mapper，必须经过 Service
 - DTO/VO 不应出现在数据访问层中（不要用 DTO 直接做持久化）
@@ -54,7 +63,12 @@ CLAUDE.md 未覆盖的信息通过文件系统探测：
 - API/接口模块只放接口定义和传输对象，不放业务实现
 - 避免循环依赖：Service 之间单向依赖，必要时抽公共逻辑到独立模块
 
-### 2. ORM / 数据库（CRITICAL）
+### 2.2 ORM / 数据库（CRITICAL）
+
+```bash
+# 检查 MyBatis XML 中是否使用 ${} 拼接
+grep -rn '\${' --include="*.xml" src/main 2>/dev/null
+```
 
 **通用规则：**
 - SQL 参数必须使用参数化查询或 ORM 提供的绑定方式，禁止字符串拼接用户输入
@@ -72,7 +86,12 @@ CLAUDE.md 未覆盖的信息通过文件系统探测：
 - 批量操作使用 `<foreach>` 分页或分批处理
 - 注意 MyBatis-Plus `LambdaQueryWrapper` 优于字符串字段名
 
-### 3. 异常处理（CRITICAL）
+### 2.3 异常处理（CRITICAL）
+
+```bash
+# 检查空 catch 块
+grep -rn "catch\s*(" --include="*.java" src/main -A 2 2>/dev/null | grep -B 1 "^\s*}$"
+```
 
 - 不允许空 catch 块 — 至少记录日志或添加注释说明忽略原因
 - 不允许 `printStackTrace()`，必须使用日志框架记录
@@ -80,7 +99,12 @@ CLAUDE.md 未覆盖的信息通过文件系统探测：
 - Controller 层应有统一的异常处理机制（`@ControllerAdvice` / `ExceptionHandler`）
 - 资源释放使用 try-with-resources 或 finally 块，避免连接泄漏
 
-### 4. 安全性（HIGH）
+### 2.4 安全性（HIGH）
+
+```bash
+# 检查硬编码密钥/密码/Token
+grep -rnE "(password|secret|token|apikey|api_key)\s*=" --include="*.java" --include="*.properties" --include="*.yml" src/main 2>/dev/null
+```
 
 - 不允许硬编码密钥、Token、密码、连接串（应从配置/环境变量/密钥管理服务获取）
 - 外部输入（请求参数、文件上传、Header）必须校验（`@Valid`/`@Validated`、参数断言）
@@ -88,7 +112,7 @@ CLAUDE.md 未覆盖的信息通过文件系统探测：
 - 敏感数据在内存中使用 `char[]` 而非 `String`（可选，按项目安全等级）
 - SQL WHERE 条件中的动态列名/排序字段必须做白名单校验
 
-### 5. 代码质量（HIGH）
+### 2.5 代码质量（HIGH）
 
 - 方法 ≤ 50 行，类 ≤ 800 行（核心逻辑超出时拆分为多个私有方法或独立类）
 - 嵌套层次 ≤ 4 层，使用 early return / guard clause 减少嵌套
@@ -108,7 +132,7 @@ CLAUDE.md 未覆盖的信息通过文件系统探测：
 - 日志声明：`private static final Logger log = LoggerFactory.getLogger(Xxx.class);`
 - 依赖注入优先构造器注入（`final` 字段 + 构造器），避免字段注入
 
-### 6. 测试（MEDIUM）
+### 2.6 测试（MEDIUM）
 
 - 新增 Service/Component 的 public 方法应有对应单元测试
 - 测试命名清晰描述行为：`shouldXxxWhenYyy` 或 `testXxxGivenYyy`
@@ -116,7 +140,7 @@ CLAUDE.md 未覆盖的信息通过文件系统探测：
 - 测试不依赖外部环境（数据库、网络、文件系统），使用 Mock/Stub
 - 测试应包含边界条件（null、空集合、异常输入）
 
-### 7. 日志（MEDIUM）
+### 2.7 日志（MEDIUM）
 
 - 关键分支记录日志：参数校验失败、异常捕获、远程调用、业务状态变更
 - 日志级别正确：
@@ -126,7 +150,9 @@ CLAUDE.md 未覆盖的信息通过文件系统探测：
   - `debug`：方法入参/出参、调试细节
 - 日志信息包含足够上下文（如订单 ID、用户 ID），但不过量
 
-## 审查报告格式
+---
+
+## Phase 3 — REPORT（输出报告）
 
 ```markdown
 ## Code Review 报告
@@ -157,6 +183,24 @@ CLAUDE.md 未覆盖的信息通过文件系统探测：
 **总结**: <一句话概括>
 ```
 
+---
+
+## 边界条件
+
+| 场景 | 处理方式 |
+|------|----------|
+| `git diff` 为空（无未提交变更） | 检查 `git diff --cached`；如也为空则终止 |
+| CLAUDE.md 不存在 | 仅依赖依赖探测 + 通用规则；在报告开头标注"未检测到 CLAUDE.md" |
+| 变更文件 > 50 个 | 仅审查 `.java` 文件；跳过配置文件除非有安全关注 |
+| 变更仅包含 `pom.xml` / `build.gradle` | 仅检查安全维度（依赖版本是否有已知漏洞）；标注其他维度为 N/A |
+| 同时存在 Lombok 和非 Lombok 文件 | 按文件分别判定：有 `@Slf4j` 的用 Lombok 标准，没有的用非 Lombok 标准 |
+| ORM 混合使用（JPA + MyBatis 同项目） | 两个 ORM 的规则都适用，在报告中标注每个文件使用的 ORM |
+| 检测到 Kotlin 文件混在 Java 项目中 | 仅审查 Java 文件；提及存在 Kotlin 文件但说明不在审查范围 |
+| 代码库没有测试目录 `src/test` | 测试维度标注 N/A 而非 FAIL |
+| 变更包含生成代码（`target/`、`build/`、`generated/`） | 排除这些文件的审查，在报告中注明 |
+
+---
+
 ## 注意事项
 
 - 只审查本次 `git diff` 中变更的代码，不审查未改动的文件
@@ -164,3 +208,4 @@ CLAUDE.md 未覆盖的信息通过文件系统探测：
 - 发现 CRITICAL 问题时明确标注 **BLOCK**，建议修复后再合入
 - 审查结论应与项目实际技术栈一致 — 探测到的框架和约定优先于通用规则
 - 优先复用项目中已有的枚举、常量、工具类和业务异常，不重复造轮子
+- 如果变更涉及多个模块，按模块分组输出审查结论

@@ -22,10 +22,8 @@ skills/fix/SKILL.md                     # Skill: 系统化缺陷修复
 skills/add-javadoc/SKILL.md              # Skill: JavaDoc 文档注释补充
 skills/gen-java-entity/SKILL.md          # Skill: Java Entity + Mapper 生成
 skills/write-a-skill/SKILL.md            # Skill: 编写 Agent Skill
-skills/cmd-db-ops/SKILL.md               # Skill: 数据库操作命令（→ db-ops Agent）
-skills/cmd-cc-ext-dev/SKILL.md           # Skill: 扩展开发命令（→ cc-ext-dev Agent）
-skills/cmd-feature-dev/SKILL.md          # Skill: 功能开发命令（→ feature-dev Agent）
-skills/cmd-superpowers/SKILL.md          # Skill: 设计规划命令（→ superpowers-planner Agent）
+skills/build-fix/SKILL.md                # Skill: Java 构建错误修复
+skills/tdd/SKILL.md                      # Skill: Java TDD 工作流
 ```
 
 - **Agent** (`agents/<name>/AGENT.md`): 带 YAML frontmatter 定义工具集、模型、权限模式；正文为系统提示词
@@ -133,24 +131,6 @@ Java 代码审查。对 git diff 变更进行 7 维审查（分层架构、JPA/D
 
 详细流程见 `skills/fix/SKILL.md`。
 
-### Skill: cmd-db-ops（命令入口）
-
-自动触发命令 Skill。用户说"建表""写 SQL""查数据""生成 Entity""SQL 优化"时，自动委托给 `my-ext:db-ops` Agent 执行数据库操作。
-
-### Skill: cmd-cc-ext-dev（命令入口）
-
-自动触发命令 Skill。用户说"写个 Skill""创建 Agent""配置 MCP""加个 Hook"时，自动委托给 `my-ext:cc-ext-dev` Agent 执行扩展开发。
-
-### Skill: cmd-feature-dev（命令入口）
-
-自动触发命令 Skill。用户说"开发功能""实现需求""按设计编码"并提供了设计文档时，自动委托给 `my-ext:feature-dev` Agent 执行编码→审查→修复流水线。
-
-### Skill: cmd-superpowers（命令入口）
-
-自动触发命令 Skill。用户说"帮我设计""做个方案""需求分析""技术方案"时，自动委托给 `my-ext:superpowers-planner` Agent 执行头脑风暴→设计规范→实施计划。
-
-详细流程见 `skills/fix/SKILL.md`。
-
 ### Skill: add-javadoc
 
 为 Service 接口和实现类补充 JavaDoc 文档注释。自动扫描未注释方法，生成符合项目风格的中文 JavaDoc（`@param`、`@return`、`@throws`）。
@@ -163,24 +143,43 @@ Java 代码审查。对 git diff 变更进行 7 维审查（分层架构、JPA/D
 
 详细流程见 `skills/write-a-skill/SKILL.md`。
 
+### Skill: build-fix（ECC 风格命令）
+
+Java 构建错误修复命令。6 Phase 流程：Detect 检测构建系统 → Build 首次构建 → Parse 错误分组解析 → Fix Loop 逐个修复 → Guardrails 护栏 → Summary 报告。在当前会话内联执行，不委托 Agent。
+
+详细流程见 `skills/build-fix/SKILL.md`。
+
+### Skill: tdd（ECC 风格命令）
+
+Java TDD 工作流命令。5 Phase 流程：Detect 探测测试基础设施 → RED 编写失败测试 → GREEN 最小实现 → REFACTOR 重构 → Coverage 覆盖率门禁（≥80%）。在当前会话内联执行，覆盖正常路径/null/异常/边界值 4 种测试场景。
+
+详细流程见 `skills/tdd/SKILL.md`。
+
 ## 架构概览
 
 ```
-用户自然语言输入
+用户输入
   ↓ 自动匹配 description 关键词
-cmd-* Skill（命令入口层）          ← 自动触发，无等待
-  ↓ Agent(subagent_type: "...")
-Agent（编排层）                    ← 独立进程，探查 + 决策
-  ↓ Skill(...) / 直接执行
-gen-* / fix / review Skill（执行层） ← 模板渲染，规则执行
+Skill（内联执行）
+  ├── 代码生成：gen-pgsql-ddl / gen-java-entity / gen-java-enum
+  ├── 质量保障：code-reviewer / fix / build-fix / tdd / add-javadoc
+  ├── 流程编排：implement-from-design / write-a-skill
+  └── 所有 Skill 在当前会话直接执行，多 Phase + bash + 护栏
+
+用户输入 / / 命令
+  ↓ 显式调用
+Agent（独立子进程）
+  ├── db-ops：数据库操作（探查 → 委托 Skill / 手动生成）
+  ├── cc-ext-dev：扩展开发（探查 → 生成 Skill/Agent/Plugin）
+  ├── feature-dev：功能开发流水线（编码→审查→修复）
+  └── superpowers-planner：设计规划（头脑风暴→Spec→Plan）
 ```
 
-- **命令层**（`cmd-*`）：4 个薄 Skill，只做触发匹配和委托
-- **编排层**（Agent）：4 个 Agent，探查项目上下文 + 选择工作流
-- **执行层**（gen-* / fix / review 等）：8 个 Skill，具体模板和规则
+- **Skill（10 个）**：内联执行，自动触发，覆盖代码生成、质量保障、流程编排
+- **Agent（4 个）**：独立子进程，需 `/` 显式调用或通过 `Agent` 工具启动，探查项目上下文后执行复杂多步骤任务
 
 ## 注意事项
 
-- 本插件中的 Agent 和 Skill 相互独立。Agent 通过工具列表中的 `Skill` 工具可以调用项目内已安装的 skill
-- **命令模式**：`cmd-*` Skill 是 Agent 的自动触发入口。Skill 拥有丰富的 description 关键词用于 `/` 搜索和自动匹配，触发后将用户需求委托给对应 Agent 执行。Agent 无法自动触发，必须通过 `/` 显式调用或 Skill 委托
+- Skill 通过 `description` 关键词自动匹配用户输入，无需显式调用。Agent 需通过 `/` 命令或 `Agent` 工具显式启动
+- Agent 可通过工具列表中的 `Skill` 工具调用项目内已安装的 Skill（如 `db-ops` → `gen-pgsql-ddl`）
 - `plugin.json` 中的 `name` 字段即安装后的插件标识，变更需同步调整引用
