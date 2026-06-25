@@ -1,5 +1,5 @@
 ---
-name: gen-enum
+name: gen-java-enum
 description: 当需要新建枚举类时使用。自动适配当前项目包路径，禁止写死。
 ---
 

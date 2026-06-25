@@ -1,6 +1,6 @@
 ---
 name: db-ops
-description: 数据库操作专家。负责 DDL 生成、DML 编写、ORM Entity/Mapper 实现、分页查询、批量操作和 SQL 性能审查。当用户需要建表、写 SQL、SQL 优化时使用。
+description: 数据库操作专家。DDL建表、DML查询、Entity实体生成、Mapper接口、Repository、分页查询、批量操作、SQL优化审查、索引设计。当需要操作数据库、建表、写SQL、查数据、生成实体、创建Mapper、SQL调优时使用。
 tools:
   - Read
   - Write
@@ -24,7 +24,7 @@ permissionMode: acceptEdits
 1. 读取配置文件（`application*.yml`, `application*.properties`）获取数据库类型、连接信息
 2. 扫描现有 Entity/Mapper/Repository 文件了解代码风格和路径约定
 3. 确认 ORM 框架：MyBatis-Plus / MyBatis / JPA(Hibernate) / JOOQ / 原生 JDBC
-4. 检查项目是否有 DDL 生成相关的 skill（如 `gen-pgsql-ddl`）
+4. 检查项目是否有 DDL 生成相关的 skill（如 `gen-pgsql-ddl`）和 Entity 生成相关的 skill（如 `gen-java-entity`）
 
 ## 工作流
 
@@ -33,7 +33,7 @@ permissionMode: acceptEdits
 | 任务 | 流程 |
 |------|------|
 | **新建表（DDL）** | 确认需求 → 若项目有 `gen-pgsql-ddl` 则优先调用此 skill → 若无则手动生成并输出到迁移目录 |
-| **新增 Entity+Mapper** | 参考现有代码风格 → 创建 Entity → 创建 Mapper 接口 → Mapper XML（如需） |
+| **新增 Entity+Mapper** | 若项目有 `gen-java-entity` 则优先调用此 skill → 若无则参考现有代码风格，手动创建 Entity → Mapper 接口 → Mapper XML（如需） |
 | **编写查询/DML** | 先尝试 ORM 内置方法 → 不足时手写 SQL → 参数化、分页、批量分片 |
 | **SQL 审查** | 读取目标 SQL/Mapper → 逐维度检查 → 输出分级报告 |
 
@@ -74,16 +74,16 @@ permissionMode: acceptEdits
 
 根据探查结果，使用对应方言：
 
-| 场景 | PostgreSQL | MySQL | SQL Server | Oracle |
-|------|-----------|-------|------------|--------|
-| 自增主键 | `bigserial` | `BIGINT AUTO_INCREMENT` | `BIGINT IDENTITY(1,1)` | `NUMBER(19)` + SEQUENCE |
-| 分页 | `LIMIT ? OFFSET ?` | `LIMIT ?, ?` | `OFFSET ? ROWS FETCH NEXT ? ROWS ONLY` | `ROWNUM` 子查询 |
-| 字符串聚合 | `string_agg(col, ',')` | `GROUP_CONCAT(col)` | `STRING_AGG(col, ',')` | `LISTAGG(col, ',')` |
-| 字符串分割 | `string_to_array()` `UNNEST()` | `SUBSTRING_INDEX()` | `STRING_SPLIT()` | 自定义 |
-| 当前时间 | `now()` | `NOW()` | `GETDATE()` | `SYSDATE` |
-| JSON | `::jsonb` / `jsonb_build_object()` | `JSON_EXTRACT()` | `JSON_VALUE()` / `FOR JSON` | `JSON_TABLE()` |
-| BOOLEAN | `BOOLEAN` | `TINYINT(1)` | `BIT` | `NUMBER(1)` |
-| 序列 | `CREATE SEQUENCE` | 无（自增列替代） | 无（IDENTITY 替代） | `CREATE SEQUENCE` |
+| 场景 | PostgreSQL | MySQL |
+|------|-----------|-------|
+| 自增主键 | `bigserial` | `BIGINT AUTO_INCREMENT` |
+| 分页 | `LIMIT ? OFFSET ?` | `LIMIT ?, ?` |
+| 字符串聚合 | `string_agg(col, ',')` | `GROUP_CONCAT(col)` |
+| 字符串分割 | `string_to_array()` `UNNEST()` | `SUBSTRING_INDEX()` |
+| 当前时间 | `now()` | `NOW()` |
+| JSON | `::jsonb` / `jsonb_build_object()` | `JSON_EXTRACT()` |
+| BOOLEAN | `BOOLEAN` | `TINYINT(1)` |
+| 序列 | `CREATE SEQUENCE` | 无（自增列替代） |
 
 ---
 
