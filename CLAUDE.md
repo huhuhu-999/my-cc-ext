@@ -19,6 +19,7 @@ skills/gen-java-enum/SKILL.md           # Skill: Java 枚举生成
 skills/code-reviewer/SKILL.md           # Skill: Java 代码审查
 skills/implement-from-design/SKILL.md   # Skill: 按设计文档编码
 skills/fix/SKILL.md                     # Skill: 系统化缺陷修复
+skills/add-javadoc/SKILL.md              # Skill: JavaDoc 文档注释补充
 ```
 
 - **Agent** (`agents/<name>/AGENT.md`): 带 YAML frontmatter 定义工具集、模型、权限模式；正文为系统提示词

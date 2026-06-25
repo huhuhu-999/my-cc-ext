@@ -1,0 +1,138 @@
+---
+name: add-javadoc
+description: >-
+  为 Service 接口和实现类补充 JavaDoc 文档注释。当用户说"补充注释""加文档注释"
+  "add javadoc""补 doc"或在修改 Service 文件后需要补充注释时使用。
+  自动扫描未注释的方法，生成符合项目风格的中文 JavaDoc（@param、@return、@throws）。
+when_to_use: >-
+  用户要求为 service 文件补充文档注释、批量添加 JavaDoc、或代码审查后发现
+  缺少注释需要补充时。
+argument-hint: '[module|file...]'
+user-invocable: true
+allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Agent
+paths: "**/*Service*.java"
+---
+
+# JavaDoc 补充工具
+
+你是 JavaDoc 补充的**调度者**，负责扫描和分配任务。**实际的代码修改由子代理执行，不在主会话中逐文件操作。**
+
+## 项目文档风格
+
+- 方法描述使用**中文**，简洁明确，不加句号
+- 标签名使用标准 JavaDoc 英文：`@param`、`@return`、`@throws`
+- 参数和返回值说明使用**中文**
+- 类级别添加一行职责描述
+
+### 接口与实现类的注释策略
+
+| 场景 | 策略 |
+|------|------|
+| 接口方法 | 写完整 JavaDoc（用途 + @param + @return + @throws） |
+| 实现类 @Override（接口有完整注释） | 仅写 `{@inheritDoc}` |
+| 实现类 @Override（接口无注释） | 写完整 JavaDoc |
+| 实现类独有的 public 方法 | 写完整 JavaDoc |
+
+完整示例见 `templates/javadoc-examples.md`（子代理必须读取此文件作为生成规范）。
+
+---
+
+## 工作流 —— 主会话只做调度，修改在子代理中执行
+
+### 第一步：扫描
+
+运行扫描脚本获取需要补充的文件清单：
+
+```bash
+# 插件安装后运行时（脚本在 .claude/skills/ 下）：
+python .claude/skills/add-javadoc/scripts/scan_javadoc.py . --json
+
+# 本地开发调试时（脚本在 skills/ 下）：
+python skills/add-javadoc/scripts/scan_javadoc.py . --json
+
+# 扫描非 Service 文件（如 Controller）：
+python .claude/skills/add-javadoc/scripts/scan_javadoc.py . --json -p "**/*Controller.java"
+```
+
+退出码非 0 表示存在需要补充的文件。
+
+### 第二步：确认范围（如有必要）
+
+用户未明确指定范围时，用 AskUserQuestion 确认。已指定则跳过。
+
+### 第三步：拆分子代理执行
+
+**重要：不在主会话中编辑任何 Java 文件。所有修改一律通过子代理完成。**
+
+将文件分批，每批包含 **1-3 个关联文件**（接口 + 对应的实现类打包在一起）：
+
+1. 从 JSON 报告中提取需要补充的文件，按"接口名 - 实现类名"分组
+2. 每组分配一个子代理，并行启动（单次最多 6-8 个并发）
+3. 子代理必须严格按以下 prompt 模板执行
+
+#### 子代理 Prompt 模板
+
+```
+你的任务是为以下文件补充 JavaDoc 文档注释。
+
+## 要处理的文件
+
+（列出文件绝对路径，以及从 JSON 报告中提取的缺失详情：类级注释缺失、每个方法缺少什么）
+
+## 必须遵守的规范
+
+先读取 templates/javadoc-examples.md 了解生成风格，然后逐文件补充：
+
+1. 类级注释缺失 → 根据类名和所在包推断职责，添加一行 /** ... */
+2. 方法无 JavaDoc → 根据方法名、参数类型、返回类型生成完整 JavaDoc
+3. @param 无说明 → 补充参数说明文字
+4. @return 为空 → 补充返回值说明
+5. @throws 缺失 → 补充异常说明
+6. 接口已有注释的实现类方法 → 改用 {@inheritDoc}
+
+## 严格约束
+
+- 已有完整注释的方法不要动
+- 不要修改方法体代码
+- 不要修改 // 行内注释
+- 不要改 import、注解、字段
+- 文件编码 UTF-8
+```
+
+### 第四步：汇总
+
+所有子代理完成后，在主会话输出汇总：
+
+```markdown
+## JavaDoc 补充报告
+
+**扫描文件数**: N
+**有缺失需补充**: N
+**已补充文件数**: N
+**已补充方法数**: N
+
+### 子代理执行详情
+
+| 代理 | 处理文件 | 类级 | 方法 | @param | @return | @throws |
+|------|----------|------|------|--------|---------|---------|
+| agent-n | XxxService.java | 1 | 3 | 5 | 2 | 1 |
+```
+
+---
+
+## 子代理并行策略
+
+| 总文件数 | 并发策略 |
+|----------|----------|
+| ≤10 个 | 1-2 轮，每轮 5-6 个代理 |
+| 10-30 个 | 3-4 轮，每轮 6-8 个代理 |
+| >30 个 | 先处理 20-30 个核心文件，剩余后续 |
+
+每轮等待所有代理完成后再启动下一轮，避免并发过多。
+
+---
+
+## 约束
+
+- 主会话**不直接编辑** Java 文件，只做扫描 + 调度 + 汇总
+- 文件编码保持 UTF-8
