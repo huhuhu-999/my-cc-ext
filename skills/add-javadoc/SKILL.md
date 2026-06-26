@@ -77,7 +77,7 @@ python .claude/skills/add-javadoc/scripts/scan_javadoc.py . --json -p "**/*Contr
 
 ## 要处理的文件
 
-（列出文件绝对路径，以及从 JSON 报告中提取的缺失详情：类级注释缺失、每个方法缺少什么）
+（列出文件绝对路径，以及从 JSON 报告中提取的缺失详情：类级注释缺失、每个方法缺少什么。标注 hasBom: true 的文件已有 BOM。）
 
 ## 必须遵守的规范
 
@@ -96,7 +96,8 @@ python .claude/skills/add-javadoc/scripts/scan_javadoc.py . --json -p "**/*Contr
 - 不要修改方法体代码
 - 不要修改 // 行内注释
 - 不要改 import、注解、字段
-- 文件编码 UTF-8
+- 文件编码 UTF-8 without BOM —— 写入文件时禁止添加 BOM 头（EF BB BF）。如果原文件无 BOM，修改后也必须无 BOM。
+- 如果原文件已有 BOM（JSON 中 hasBom: true），写入后允许保留 BOM（不新增也不移除，保持原样）
 ```
 
 ### 第四步：汇总
@@ -135,4 +136,4 @@ python .claude/skills/add-javadoc/scripts/scan_javadoc.py . --json -p "**/*Contr
 ## 约束
 
 - 主会话**不直接编辑** Java 文件，只做扫描 + 调度 + 汇总
-- 文件编码保持 UTF-8
+- 文件编码保持 UTF-8 without BOM

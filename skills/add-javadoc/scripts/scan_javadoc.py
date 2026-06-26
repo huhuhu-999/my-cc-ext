@@ -72,6 +72,7 @@ class FileReport:
     has_class_javadoc: bool
     class_name: str
     interface_name: Optional[str] = None  # 实现类实现的接口名
+    has_bom: bool = False  # 文件是否有 UTF-8 BOM
     methods: list = field(default_factory=list)  # MethodJavadocStatus 列表
 
     def methods_needing_attention(self):
@@ -115,6 +116,12 @@ def read_file_lines(file_path: str) -> list:
     """读取文件所有行，返回带行号的列表 [(line_no, content), ...]"""
     with open(file_path, "r", encoding="utf-8") as f:
         return f.readlines()
+
+
+def has_bom(file_path: str) -> bool:
+    """检测文件是否以 UTF-8 BOM (EF BB BF) 开头"""
+    with open(file_path, "rb") as f:
+        return f.read(3) == b'\xef\xbb\xbf'
 
 
 def extract_class_name(lines: list) -> tuple:
@@ -509,6 +516,7 @@ def analyze_file(file_path: str, root: Path) -> FileReport:
         relative_path=relative,
         is_interface=is_interface,
         has_class_javadoc=class_jd,
+        has_bom=has_bom(file_path),
         class_name=class_name or os.path.basename(file_path),
         interface_name=impl_interface,
     )
@@ -530,6 +538,7 @@ def print_summary(reports: list):
     total_ok = sum(r.ok_count() for r in reports)
     total_need = sum(r.need_count() for r in reports)
     no_class_jd = sum(1 for r in reports if not r.has_class_javadoc)
+    bom_files = [r for r in reports if r.has_bom]
 
     print("=" * 70)
     print("JavaDoc 覆盖扫描报告")
@@ -540,6 +549,8 @@ def print_summary(reports: list):
     print(f"  注释完整:   {total_ok}  ({total_ok * 100 // max(total_methods, 1)}%)")
     print(f"  需要补充:   {total_need}  ({total_need * 100 // max(total_methods, 1)}%)")
     print(f"  缺少类级注释: {no_class_jd} 个文件")
+    if bom_files:
+        print(f"  ⚠ BOM 文件:  {len(bom_files)} 个 (UTF-8 with BOM — 建议先移除 BOM)")
     print()
 
     # 按文件明细
@@ -549,7 +560,8 @@ def print_summary(reports: list):
     for r in reports:
         flag = " [I]" if r.is_interface else " [C]"
         cjd = "" if r.has_class_javadoc else " (缺类注释)"
-        print(f"{r.relative_path + flag + cjd:<50} {len(r.methods):>5} {r.ok_count():>5} {r.need_count():>5}")
+        bom = " [BOM!]" if r.has_bom else ""
+        print(f"{r.relative_path + flag + cjd + bom:<50} {len(r.methods):>5} {r.ok_count():>5} {r.need_count():>5}")
 
     # 需要补充的方法详情
     print()
@@ -590,6 +602,7 @@ def print_json(reports: list):
             "className": r.class_name,
             "interfaceName": r.interface_name,
             "hasClassJavadoc": r.has_class_javadoc,
+            "hasBom": r.has_bom,
             "totalMethods": len(r.methods),
             "completeCount": r.ok_count(),
             "needAttentionCount": r.need_count(),
