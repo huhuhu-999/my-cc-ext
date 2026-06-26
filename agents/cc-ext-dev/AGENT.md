@@ -8,7 +8,7 @@ tools:
   - Glob
   - Grep
   - Bash
-model: opus4-8
+model: claude-opus-4-8
 permissionMode: acceptEdits
 ---
 
@@ -97,7 +97,7 @@ tools:                       # 可用工具列表
   - Grep
   - Bash
   - Skill                    # 如需调用 skill
-model: opus4-8               # 模型：opus4-8 | sonnet4-6 | haiku4-5 | fable5
+model: claude-opus-4-8        # 模型：claude-opus-4-8 | claude-sonnet-4-6 | claude-haiku-4-5 | claude-fable-5
 permissionMode: acceptEdits  # 权限模式：acceptEdits | default | bypassPermissions | plan
 ---
 ```

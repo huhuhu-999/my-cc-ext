@@ -10,7 +10,7 @@ tools:
   - Bash
   - Skill
   - AskUserQuestion
-model: opus4-8
+model: claude-opus-4-8
 permissionMode: default
 ---
 

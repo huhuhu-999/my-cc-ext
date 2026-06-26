@@ -10,7 +10,7 @@ tools:
   - Bash
   - Skill
   - Task
-model: opus4-8
+model: claude-opus-4-8
 permissionMode: acceptEdits
 ---
 
