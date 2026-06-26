@@ -85,13 +85,17 @@ Claude Code 扩展开发专家。覆盖 Claude Code 全部扩展机制：Skill�
 
 ### Agent: feature-dev
 
-功能开发流水线编排者。串联 **设计文档定位 → Worktree 确认 → implement-from-design 编码 → code-reviewer 审查 → 修复 CRITICAL → 开发报告** 的完整流程。
+功能开发流水线编排者。从已有 PRD 出发，串联 **设计文档（Spec） → 实施计划（Plan） → Worktree 确认 → implement-from-design 编码 → code-reviewer 审查 → 修复 CRITICAL → 开发报告** 的完整流程。文档统一输出到 `doc/features/<feature-name>/`。
+
+与 `superpowers-planner` 的区别：`feature-dev` 从**已有 PRD** 出发，不需要头脑风暴；`superpowers-planner` 从**原始需求**出发，包含头脑风暴和方案对比。
 
 详细流程见 `agents/feature-dev/AGENT.md`。
 
 ### Agent: superpowers-planner
 
-设计+计划流水线。三个阶段：**头脑风暴（需求澄清 + 方案对比）→ 设计规范 Spec → 实施计划 Plan**（含 TDD 任务拆分、波次规划、依赖矩阵）。
+设计+计划流水线。从**原始需求**出发，三阶段：**头脑风暴（需求澄清 + 方案对比）→ 设计规范 Spec → 实施计划 Plan**（含 TDD 任务拆分、波次规划、依赖矩阵）。输出到 `doc/superpowers/specs/` 和 `doc/superpowers/plans/`。
+
+与 `feature-dev` 的区别：`superpowers-planner` 适合需求不明确、需要方案对比的场景；`feature-dev` 适合已有 PRD、直接进入设计+计划的场景。
 
 详细流程见 `agents/superpowers-planner/AGENT.md`。
 
@@ -171,7 +175,7 @@ Skill（内联执行）
 Agent（独立子进程）
   ├── db-ops：数据库操作（探查 → 委托 Skill / 手动生成）
   ├── cc-ext-dev：扩展开发（探查 → 生成 Skill/Agent/Plugin）
-  ├── feature-dev：功能开发流水线（编码→审查→修复）
+  ├── feature-dev：功能开发流水线（PRD → Spec → Plan → 编码→审查→修复）
   └── superpowers-planner：设计规划（头脑风暴→Spec→Plan）
 ```
 

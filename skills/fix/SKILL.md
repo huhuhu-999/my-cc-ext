@@ -87,10 +87,10 @@ void shouldXxxWhenYyy() {
 
 ```bash
 # 1. 运行复现测试 — 应该通过
-mvn test -pl pare-lmp-integrate-component -Dtest=XxxServiceImplTest
+mvn test -pl <module> -Dtest=XxxServiceImplTest
 
 # 2. 运行相关模块全部测试 — 确保无回归
-mvn test -pl pare-lmp-integrate-component
+mvn test -pl <module>
 ```
 
 ### 第六步：代码审查

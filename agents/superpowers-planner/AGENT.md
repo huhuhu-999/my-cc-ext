@@ -11,7 +11,7 @@ tools:
   - Skill
   - AskUserQuestion
 model: claude-opus-4-8
-permissionMode: default
+permissionMode: acceptEdits
 ---
 
 # Superpowers Planner
@@ -35,7 +35,6 @@ permissionMode: default
 - 阅读 `CLAUDE.md`、`doc/plan/`、`.claude/plan/` 了解项目架构
 - 搜索现有代码中是否有类似功能可参考
 - 检查最近的 git 提交，了解当前开发方向
-- 如果 graphify 知识图谱可用，查询相关模块关系
 
 ### 步骤 2：提出澄清问题
 
@@ -164,16 +163,16 @@ git commit -m "docs: add <feature-name> design spec"
 
 ```
 创建：
-  pare-lmp-integrate-api/src/main/java/.../XxxRequest.java    — 请求 DTO
-  pare-lmp-integrate-api/src/main/java/.../XxxResponse.java   — 响应 DTO
+  <api-module>/src/main/java/.../XxxRequest.java    — 请求 DTO
+  <api-module>/src/main/java/.../XxxResponse.java   — 响应 DTO
   ...
 
 修改：
-  pare-lmp-integrate-app/src/main/java/.../XxxController.java:80-120  — 新增接口方法
+  <app-module>/src/main/java/.../XxxController.java:80-120  — 新增接口方法
   ...
 
 测试：
-  pare-lmp-integrate-component/src/test/java/.../XxxServiceTest.java
+  <test-module>/src/test/java/.../XxxServiceTest.java
   ...
 ```
 

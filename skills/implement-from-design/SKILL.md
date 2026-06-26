@@ -1,6 +1,6 @@
 ---
 name: implement-from-design
-description: 根据设计文档（PRD、技术方案、架构设计等）实现 Java 编码。自动适配项目技术栈，遵循分层架构、TDD 流程和项目编码规范。
+description: 根据设计文档（PRD、技术方案、架构设计等）实现 Java 编码。自动适配项目技术栈，遵循分层架构、TDD 流程和项目编码规范。当用户提供设计文档并要求开发功能、或说"开发这个功能""实现这个需求""按设计编码"时使用。
 ---
 
 # 根据设计文档实现编码
@@ -49,10 +49,13 @@ CLAUDE.md 未覆盖的信息通过文件系统探测：
 先确认设计文档位置，按优先级搜索：
 
 1. `.claude/plan/` 目录下的规划文档
-2. `doc/` 或 `docs/` 目录下的设计文档
-3. `specs/`、`design/` 目录下的规格说明
-4. 用户显式指定的设计文档路径
-5. PRD、技术方案、接口文档
+2. `doc/features/<feature-name>/` 目录下的设计文档和实施计划（`feature-dev` 输出）
+3. `doc/plan/` 目录下的实施计划
+4. `doc/design/` 目录下的设计文档
+5. `doc/` 或 `docs/` 目录下的设计文档
+6. `doc/superpowers/specs/` 目录下的 Spec（`superpowers-planner` 输出）
+7. `specs/`、`design/` 目录下的规格说明
+8. 用户显式指定的文档路径
 
 读取后，提取以下信息：
 - **功能范围**：要实现哪些接口/模块
@@ -159,7 +162,7 @@ public class XxxServiceImpl implements XxxService {
 }
 ```
 
-#### DTO / Entity 规范——JPA 项目
+#### DTO 规范
 
 ```java
 // DTO: 接口/传输对象模块
@@ -168,42 +171,23 @@ public class XxxRequest {
     @NotBlank(message = "名称不能为空")
     private String name;
 }
-
-// Entity: 领域/数据访问模块
-@Getter  // 只生成 getter，不暴露 setter
-@Entity
-@Table(name = "t_xxx")
-public class XxxEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    // 通过业务方法修改字段，不暴露 setter
-    public void updateName(final String name) {
-        this.name = name;
-    }
-}
 ```
 
-#### DTO / Entity 规范——MyBatis/MyBatis-Plus 项目
+#### Entity / Mapper 规范
 
-```java
-// DTO: 接口/传输对象模块
-@Data  // 使用 Lombok 时；无 Lombok 则手写或 IDE 生成 getter/setter
-public class XxxRequest {
-    @NotBlank(message = "名称不能为空")
-    private String name;
-}
+Entity 和 Mapper 的生成模板统一委托给 `gen-java-entity` skill，该 skill 已覆盖：
 
-// Entity/Model: 领域/数据访问模块
-@Data  // MyBatis 项目中 Entity 通常也使用 getter/setter
-@TableName("t_xxx")  // MyBatis-Plus 注解
-public class XxxEntity {
-    @TableId(type = IdType.AUTO)
-    private Long id;
-    private String name;
-}
-```
+- **MyBatis-Plus**：`@TableName` + `@TableId` + `BaseMapper<Entity>` + `ServiceImpl<M, E>`
+- **MyBatis**：纯 POJO + Mapper 接口 + 同名 XML（`resultMap`/`<sql>`/CRUD）
+- **JPA/Hibernate**：`@Entity` + `@Getter` + `JpaRepository` + `JpaSpecificationExecutor`
+
+需要生成 Entity/Mapper 时，先通过 Glop 探测项目 ORM 框架和包路径，然后按 `gen-java-entity` 的模板生成。核心规范摘要：
+
+- Entity 实现 `Serializable`，显式 `serialVersionUID`
+- 审计字段齐全：`createdDate`, `createdBy`, `updatedDate`, `updatedBy`, `isDelete`
+- 时间字段用 `LocalDateTime`，不用 `Date`
+- MyBatis-Plus Entity 用 `@Data`，JPA Entity 用 `@Getter`（不暴露 setter）
+- 逻辑删除用 `UPDATE SET is_delete = 1`，XML 禁止 `SELECT *`
 
 #### 异常处理
 

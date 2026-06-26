@@ -8,6 +8,7 @@ tools:
   - Glob
   - Grep
   - Bash
+  - Skill
 model: claude-opus-4-8
 permissionMode: acceptEdits
 ---
@@ -41,6 +42,17 @@ permissionMode: acceptEdits
 ---
 
 ## Skill 开发规范
+
+### 创建流程
+
+创建新 Skill 时，**优先委托 `write-a-skill` skill** 完成。该 skill 会引导需求收集、起草 SKILL.md、确认覆盖范围，确保 description 触发条件精确、正文结构合规。
+
+```bash
+# 通过 Skill 工具调用
+Skill(skill: "write-a-skill")
+```
+
+当 `write-a-skill` 不可用或仅需小幅修改时，手动编辑。
 
 ### 文件结构
 

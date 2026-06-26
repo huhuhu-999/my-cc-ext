@@ -7,5 +7,5 @@
     "name": "yuanziquan"
   },
   "license": "MIT",
-  "keywords": ["java", "database", "sql", "ddl", "dml", "entity", "mapper", "orm", "mybatis", "jpa", "postgresql", "mysql", "code-review", "fix", "tdd", "design", "planning", "javadoc", "claude-code", "skill", "agent", "plugin", "mcp", "hook", "workflow", "extension"]
+  "keywords": ["java", "database", "sql", "ddl", "entity", "mapper", "orm", "mybatis", "jpa", "postgresql", "code-review", "tdd", "javadoc", "skill", "agent"]
 }

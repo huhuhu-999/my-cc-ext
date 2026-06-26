@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: 对 Java 代码进行代码审查。检查分层架构、JPA/MyBatis 使用、异常处理、安全性、代码质量和测试覆盖。
+description: 对 Java 代码进行代码审查。检查分层架构、JPA/MyBatis 使用、异常处理、安全性、代码质量和测试覆盖。当用户说"review""审查""code review"或提交前需要检查代码质量时使用。
 ---
 
 # Java Code Reviewer

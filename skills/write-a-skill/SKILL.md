@@ -1,6 +1,6 @@
 ---
 name: write-a-skill
-description: 创建结构良好、渐进式披露、带捆绑资源的新 Agent Skill。Use when user wants to create, write, or build a new skill（当用户想要创建、编写或构建新 Skill 时使用）。
+description: 创建结构良好、渐进式披露、带捆绑资源的新 Agent Skill。当用户想要创建、编写或构建新 Skill 时使用。
 ---
 
 # 编写 Skill

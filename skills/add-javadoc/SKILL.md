@@ -1,16 +1,6 @@
 ---
 name: add-javadoc
-description: >-
-  为 Service 接口和实现类补充 JavaDoc 文档注释。当用户说"补充注释""加文档注释"
-  "add javadoc""补 doc"或在修改 Service 文件后需要补充注释时使用。
-  自动扫描未注释的方法，生成符合项目风格的中文 JavaDoc（@param、@return、@throws）。
-when_to_use: >-
-  用户要求为 service 文件补充文档注释、批量添加 JavaDoc、或代码审查后发现
-  缺少注释需要补充时。
-argument-hint: '[module|file...]'
-user-invocable: true
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Agent
-paths: "**/*Service*.java"
+description: 为 Service 接口和实现类补充 JavaDoc 文档注释。当用户说"补充注释""加文档注释""add javadoc""补 doc"或在修改 Service 文件后需要补充注释时使用。自动扫描未注释的方法，生成符合项目风格的中文 JavaDoc（@param、@return、@throws）。
 ---
 
 # JavaDoc 补充工具
