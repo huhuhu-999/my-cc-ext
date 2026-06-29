@@ -63,7 +63,9 @@ public enum <EnumName> {
 
 ## 规则
 
-1. 包路径通过 Grep 已有枚举动态确定，不写死
+生成代码前 Read `skills/shared/index.md` 并按需加载对应规范文档。
+
+0. 包路径通过 Grep 已有枚举动态确定，不写死
 2. `getCodeByMsg` + `getMsgByCode` 缺一不可
 3. `StringUtils.isEmpty` 空安全，无匹配返回 `null`
 4. Lombok `@Getter`，不手写 getter

@@ -361,6 +361,8 @@ public interface <EntityName>Repository extends JpaRepository<<EntityName>Entity
 
 ## 规则
 
+生成代码前 Read `skills/shared/index.md` 并按需加载对应规范文档。
+
 ### 命名映射
 
 | DDL 列名 (snake_case) | Java 字段名 (camelCase) |
