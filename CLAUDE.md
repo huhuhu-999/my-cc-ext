@@ -14,7 +14,11 @@ agents/db-ops/AGENT.md                  # Agent: 数据库操作专家
 agents/cc-ext-dev/AGENT.md              # Agent: Claude Code 扩展开发专家
 agents/feature-dev/AGENT.md             # Agent: 功能开发流水线编排
 agents/superpowers-planner/AGENT.md     # Agent: 设计+计划流水线
-skills/gen-pgsql-ddl/SKILL.md           # Skill: PostgreSQL DDL 生成
+skills/gen-pgsql-ddl/                       # Skill: PostgreSQL DDL 生成
+skills/gen-pgsql-ddl/SKILL.md              #   主指令（快速参考）
+skills/gen-pgsql-ddl/REFERENCE.md          #   列定义、COMMENT、GRANT 完整规则
+skills/gen-pgsql-ddl/EXAMPLES.md           #   实际 DDL 范例
+skills/gen-pgsql-ddl/template/             #   SQL 模板（create-table.sql / alter-table.sql）
 skills/gen-java-enum/SKILL.md           # Skill: Java 枚举生成
 skills/code-reviewer/SKILL.md           # Skill: Java 代码审查
 skills/implement-from-design/SKILL.md   # Skill: 按设计文档编码
