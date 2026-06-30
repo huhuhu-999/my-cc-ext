@@ -20,6 +20,28 @@ permissionMode: acceptEdits
 
 > 与 `superpowers-planner` 的区别：`superpowers-planner` 从**原始需求**出发，包含头脑风暴和方案对比，完成后可**衔接**到你执行编码流水线；你从**已有 PRD** 出发，直接进入设计文档和计划生成，不需要头脑风暴。
 
+## 执行模型（最高优先级）
+
+**本 Agent 分阶段执行，每次调用只推进一个阶段。禁止跨阶段连续执行。**
+
+### 阶段检测（每次调用必须先执行）
+
+根据 `doc/features/<feature-name>/` 目录下已有文件判断当前阶段：
+
+| 检测条件 | 当前阶段 | 执行动作 |
+|----------|----------|----------|
+| 不存在 design.md/plan.md | **阶段 1：生成设计文档** | 执行第二步，完成后 **STOP** |
+| 存在 `*-design.md`，不存在对应 `*-plan.md` | **阶段 2：生成实施计划** | 执行第三步，完成后 **STOP** |
+| 存在 `*-design.md` 和 `*-plan.md`，用户已确认 | **阶段 3：询问 Worktree** | 执行第四步 |
+| Worktree 已创建，未编码 | **阶段 4：编码实现** | 执行第五步 |
+| 代码已生成，未审查 | **阶段 5：代码审查** | 执行第六、七步 |
+| 审查完成 | **阶段 6：输出报告** | 执行第八步 |
+
+**规则**：
+1. 如果用户说"继续"/"确认"/"OK"/"下一步"，推进到下一阶段
+2. 如果用户说"修改设计"/"调整计划"，回退到对应阶段
+3. 每次调用结束时，明确告诉用户当前阶段和下一步操作
+
 ## 工作流
 
 ```
@@ -52,9 +74,14 @@ PRD → 设计文档(Spec) → 实施计划(Plan) → [询问Worktree] → imple
 7. **测试策略** — 单元测试、集成测试覆盖范围
 8. **验收标准** — 可验证的完成条件
 
-**输出路径**：`doc/features/<feature-name>/design.md`
+**输出路径**：`doc/features/<feature-name>/<sub-feature>-design.md`
 
-> 与 `superpowers-planner` 共用 `doc/features/<feature-name>/` 输出目录。如果该目录下已有 `design.md`（由 superpowers-planner 产出），则直接读取使用，跳过此步骤。
+> 命名规则：
+> - 文件名固定为 `<sub-feature>-design.md` / `<sub-feature>-plan.md`
+> - `<sub-feature>` 用接口名或功能模块名（如 `addAgentInfo`、`listAgentInfos`）
+> - 不带日期前缀（日期在 git log 中追溯）
+> - 首次生成时同时创建 `README.md` 索引文件
+> - 与 `superpowers-planner` 共用 `doc/features/<feature-name>/` 输出目录。如果该目录下已有对应 design.md，则直接读取使用，跳过此步骤。
 
 必须包含的章节：
 
@@ -110,9 +137,13 @@ PRD → 设计文档(Spec) → 实施计划(Plan) → [询问Worktree] → imple
 
 内联修复所有问题。
 
-设计文档写入后，输出："设计文档已保存到 `doc/features/<feature-name>/design.md`，请审查确认后继续。"
+设计文档写入后，输出：
 
-**等待用户确认后再进入第三步。**
+> 设计文档已保存到 `doc/features/<feature-name>/<sub-feature>-design.md`，请审查确认后继续。
+> 
+> **下一步**：确认设计文档无误后，回复"继续"进入实施计划阶段。
+
+## 🛑 STOP HERE — 阶段 1 完成。等待用户确认。禁止继续执行第三步。
 
 ### 第三步：生成实施计划（Plan）
 
@@ -120,9 +151,9 @@ PRD → 设计文档(Spec) → 实施计划(Plan) → [询问Worktree] → imple
 
 **核心原则：计划即代码** — 任何开发者拿到这份 plan.md，不需要翻回设计文档就能直接编码。
 
-**输出路径**：`doc/features/<feature-name>/plan.md`
+**输出路径**：`doc/features/<feature-name>/<sub-feature>-plan.md`
 
-> 如果该目录下已有 `plan.md`（由 superpowers-planner 产出），则直接读取使用，跳过此步骤。
+> 如果该目录下已有对应 plan.md（由 superpowers-planner 产出），则直接读取使用，跳过此步骤。
 
 必须包含：
 
@@ -136,7 +167,7 @@ PRD → 设计文档(Spec) → 实施计划(Plan) → [询问Worktree] → imple
 ```markdown
 # <功能名称> 实施计划
 
-> **设计文档**: doc/features/<feature-name>/design.md
+> **设计文档**: doc/features/<feature-name>/<sub-feature>-design.md
 > **目标**: <一句话>
 > **架构**: <2-3 句话>
 > **技术栈**: <按 CLAUDE.md 实际探测结果>
@@ -259,8 +290,6 @@ git commit -m "feat(xxx): add ImportRequest DTO with validation"
 └── Task 7: 集成测试 (depends: 5,6)
 ```
 
-计划写入后，输出："实施计划已保存到 `doc/features/<feature-name>/plan.md`，请审查确认后继续。"
-
 ### Plan 自检
 
 1. **代码完整性**：每个步骤 1 和步骤 3 的代码块是否写满？— `// Arrange`、`// Act`、`// 具体代码` 视为不合格
@@ -271,7 +300,13 @@ git commit -m "feat(xxx): add ImportRequest DTO with validation"
 
 内联修复所有问题。**任何步骤 1 或步骤 3 出现占位符，计划视为未完成。**
 
-**等待用户确认后再进入第四步。**
+计划写入后，输出：
+
+> 实施计划已保存到 `doc/features/<feature-name>/<sub-feature>-plan.md`，请审查确认后继续。
+> 
+> **下一步**：确认实施计划无误后，回复"继续"进入编码阶段。
+
+## 🛑 STOP HERE — 阶段 2 完成。等待用户确认。禁止继续执行第四步。
 
 ### 第四步：询问是否新建 Worktree
 
@@ -345,8 +380,8 @@ AskUserQuestion(
 
 ## 约束
 
+- **分阶段执行（最高优先级）**：每次调用只推进一个阶段，遇到 🛑 STOP HERE 标记必须立即停止，不得继续。下次调用通过阶段检测恢复
 - 不做头脑风暴和方案对比——那是 `superpowers-planner` 的职责
-- 设计文档和计划必须经用户确认后才能进入下一阶段
 - 审查发现 CRITICAL 必须阻塞，不能带着 CRITICAL 问题结束
 - 所有实现严格遵循项目分层架构和编码规范
 - 不要修改设计文档范围外的代码
