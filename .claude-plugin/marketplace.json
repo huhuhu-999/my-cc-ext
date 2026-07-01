@@ -8,7 +8,7 @@
     {
       "name": "my-ext",
       "displayName": "Database Operations Agent",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "数据库操作与 Claude Code 扩展开发工具集。提供 db-ops(数据库DDL/DML/ORM/SQL审查)和 cc-ext-dev(Skill/Agent/Plugin/Hook/MCP/Workflow开发)两个 Agent，以及 gen-pgsql-ddl 建表 Skill。",
       "source": ".",
       "license": "MIT",
