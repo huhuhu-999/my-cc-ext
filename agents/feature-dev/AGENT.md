@@ -239,12 +239,15 @@ plan: pending
 - [ ] **步骤 1：编写失败测试**
 
 ```java
-package com.xxx.dto;
+package com.xxx.validation;
 
 import org.junit.jupiter.api.Test;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ImportRequestTest {
+class ImportRequestValidatorTest {
+
+    private final ImportRequestValidator validator = new ImportRequestValidator();
 
     @Test
     void shouldRejectEmptyFileName() {
@@ -273,14 +276,14 @@ class ImportRequestTest {
 - [ ] **步骤 2：运行测试验证失败**
 
 ```bash
-mvn -pl api-module -am test -Dtest=ImportRequestTest 2>&1
+mvn -pl api-module -am test -Dtest=ImportRequestValidatorTest 2>&1
 ```
-预期：FAIL — ImportRequest 类不存在
+预期：FAIL — ImportRequestValidator 类不存在
 
 - [ ] **步骤 3：编写最小实现**
 
 ```java
-package com.xxx.dto;
+package com.xxx.validation;
 
 import lombok.Data;
 import javax.validation.constraints.NotBlank;
@@ -294,19 +297,66 @@ public class ImportRequest {
 }
 ```
 
+```java
+package com.xxx.validation;
+
+public class ValidationResult {
+
+    private final boolean hasError;
+    private final String errorMessage;
+
+    private ValidationResult(final boolean hasError, final String errorMessage) {
+        this.hasError = hasError;
+        this.errorMessage = errorMessage;
+    }
+
+    public static ValidationResult ok() {
+        return new ValidationResult(false, "");
+    }
+
+    public static ValidationResult error(final String errorMessage) {
+        return new ValidationResult(true, errorMessage);
+    }
+
+    public boolean hasError() {
+        return hasError;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+}
+```
+
+```java
+package com.xxx.validation;
+
+public class ImportRequestValidator {
+
+    public ValidationResult validate(final ImportRequest request) {
+        if (request == null || request.getFileName() == null || request.getFileName().isBlank()) {
+            return ValidationResult.error("文件名不能为空");
+        }
+        return ValidationResult.ok();
+    }
+}
+```
+
 - [ ] **步骤 4：运行测试验证通过**
 
 ```bash
-mvn -pl api-module -am test -Dtest=ImportRequestTest 2>&1
+mvn -pl api-module -am test -Dtest=ImportRequestValidatorTest 2>&1
 ```
 预期：PASS — 2 tests passed
 
 - [ ] **步骤 5：提交**
 
 ```bash
-git add api-module/src/main/java/com/xxx/dto/ImportRequest.java \
-        api-module/src/test/java/com/xxx/dto/ImportRequestTest.java
-git commit -m "feat(xxx): add ImportRequest DTO with validation"
+git add api-module/src/main/java/com/xxx/validation/ImportRequest.java \
+        api-module/src/main/java/com/xxx/validation/ValidationResult.java \
+        api-module/src/main/java/com/xxx/validation/ImportRequestValidator.java \
+        api-module/src/test/java/com/xxx/validation/ImportRequestValidatorTest.java
+git commit -m "feat(import): add request validation"
 ```
 ```
 

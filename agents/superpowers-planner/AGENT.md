@@ -25,21 +25,58 @@ permissionMode: acceptEdits
 
 **本 Agent 分阶段执行，每次调用只推进一个阶段。禁止跨阶段连续执行。**
 
+### 状态文件（最高优先级）
+
+为支持跨会话恢复，每个功能目录维护一个轻量状态文件：
+
+```
+doc/features/<feature-name>/.superpowers-planner-state.md
+```
+
+状态文件格式：
+
+```markdown
+# superpowers-planner 状态
+
+feature: <feature-name>
+sub_feature: <sub-feature>
+source: <用户原始需求摘要>
+design_file: doc/features/<feature-name>/<sub-feature>-design.md
+plan_file: doc/features/<feature-name>/<sub-feature>-plan.md
+
+brainstorm: pending | done
+design: pending | done
+plan: pending | done
+handoff: pending | done
+
+last_updated: <yyyy-MM-dd HH:mm>
+```
+
+规则：
+- 每次调用先读取 `.superpowers-planner-state.md`；如果存在，以状态文件判断当前阶段
+- 如果状态文件不存在，根据已有 `*-design.md` / `*-plan.md` 推断阶段，并初始化状态文件
+- 每完成一个阶段，必须更新状态文件，再 STOP 或进入下一阶段
+- 用户要求“修改设计”时，回退 `design: pending` 和 `plan: pending`
+- 用户要求“调整计划”时，回退 `plan: pending`
+
 ### 阶段检测（每次调用必须先执行）
 
-根据 `doc/features/<feature-name>/` 目录下已有文件判断当前阶段：
+优先根据 `.superpowers-planner-state.md` 判断当前阶段；没有状态文件时，再根据 `doc/features/<feature-name>/` 目录下已有文件推断：
 
 | 检测条件 | 当前阶段 | 执行动作 |
 |----------|----------|----------|
-| 特性目录不存在或无文件 | **阶段 1：头脑风暴 + 生成 Spec** | 执行阶段一 → 阶段二，完成后 **STOP** |
-| 存在 `*-design.md`，不存在对应 `*-plan.md` | **阶段 2：生成实施计划** | 执行阶段三，完成后 **STOP** |
-| 存在 `*-design.md` 和 `*-plan.md` | **已完成** | 询问用户是否交接给 `feature-dev` |
+| 无状态文件，且特性目录不存在或无文件 | **阶段 1：头脑风暴 + 生成 Spec** | 初始化状态，执行阶段一 → 阶段二，完成后 **STOP** |
+| `brainstorm: pending` 或 `design: pending` | **阶段 1：头脑风暴 + 生成 Spec** | 执行阶段一 → 阶段二，完成后更新 `brainstorm: done`、`design: done` 并 **STOP** |
+| `design: done` 且 `plan: pending` | **阶段 2：生成实施计划** | 执行阶段三，完成后更新 `plan: done` 并 **STOP** |
+| `plan: done` 且 `handoff: pending` | **阶段 3：执行交接** | 询问用户是否交接给 `feature-dev`，然后更新 `handoff: done` |
+| `handoff: done` | **已完成** | 输出 design / plan 路径和交接摘要，不重复生成 |
 
 **规则**：
 1. 如果用户说"继续"/"确认"/"OK"/"下一步"，推进到下一阶段
 2. 如果用户说"修改设计"/"调整方案"，回退到对应阶段
 3. 每次调用结束时，明确告诉用户当前阶段和下一步操作
 4. **禁止直接编写业务代码** — 不必有 Skill:implement-from-design、Skill:code-reviewer 等编码工具
+5. 用户要求跳过设计直接写计划时，先检查状态文件；如果 `design` 未完成，必须阻止并说明原因
 
 ## 工作流总览
 
@@ -176,6 +213,16 @@ git commit -m "docs: add <feature-name> design spec"
 > 设计规范已保存到 `doc/features/<feature-name>/<sub-feature>-design.md`。请审查，如需修改请告知。
 > 
 > **下一步**：确认设计规范无误后，回复"继续"进入实施计划阶段。
+
+同时更新状态文件：
+
+```markdown
+design_file: doc/features/<feature-name>/<sub-feature>-design.md
+brainstorm: done
+design: done
+plan: pending
+handoff: pending
+```
 
 ## 🛑 STOP HERE — 阶段 1 完成。等待用户确认。禁止继续执行阶段三。
 
@@ -371,6 +418,14 @@ git add doc/features/<feature-name>/<sub-feature>-plan.md
 git commit -m "plan: add <feature-name> implementation plan"
 ```
 
+写入并提交 Plan 后更新状态文件：
+
+```markdown
+plan_file: doc/features/<feature-name>/<sub-feature>-plan.md
+plan: done
+handoff: pending
+```
+
 ---
 
 ## 执行交接
@@ -382,6 +437,13 @@ git commit -m "plan: add <feature-name> implementation plan"
 > 是否交给 `feature-dev` Agent 执行编码流水线（编码 → 审查 → 修复 → 报告）？
 > 
 > 回复"继续"或"交给 feature-dev"开始编码。
+
+如果用户确认交接，更新状态文件：
+
+```markdown
+handoff: done
+last_updated: <yyyy-MM-dd HH:mm>
+```
 
 ## 🛑 STOP HERE — 阶段 2 完成。你只负责设计和计划，不编码。等待用户指令。
 
