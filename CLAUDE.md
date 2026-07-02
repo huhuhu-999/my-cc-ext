@@ -66,13 +66,14 @@ claude plugins uninstall my-ext
 
 ### Skill: gen-pgsql-ddl
 
-PostgreSQL DDL 生成模板，面向特定项目的 `lmp` schema 规范。关键约定：
+PostgreSQL DDL 生成模板。关键约定：
 
 - 主键 `id bigserial`（无 DEFAULT）; 审计字段顺序固定; 删除标记 `int2 DEFAULT 0`
 - 列名最长 28 字符，列名/类型/约束三列对齐
 - 每列 + 表必须有 COMMENT
-- 固定角色授权：`r_pabemlmpdata_dml`（读写）和 `r_pabemlmpdata_qry`（只读），含 SEQUENCE 授权
-- 输出到 `tmp/` 目录，文件名 `operator_<业务>_init.sql`
+- schema 必须询问用户，不默认写死
+- 授权角色必须向用户确认；默认使用 `r_pabemlmpdata_dml`（读写）和 `r_pabemlmpdata_qry`（只读），含 SEQUENCE 授权
+- 输出到 `tmp/` 目录，文件名 `<yyyyMMdd>_<业务>_init.sql`
 
 详细模板见 `skills/gen-pgsql-ddl/SKILL.md`。
 
@@ -92,7 +93,7 @@ Claude Code 扩展开发专家。覆盖 Claude Code 全部扩展机制：Skill�
 
 ### Agent: feature-dev
 
-功能开发流水线编排者。从已有 PRD 出发，串联 **设计文档（Spec） → 实施计划（Plan） → Worktree 确认 → implement-from-design 编码 → code-reviewer 审查 → 修复 CRITICAL → 开发报告** 的完整流程。文档统一输出到 `doc/features/<feature-name>/`。
+功能开发流水线编排者。从已有 PRD 出发，串联 **设计文档（Spec） → 实施计划（Plan） → 开发目录确认 → implement-from-design 编码 → code-reviewer 审查 → 修复 CRITICAL → 开发报告** 的完整流程。文档统一输出到 `doc/features/<feature-name>/`，并通过 `.feature-dev-state.md` 状态文件支持跨会话恢复。
 
 与 `superpowers-planner` 的区别：`feature-dev` 从**已有 PRD** 出发，不需要头脑风暴；`superpowers-planner` 从**原始需求**出发，包含头脑风暴和方案对比。
 

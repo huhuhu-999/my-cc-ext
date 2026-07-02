@@ -9,7 +9,6 @@ tools:
   - Grep
   - Bash
   - Skill
-  - AskUserQuestion
 model: claude-opus-4-8
 permissionMode: acceptEdits
 ---
@@ -62,7 +61,7 @@ permissionMode: acceptEdits
 
 ### 步骤 2：提出澄清问题
 
-一次一个问题，逐步完善需求。优先使用多选问题。
+用普通文本一次询问一个问题，逐步完善需求。问题应尽量提供 2-3 个明确选项，并允许用户补充其他答案；不要依赖专有交互工具。
 
 需要澄清的维度：
 - **目的**：这个功能要解决什么问题？
@@ -222,17 +221,23 @@ git commit -m "docs: add <feature-name> design spec"
 - [ ] **步骤 1：编写失败测试**
 
 ```java
-@Test
-void shouldReturnErrorWhenTemplateMismatch() {
-    // Arrange
-    var request = new OperatorImportUploadRequest();
-    request.setFileKey("invalid_template.xlsx");
+package com.xxx.service;
 
-    // Act
-    var result = service.resolve(request);
+import org.junit.jupiter.api.Test;
 
-    // Assert
-    assertThat(result.getCheckMsg()).contains("模板不符合");
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TemplateValidationServiceTest {
+
+    private final TemplateValidationService service = new TemplateValidationService();
+
+    @Test
+    void shouldReturnErrorWhenTemplateMismatch() {
+        TemplateValidationResult result = service.validate("invalid_template.xlsx", "OPERATOR_IMPORT");
+
+        assertThat(result.isMatched()).isFalse();
+        assertThat(result.getCheckMsg()).contains("模板不符合");
+    }
 }
 ```
 
@@ -246,7 +251,40 @@ mvn -pl pare-lmp-integrate-component -am test -Dtest=XxxServiceTest#shouldReturn
 - [ ] **步骤 3：编写最小实现**
 
 ```java
-// 具体代码...
+package com.xxx.service;
+
+public class TemplateValidationService {
+
+    public TemplateValidationResult validate(final String fileName, final String expectedTemplateCode) {
+        if (!"operator_import_template.xlsx".equals(fileName) || !"OPERATOR_IMPORT".equals(expectedTemplateCode)) {
+            return new TemplateValidationResult(false, "模板不符合");
+        }
+        return new TemplateValidationResult(true, "模板校验通过");
+    }
+}
+```
+
+```java
+package com.xxx.service;
+
+public class TemplateValidationResult {
+
+    private final boolean matched;
+    private final String checkMsg;
+
+    public TemplateValidationResult(final boolean matched, final String checkMsg) {
+        this.matched = matched;
+        this.checkMsg = checkMsg;
+    }
+
+    public boolean isMatched() {
+        return matched;
+    }
+
+    public String getCheckMsg() {
+        return checkMsg;
+    }
+}
 ```
 
 - [ ] **步骤 4：运行测试验证通过**
@@ -337,7 +375,7 @@ git commit -m "plan: add <feature-name> implementation plan"
 
 ## 执行交接
 
-计划完成后，输出：
+计划完成后，用普通文本询问用户是否交给 `feature-dev` Agent 执行编码流水线，不依赖专有交互工具。输出：
 
 > 实施计划已保存到 `doc/features/<feature-name>/<sub-feature>-plan.md`。
 > 

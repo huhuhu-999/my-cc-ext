@@ -1,6 +1,6 @@
 ---
 name: gen-pgsql-ddl
-description: 在交付设计的时候，需要生成 PostgreSQL DDL 时使用。自动适配 schema、表名、字段列表，输出完整建表+注释+授权语句。
+description: 在交付设计的时候，需要生成 PostgreSQL DDL 时使用。根据用户确认的 schema、授权角色、表名和字段列表，输出完整建表+注释+授权语句。
 ---
 
 # PostgreSQL 建表 DDL 生成
@@ -20,11 +20,21 @@ gen-pgsql-ddl/
 ## 快速开始
 
 1. 收集用户的列定义（列名、类型、是否必填、注释）
-2. 从 `template/` 复制对应模板
-3. 按 REFERENCE.md 中的列定义规则替换 `<占位符>`
-4. 输出到 `tmp/` 目录
+2. 询问用户目标 schema；未提供时必须先确认，不默认写死
+3. 向用户确认授权角色；默认使用 `r_pabemlmpdata_dml` / `r_pabemlmpdata_qry`
+4. 从 `template/` 复制对应模板
+5. 按 REFERENCE.md 中的列定义规则替换 `<占位符>`
+6. 输出到 `tmp/` 目录
 
 ## 核心规则
+
+### 生成前确认
+
+- **schema**：必须询问用户目标 schema，并将 SQL 中所有 `<schema_name>` 替换为用户确认值
+- **授权角色**：必须向用户确认 DML / QRY 角色；如果用户无特殊要求，默认使用：
+  - DML 角色：`r_pabemlmpdata_dml`
+  - QRY 角色：`r_pabemlmpdata_qry`
+- **业务名**：用于输出文件名，按 snake_case 转换
 
 ### 列定义速查
 
@@ -51,12 +61,12 @@ gen-pgsql-ddl/
 
 ### 权限
 
-- `r_pabemlmpdata_dml`：SELECT, UPDATE, DELETE, INSERT + SEQUENCE
-- `r_pabemlmpdata_qry`：SELECT + SEQUENCE
+- `<dml_role>`：SELECT, UPDATE, DELETE, INSERT + SEQUENCE（默认 `r_pabemlmpdata_dml`）
+- `<qry_role>`：SELECT + SEQUENCE（默认 `r_pabemlmpdata_qry`）
 
 ### 文件
 
-- 存放路径 `tmp/`，文件名 `operator_<业务>_init.sql`
+- 存放路径 `tmp/`，文件名 `<yyyyMMdd>_<业务>_init.sql`
 - 建表脚本以 `DROP TABLE IF EXISTS` 开头
 - ALTER TABLE 不需要重复 GRANT
 

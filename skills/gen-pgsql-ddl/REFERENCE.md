@@ -1,5 +1,14 @@
 # REFERENCE — 完整规则
 
+## 生成前确认
+
+| 项 | 规则 |
+|----|------|
+| schema | 必须询问用户目标 schema；SQL 中统一使用用户确认后的 schema |
+| DML 授权角色 | 必须向用户确认；默认 `r_pabemlmpdata_dml` |
+| QRY 授权角色 | 必须向用户确认；默认 `r_pabemlmpdata_qry` |
+| 输出文件名 | `tmp/<yyyyMMdd>_<业务>_init.sql`，业务名使用 snake_case |
+
 ## 列定义
 
 | 规则 | 说明 |
@@ -19,7 +28,7 @@
 
 ## COMMENT
 
-- 每列必须有 `COMMENT ON COLUMN lmp.<table_name>."<column>" IS '...'`
+- 每列必须有 `COMMENT ON COLUMN <schema_name>.<table_name>."<column>" IS '...'`
 - 审计字段使用固定注释文案：
   - `created_by` — `'创建人'`
   - `created_date` — `'创建时间'`
@@ -32,12 +41,12 @@
 
 ## GRANT
 
-两个固定角色：
+授权角色必须向用户确认；如果用户没有特殊要求，使用默认角色：
 
 | 角色 | 表权限 | SEQUENCE 权限 |
 |------|--------|---------------|
-| `r_pabemlmpdata_dml` | SELECT, UPDATE, DELETE, INSERT | SELECT, UPDATE |
-| `r_pabemlmpdata_qry` | SELECT | SELECT |
+| `<dml_role>`，默认 `r_pabemlmpdata_dml` | SELECT, UPDATE, DELETE, INSERT | SELECT, UPDATE |
+| `<qry_role>`，默认 `r_pabemlmpdata_qry` | SELECT | SELECT |
 
 > ALTER TABLE 不需要重复 GRANT，权限已在建表时授予。
 
@@ -45,10 +54,10 @@
 
 - 存放路径：`tmp/` 目录
 - `DROP TABLE IF EXISTS` 开头（中间表允许重建）
-- 文件名：`operator_<业务>_init.sql`
+- 文件名：`<yyyyMMdd>_<业务>_init.sql`
 
 ## 参考
 
-- `tmp/operator_import_init.sql`
-- `tmp/operator_cost_apply_init.sql`
-- `tmp/operator_manage_flow_init.sql`
+- `tmp/20260625_operator_import_init.sql`
+- `tmp/20260625_operator_cost_apply_init.sql`
+- `tmp/20260625_operator_manage_flow_init.sql`

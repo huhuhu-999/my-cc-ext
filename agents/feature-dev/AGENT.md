@@ -9,7 +9,6 @@ tools:
   - Grep
   - Bash
   - Skill
-  - Task
 model: claude-opus-4-8
 permissionMode: acceptEdits
 ---
@@ -24,28 +23,72 @@ permissionMode: acceptEdits
 
 **本 Agent 分阶段执行，每次调用只推进一个阶段。禁止跨阶段连续执行。**
 
+### 状态文件（最高优先级）
+
+为支持跨会话恢复，每个功能目录维护一个状态文件：
+
+```
+doc/features/<feature-name>/.feature-dev-state.md
+```
+
+状态文件格式：
+
+```markdown
+# feature-dev 状态
+
+feature: <feature-name>
+sub_feature: <sub-feature>
+prd: <PRD 路径或用户输入摘要>
+design_file: doc/features/<feature-name>/<sub-feature>-design.md
+plan_file: doc/features/<feature-name>/<sub-feature>-plan.md
+workdir: current | .claude/worktrees/<feature-name>
+base_ref: <origin/master | origin/main | HEAD | 当前分支 upstream>
+branch: <当前开发分支>
+
+design: pending | done
+plan: pending | done
+workdir_confirmed: pending | done
+implementation: pending | done
+review: pending | done
+report: pending | done
+
+critical: <N>
+warning: <N>
+info: <N>
+last_updated: <yyyy-MM-dd HH:mm>
+```
+
+规则：
+- 每次调用先读取 `.feature-dev-state.md`；如果存在，以状态文件判断当前阶段
+- 如果状态文件不存在，根据已有 `*-design.md` / `*-plan.md` 推断阶段，并初始化状态文件
+- 每完成一个阶段，必须更新状态文件，再 STOP 或进入下一阶段
+- 用户要求“修改设计”或“调整计划”时，回退对应状态，例如 `design: pending` 或 `plan: pending`
+
 ### 阶段检测（每次调用必须先执行）
 
-根据 `doc/features/<feature-name>/` 目录下已有文件判断当前阶段：
+优先根据 `.feature-dev-state.md` 判断当前阶段；没有状态文件时，再根据 `doc/features/<feature-name>/` 目录下已有文件推断：
 
 | 检测条件 | 当前阶段 | 执行动作 |
 |----------|----------|----------|
-| 不存在 design.md/plan.md | **阶段 1：生成设计文档** | 执行第二步，完成后 **STOP** |
-| 存在 `*-design.md`，不存在对应 `*-plan.md` | **阶段 2：生成实施计划** | 执行第三步，完成后 **STOP** |
-| 存在 `*-design.md` 和 `*-plan.md`，用户已确认 | **阶段 3：询问 Worktree** | 执行第四步 |
-| Worktree 已创建，未编码 | **阶段 4：编码实现** | 执行第五步 |
-| 代码已生成，未审查 | **阶段 5：代码审查** | 执行第六、七步 |
-| 审查完成 | **阶段 6：输出报告** | 执行第八步 |
+| 无状态文件，且不存在 design.md/plan.md | **阶段 1：生成设计文档** | 初始化状态，执行第二步，完成后 **STOP** |
+| `design: pending` 或存在 `*-design.md` 但状态未记录 | **阶段 1：生成/确认设计文档** | 执行第二步，完成后更新 `design: done` 并 **STOP** |
+| `design: done` 且 `plan: pending` | **阶段 2：生成实施计划** | 执行第三步，完成后更新 `plan: done` 并 **STOP** |
+| `plan: done` 且 `workdir_confirmed: pending` | **阶段 3：确认开发目录** | 执行第四步，完成后更新 `workdir_confirmed: done` |
+| `workdir_confirmed: done` 且 `implementation: pending` | **阶段 4：编码实现** | 执行第五步，完成后更新 `implementation: done` |
+| `implementation: done` 且 `review: pending` | **阶段 5：代码审查** | 执行第六、七步，完成后更新 `review: done` |
+| `review: done` 且 `report: pending` | **阶段 6：输出报告** | 执行第八步，完成后更新 `report: done` |
+| `report: done` | **已完成** | 输出开发报告摘要，不重复执行 |
 
 **规则**：
 1. 如果用户说"继续"/"确认"/"OK"/"下一步"，推进到下一阶段
 2. 如果用户说"修改设计"/"调整计划"，回退到对应阶段
 3. 每次调用结束时，明确告诉用户当前阶段和下一步操作
+4. 用户要求跳过阶段时，先检查状态文件；如果前置阶段未完成，必须阻止并说明原因
 
 ## 工作流
 
 ```
-PRD → 设计文档(Spec) → 实施计划(Plan) → [询问Worktree] → implement-from-design → code-reviewer → 修复 CRITICAL → 输出报告
+PRD → 设计文档(Spec) → 实施计划(Plan) → [确认开发目录] → implement-from-design → code-reviewer → 修复 CRITICAL → 输出报告
 ```
 
 ## 执行步骤
@@ -142,6 +185,14 @@ PRD → 设计文档(Spec) → 实施计划(Plan) → [询问Worktree] → imple
 > 设计文档已保存到 `doc/features/<feature-name>/<sub-feature>-design.md`，请审查确认后继续。
 > 
 > **下一步**：确认设计文档无误后，回复"继续"进入实施计划阶段。
+
+同时更新状态文件：
+
+```markdown
+design_file: doc/features/<feature-name>/<sub-feature>-design.md
+design: done
+plan: pending
+```
 
 ## 🛑 STOP HERE — 阶段 1 完成。等待用户确认。禁止继续执行第三步。
 
@@ -306,42 +357,73 @@ git commit -m "feat(xxx): add ImportRequest DTO with validation"
 > 
 > **下一步**：确认实施计划无误后，回复"继续"进入编码阶段。
 
+同时更新状态文件：
+
+```markdown
+plan_file: doc/features/<feature-name>/<sub-feature>-plan.md
+plan: done
+workdir_confirmed: pending
+```
+
 ## 🛑 STOP HERE — 阶段 2 完成。等待用户确认。禁止继续执行第四步。
 
-### 第四步：询问是否新建 Worktree
+### 第四步：确认开发目录
 
-使用 `AskUserQuestion` 工具询问用户：
+用普通文本询问用户是否在新 git worktree 中开发，不依赖专有交互工具。必须提供三个选项：
 
+1. **从远程新建（推荐）**：基于当前分支追踪的远程分支创建新 worktree，隔离开发环境
+2. **从本地 HEAD 新建**：基于当前本地分支创建新 worktree
+3. **不新建**：在当前分支直接开发
+
+如果用户选择新建 worktree，使用 `Bash` 执行 git 命令：
+
+```bash
+git rev-parse --show-toplevel
+git rev-parse --abbrev-ref HEAD
+git rev-parse --abbrev-ref --symbolic-full-name @{u}
+git worktree add .claude/worktrees/<feature-name> <base-ref>
 ```
-AskUserQuestion(
-  questions: [{
-    question: "是否在新 worktree 中开发？",
-    header: "Worktree",
-    options: [
-      {label: "从远程新建 (推荐)", description: "基于当前分支追踪的远程分支创建新 worktree，隔离开发环境"},
-      {label: "从本地 HEAD 新建", description: "基于当前本地分支创建新 worktree"},
-      {label: "不新建", description: "在当前分支直接开发"}
-    ]
-  }]
-)
+
+规则：
+- `<feature-name>` 使用功能目录名或计划文件名派生，保持 kebab-case
+- 从远程新建时，优先使用当前分支的 upstream；如果无 upstream，则依次尝试 `origin/master`、`origin/main`
+- 从本地 HEAD 新建时，`<base-ref>` 使用 `HEAD`
+- 如果 `.claude/worktrees/<feature-name>` 已存在，先停止并询问用户换名、复用还是删除旧目录；不要自动删除
+- 如果用户选择不新建，记录“在当前分支直接开发”，然后继续第五步
+- 后续命令都在用户确认的开发目录中执行
+
+确认后更新状态文件：
+
+```markdown
+workdir: current | .claude/worktrees/<feature-name>
+base_ref: <base-ref>
+branch: <当前开发分支>
+workdir_confirmed: done
+implementation: pending
 ```
-
-根据用户选择：
-- **从远程新建**：先执行 `git rev-parse --abbrev-ref --symbolic-full-name @{u}` 获取远程分支，若存在则基于该分支创建；若不存在则降级为 origin/master 或 origin/main
-- **从本地 HEAD 新建**：基于当前 HEAD 创建
-- **不新建**：跳过，在当前分支继续
-
-**Worktree 存放位置**：使用 `EnterWorktree` 工具创建，默认存放在 `.claude/worktrees/` 下。
-
-如果远程不可用，自动降级为从本地 HEAD 新建并告知用户。退出时使用 `ExitWorktree` 清理。
 
 ### 第五步：调用 implement-from-design 实现编码
 
-通过 Skill 工具调用 `implement-from-design` 技能，它会按实施计划遵循分层架构自底向上实现。
+通过 Skill 工具调用 `implement-from-design` 技能。调用时明确要求：
+
+- 只根据 `plan_file` 完成编码和测试
+- 不输出最终开发报告
+- 如果它已经执行了 code-reviewer，只记录结果；正式审查仍由本 Agent 第六步统一收口
+
+编码完成后更新状态文件：
+
+```markdown
+implementation: done
+review: pending
+```
 
 ### 第六步：调用 code-reviewer 审查代码
 
-通过 Skill 工具调用 `code-reviewer` 技能，对本次 diff 进行 7 维审查，输出 CRITICAL / WARNING / INFO 三级报告。
+优先检查第五步是否已经产生 code-reviewer 审查结果：
+
+- 如果已有审查结果，读取并复核是否覆盖本次 diff
+- 如果没有审查结果，调用 `code-reviewer` 技能，对本次 diff 进行 7 维审查
+- 无论结果来自哪里，都由本 Agent 统一记录 CRITICAL / WARNING / INFO 数量
 
 ### 第七步：处理审查结果
 
@@ -352,6 +434,16 @@ AskUserQuestion(
 | **INFO** | 选择性修复 |
 
 修复后再次调用 `code-reviewer` 验证，直到没有 CRITICAL 问题。
+
+审查通过后更新状态文件：
+
+```markdown
+review: done
+report: pending
+critical: 0
+warning: <N>
+info: <N>
+```
 
 ### 第八步：输出开发报告
 
@@ -376,6 +468,13 @@ AskUserQuestion(
 - **CRITICAL**: 0
 - **WARNING**: N → 已修复
 - **INFO**: M
+```
+
+报告输出后更新状态文件：
+
+```markdown
+report: done
+last_updated: <yyyy-MM-dd HH:mm>
 ```
 
 ## 约束

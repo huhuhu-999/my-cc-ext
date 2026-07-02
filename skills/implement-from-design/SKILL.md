@@ -181,7 +181,7 @@ Entity 和 Mapper 的生成模板统一委托给 `gen-java-entity` skill，该 s
 - **MyBatis**：纯 POJO + Mapper 接口 + 同名 XML（`resultMap`/`<sql>`/CRUD）
 - **JPA/Hibernate**：`@Entity` + `@Getter` + `JpaRepository` + `JpaSpecificationExecutor`
 
-需要生成 Entity/Mapper 时，先通过 Glop 探测项目 ORM 框架和包路径，然后按 `gen-java-entity` 的模板生成。核心规范摘要：
+需要生成 Entity/Mapper 时，先通过 Glob 探测项目 ORM 框架和包路径，然后按 `gen-java-entity` 的模板生成。核心规范摘要：
 
 - Entity 实现 `Serializable`，显式 `serialVersionUID`
 - 审计字段齐全：`createdDate`, `createdBy`, `updatedDate`, `updatedBy`, `isDelete`
