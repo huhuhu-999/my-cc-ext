@@ -85,13 +85,19 @@ void shouldXxxWhenYyy() {
 
 ### 第五步：验证（GREEN 确认）
 
-```bash
-# 1. 运行复现测试 — 应该通过
-mvn test -pl <module> -Dtest=XxxServiceImplTest
+根据项目构建文件选择 Maven 或 Gradle，并按操作系统优先使用 wrapper：Windows 使用 `mvnw.cmd` / `gradlew.bat`，Unix-like 环境使用 `./mvnw` / `./gradlew`。没有 wrapper 时使用系统命令。
 
-# 2. 运行相关模块全部测试 — 确保无回归
-mvn test -pl <module>
+```bash
+# Maven：运行复现测试，再运行相关模块测试
+<maven> test -pl <module> -am -Dtest=XxxServiceImplTest
+<maven> test -pl <module> -am
+
+# Gradle：运行复现测试，再运行相关模块测试
+<gradle-wrapper> :<module>:test --tests "*XxxServiceImplTest"
+<gradle-wrapper> :<module>:test
 ```
+
+单模块项目省略 Maven 的 `-pl/-am` 或 Gradle 的模块任务前缀。
 
 ### 第六步：代码审查
 

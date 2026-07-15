@@ -5,8 +5,9 @@
 | 项 | 规则 |
 |----|------|
 | schema | 必须询问用户目标 schema；SQL 中统一使用用户确认后的 schema |
-| DML 授权角色 | 必须向用户确认；默认 `r_pabemlmpdata_dml` |
-| QRY 授权角色 | 必须向用户确认；默认 `r_pabemlmpdata_qry` |
+| 操作模式 | 默认仅创建；删除并重建必须由用户明确确认目标环境和表名 |
+| DML 授权角色 | 优先读取项目已有 DDL/配置；无法确定时询问用户；不需要授权时省略 |
+| QRY 授权角色 | 优先读取项目已有 DDL/配置；无法确定时询问用户；不需要授权时省略 |
 | 输出文件名 | `tmp/<yyyyMMdd>_<业务>_init.sql`，业务名使用 snake_case |
 
 ## 列定义
@@ -41,23 +42,23 @@
 
 ## GRANT
 
-授权角色必须向用户确认；如果用户没有特殊要求，使用默认角色：
+授权角色必须来自项目现有约定或用户确认，不得使用与当前项目无关的硬编码默认值：
 
 | 角色 | 表权限 | SEQUENCE 权限 |
 |------|--------|---------------|
-| `<dml_role>`，默认 `r_pabemlmpdata_dml` | SELECT, UPDATE, DELETE, INSERT | SELECT, UPDATE |
-| `<qry_role>`，默认 `r_pabemlmpdata_qry` | SELECT | SELECT |
+| `<dml_role>` | SELECT, UPDATE, DELETE, INSERT | SELECT, UPDATE |
+| `<qry_role>` | SELECT | SELECT |
 
 > ALTER TABLE 不需要重复 GRANT，权限已在建表时授予。
 
 ## 文件
 
 - 存放路径：`tmp/` 目录
-- `DROP TABLE IF EXISTS` 开头（中间表允许重建）
+- 默认脚本从 `CREATE TABLE` 开始，不包含任何删除语句
+- 仅在用户明确确认“删除并重建”后加入 `DROP TABLE IF EXISTS`，并在脚本头部记录目标环境和确认信息
 - 文件名：`<yyyyMMdd>_<业务>_init.sql`
 
 ## 参考
 
-- `tmp/20260625_operator_import_init.sql`
-- `tmp/20260625_operator_cost_apply_init.sql`
-- `tmp/20260625_operator_manage_flow_init.sql`
+- 建表和改表写法见 [EXAMPLES.md](EXAMPLES.md)
+- 可复用骨架见 `template/create-table.sql` 和 `template/alter-table.sql`

@@ -44,7 +44,7 @@ python skills/add-javadoc/scripts/scan_javadoc.py . --json
 python .claude/skills/add-javadoc/scripts/scan_javadoc.py . --json -p "**/*Controller.java"
 ```
 
-退出码非 0 表示存在需要补充的文件。
+退出码 `0` 表示 JavaDoc 完整，`1` 表示存在类级或方法级缺失，`2` 表示至少一个文件解析失败。
 
 ### 第二步：确认范围（如有必要）
 

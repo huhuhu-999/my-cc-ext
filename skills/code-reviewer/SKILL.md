@@ -29,20 +29,10 @@ git diff --cached --name-only
 
 审查前必须了解项目上下文，避免用不匹配的约定误报：
 
-```bash
-# 阅读 CLAUDE.md
-cat CLAUDE.md 2>/dev/null || echo "NO_CLAUDEMD"
-
-# 检测 Lombok
-grep -l "lombok" pom.xml build.gradle* 2>/dev/null
-
-# 检测 ORM
-grep -E "mybatis-plus|spring-boot-starter-data-jpa|mybatis-spring" pom.xml build.gradle* 2>/dev/null
-
-# 检测构建工具
-ls pom.xml 2>/dev/null && echo "MAVEN"
-ls build.gradle* 2>/dev/null && echo "GRADLE"
-```
+1. 用 Read 读取根目录和相关模块的 `CLAUDE.md`。
+2. 用 Glob 递归定位 `**/pom.xml`、`**/build.gradle`、`**/build.gradle.kts`，排除构建输出目录。
+3. 用 Grep 在所有构建文件中检测 `lombok`、`mybatis-plus`、`mybatis-spring`、`spring-boot-starter-data-jpa`。
+4. 根据变更文件所属模块分别判定技术栈，不能只读取仓库根目录构建文件。
 
 > **核心原则**：CLAUDE.md > 依赖探测 > 通用规则。审查结论应与项目实际技术栈一致。
 
@@ -52,10 +42,7 @@ ls build.gradle* 2>/dev/null && echo "GRADLE"
 
 ### 2.1 分层架构（CRITICAL）
 
-```bash
-# 检查 Controller 是否直接调用 Mapper
-grep -rn "Mapper\|Repository" --include="*Controller.java" src/main 2>/dev/null
-```
+用 Glob 定位所有模块的 `**/src/main/**/*Controller.java`，再用 Grep 检查 `Mapper` / `Repository` 引用；只报告本次 diff 涉及的文件和调用链。
 
 - Controller/Resource 层不应直接访问 DAO/Repository/Mapper，必须经过 Service
 - DTO/VO 不应出现在数据访问层中（不要用 DTO 直接做持久化）
@@ -65,10 +52,7 @@ grep -rn "Mapper\|Repository" --include="*Controller.java" src/main 2>/dev/null
 
 ### 2.2 ORM / 数据库（CRITICAL）
 
-```bash
-# 检查 MyBatis XML 中是否使用 ${} 拼接
-grep -rn '\${' --include="*.xml" src/main 2>/dev/null
-```
+用 Glob 定位所有模块的 `**/src/main/**/*.xml`，再用 Grep 搜索 `${`；结合参数来源和白名单校验判断是否存在注入风险。
 
 **通用规则：**
 - SQL 参数必须使用参数化查询或 ORM 提供的绑定方式，禁止字符串拼接用户输入
@@ -88,10 +72,7 @@ grep -rn '\${' --include="*.xml" src/main 2>/dev/null
 
 ### 2.3 异常处理（CRITICAL）
 
-```bash
-# 检查空 catch 块
-grep -rn "catch\s*(" --include="*.java" src/main -A 2 2>/dev/null | grep -B 1 "^\s*}$"
-```
+用 Grep 在所有模块的 `**/src/main/**/*.java` 中定位 `catch`，读取相邻代码确认是否为空块。不要仅依赖单行正则作结论。
 
 - 不允许空 catch 块 — 至少记录日志或添加注释说明忽略原因
 - 不允许 `printStackTrace()`，必须使用日志框架记录
@@ -101,10 +82,7 @@ grep -rn "catch\s*(" --include="*.java" src/main -A 2 2>/dev/null | grep -B 1 "^
 
 ### 2.4 安全性（HIGH）
 
-```bash
-# 检查硬编码密钥/密码/Token
-grep -rnE "(password|secret|token|apikey|api_key)\s*=" --include="*.java" --include="*.properties" --include="*.yml" src/main 2>/dev/null
-```
+用 Grep 在所有模块的 Java 和配置文件中搜索 `password`、`secret`、`token`、`apikey`、`api_key`，读取命中上下文，区分真实凭据、变量名和示例占位符。
 
 - 不允许硬编码密钥、Token、密码、连接串（应从配置/环境变量/密钥管理服务获取）
 - 外部输入（请求参数、文件上传、Header）必须校验（`@Valid`/`@Validated`、参数断言）
@@ -192,7 +170,7 @@ grep -rnE "(password|secret|token|apikey|api_key)\s*=" --include="*.java" --incl
 | `git diff` 为空（无未提交变更） | 检查 `git diff --cached`；如也为空则终止 |
 | CLAUDE.md 不存在 | 仅依赖依赖探测 + 通用规则；在报告开头标注"未检测到 CLAUDE.md" |
 | 变更文件 > 50 个 | 仅审查 `.java` 文件；跳过配置文件除非有安全关注 |
-| 变更仅包含 `pom.xml` / `build.gradle` | 仅检查安全维度（依赖版本是否有已知漏洞）；标注其他维度为 N/A |
+| 变更仅包含 `pom.xml` / `build.gradle` | 检查依赖来源、版本锁定和仓库配置；只有项目已有漏洞扫描器且实际执行后，才能报告已知漏洞 |
 | 同时存在 Lombok 和非 Lombok 文件 | 按文件分别判定：有 `@Slf4j` 的用 Lombok 标准，没有的用非 Lombok 标准 |
 | ORM 混合使用（JPA + MyBatis 同项目） | 两个 ORM 的规则都适用，在报告中标注每个文件使用的 ORM |
 | 检测到 Kotlin 文件混在 Java 项目中 | 仅审查 Java 文件；提及存在 Kotlin 文件但说明不在审查范围 |

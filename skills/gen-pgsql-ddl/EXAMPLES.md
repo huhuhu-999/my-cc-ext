@@ -15,7 +15,6 @@
 -- ----------------------------
 -- 新建表 lmp.outsrc_property_data_sync
 -- ----------------------------
-DROP TABLE IF EXISTS lmp.outsrc_property_data_sync;
 CREATE TABLE lmp.outsrc_property_data_sync
 (
     id                   bigserial,
@@ -59,6 +58,17 @@ GRANT SELECT, UPDATE ON SEQUENCE lmp.outsrc_property_data_sync_id_seq TO r_pabem
 -- r_pabemlmpdata_qry
 GRANT SELECT ON lmp.outsrc_property_data_sync TO r_pabemlmpdata_qry;
 GRANT SELECT ON SEQUENCE lmp.outsrc_property_data_sync_id_seq TO r_pabemlmpdata_qry;
+```
+
+> 本示例使用需求所属项目已经确认的授权角色。其他项目必须读取其现有约定或询问用户，不得直接复用这些角色。
+
+### 删除并重建（仅在明确确认后）
+
+只有用户明确确认目标环境、表名以及允许丢弃现有数据时，才在 `CREATE TABLE` 前添加：
+
+```sql
+-- 重建确认: <环境> / <确认时间> / <确认人或确认来源>
+DROP TABLE IF EXISTS <schema_name>.<table_name>;
 ```
 
 ### 已有表新增/修改字段

@@ -48,14 +48,14 @@ CLAUDE.md 未覆盖的信息通过文件系统探测：
 
 先确认设计文档位置，按优先级搜索：
 
-1. `.claude/plan/` 目录下的规划文档
+1. 用户显式指定的文档路径
 2. `doc/features/<feature-name>/` 目录下的设计文档和实施计划（`feature-dev` 输出）
-3. `doc/plan/` 目录下的实施计划
-4. `doc/design/` 目录下的设计文档
-5. `doc/` 或 `docs/` 目录下的设计文档
-6. `doc/superpowers/specs/` 目录下的 Spec（`superpowers-planner` 输出）
-7. `specs/`、`design/` 目录下的规格说明
-8. 用户显式指定的文档路径
+3. `.claude/plan/` 目录下的规划文档
+4. `doc/plan/` 目录下的实施计划
+5. `doc/design/` 目录下的设计文档
+6. `doc/` 或 `docs/` 目录下的设计文档
+7. `doc/superpowers/specs/` 目录下的 Spec（`superpowers-planner` 输出）
+8. `specs/`、`design/` 目录下的规格说明
 
 读取后，提取以下信息：
 - **功能范围**：要实现哪些接口/模块
@@ -85,7 +85,7 @@ CLAUDE.md 未覆盖的信息通过文件系统探测：
 4. Repository         → 领域/数据访问模块
 5. Service            → 业务逻辑模块
 6. Controller         → Web/API 模块
-7. 单元测试           → 对应模块的 test 目录
+7. 单元测试           → 在对应业务实现前创建并确认 RED
 ```
 
 **MyBatis/MyBatis-Plus 项目：**
@@ -96,12 +96,20 @@ CLAUDE.md 未覆盖的信息通过文件系统探测：
 4. Mapper             → 领域/数据访问模块（接口 + XML）
 5. Service            → 业务逻辑模块
 6. Controller         → Web/API 模块
-7. 单元测试           → 对应模块的 test 目录
+7. 单元测试           → 在对应业务实现前创建并确认 RED
 ```
 
 列出具体文件清单。如涉及修改已有文件，需特别标注。建议将文件清单呈现给用户确认后再开始编码。
 
-### 第四步：逐文件编码
+### 第四步：按 TDD 波次实现
+
+基础类型和持久化契约就绪后，每个业务行为都必须按以下顺序执行，禁止先完成生产实现再补测试：
+
+1. 编写能够表达预期行为的测试
+2. 运行目标测试并确认因预期行为尚未实现而失败（RED），不能把编译错误或环境错误当作 RED
+3. 编写使测试通过的最小生产代码（GREEN）
+4. 在测试保持通过的前提下重构
+5. 完成当前波次后统一编译和运行相关测试
 
 **编译纪律（最高优先级）**：禁止逐文件编译。按分层波次批量写完所有文件后，统一编译验证。规则：
 
@@ -203,7 +211,9 @@ Entity 和 Mapper 的生成模板统一委托给 `gen-java-entity` skill，该 s
 - Service 层只在需要转换异常类型时才 catch（如将 `DataAccessException` 转为 `BusinessException`）
 - 资源操作必须使用 try-with-resources 确保释放
 
-### 第五步：先写测试
+### 第五步：补齐测试与统一回归验证
+
+以下模板在第四步各业务波次开始时使用。本步骤只检查场景是否完整并执行模块回归，不得把缺失测试留到生产代码完成后再补。
 
 每个 Service/Component 的 public 方法写单元测试。根据项目测试框架选择：
 

@@ -421,7 +421,7 @@ git commit -m "feat(import): add request validation"
 
 > 实施计划已保存到 `doc/features/<feature-name>/<sub-feature>-plan.md`，请审查确认后继续。
 > 
-> **下一步**：确认实施计划无误后，回复"继续"进入编码阶段。
+> **下一步**：确认实施计划无误后，回复"继续"进入开发目录确认阶段。
 
 同时更新状态文件：
 
@@ -461,7 +461,7 @@ git worktree add .claude/worktrees/<feature-name> <base-ref>
 - 从远程新建时，优先使用当前分支的 upstream；如果无 upstream，则依次尝试 `origin/master`、`origin/main`
 - 从本地 HEAD 新建时，`<base-ref>` 使用 `HEAD`
 - 如果 `.claude/worktrees/<feature-name>` 已存在，先停止并询问用户换名、复用还是删除旧目录；不要自动删除
-- 如果用户选择不新建，记录“在当前分支直接开发”，然后继续第五步
+- 如果用户选择不新建，记录“在当前分支直接开发”
 - 后续命令都在用户确认的开发目录中执行
 
 确认后更新状态文件：
@@ -473,6 +473,10 @@ branch: <当前开发分支>
 workdir_confirmed: done
 implementation: pending
 ```
+
+## 🛑 STOP HERE — 阶段 3 完成。禁止在本次调用中开始编码。
+
+开发目录确认后必须结束当前调用。下一次调用根据 `workdir_confirmed: done` 进入编码阶段。
 
 ### 第五步：调用 implement-from-design 实现编码
 
@@ -490,6 +494,10 @@ implementation: pending
 implementation: done
 review: pending
 ```
+
+## 🛑 STOP HERE — 阶段 4 完成。禁止在本次调用中继续代码审查。
+
+编码和测试完成后必须结束当前调用。下一次调用根据 `implementation: done` 进入正式审查阶段。
 
 ### 第六步：调用 code-reviewer 审查代码
 
@@ -518,6 +526,10 @@ critical: 0
 warning: <N>
 info: <N>
 ```
+
+## 🛑 STOP HERE — 阶段 5 完成。禁止在本次调用中输出最终报告。
+
+审查收口后必须结束当前调用。下一次调用根据 `review: done` 输出最终开发报告。
 
 ### 第八步：输出开发报告
 

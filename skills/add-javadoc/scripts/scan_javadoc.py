@@ -84,6 +84,9 @@ class FileReport:
     def need_count(self):
         return sum(1 for m in self.methods if m.needs_attention())
 
+    def needs_attention(self):
+        return not self.has_class_javadoc or self.need_count() > 0
+
 
 # ============================================================
 # 解析逻辑
@@ -93,7 +96,13 @@ def find_java_files(root: Path, module: Optional[str] = None, files: Optional[li
                     patterns: Optional[list] = None) -> list:
     """查找需要扫描的 Java Service 文件"""
     if files:
-        return [str(Path(f).resolve()) for f in files]
+        resolved = []
+        for file_name in files:
+            path = Path(file_name)
+            if not path.is_absolute():
+                path = root / path
+            resolved.append(str(path.resolve()))
+        return resolved
 
     if patterns is None:
         patterns = ["**/*Service.java", "**/*ServiceImpl.java"]
@@ -131,20 +140,25 @@ def extract_class_name(lines: list) -> tuple:
     interface_name = None
 
     # 匹配 interface 声明
-    m = re.search(r'public\s+interface\s+(\w+)', full_text)
+    type_modifiers = r'(?:(?:abstract|final|sealed|non-sealed)\s+)*'
+    m = re.search(rf'public\s+{type_modifiers}interface\s+(\w+)', full_text)
     if m:
         is_interface = True
         return m.group(1), is_interface, None
 
     # 匹配 class 声明 (含 extends + implements)
-    m = re.search(r'public\s+class\s+(\w+)\s+(?:extends\s+[\w<>,.\s]+\s+)?implements\s+([\w,\s]+)', full_text)
+    m = re.search(
+        rf'public\s+{type_modifiers}class\s+(\w+)\s+'
+        rf'(?:extends\s+[\w<>,.\s]+\s+)?implements\s+([\w,\s]+)',
+        full_text,
+    )
     if m:
         class_name = m.group(1)
         interfaces = [i.strip() for i in m.group(2).split(",")]
         return class_name, False, interfaces[0] if interfaces else None
 
     # 普通 class 无 implements
-    m = re.search(r'public\s+class\s+(\w+)', full_text)
+    m = re.search(rf'public\s+{type_modifiers}(?:class|record)\s+(\w+)', full_text)
     if m:
         return m.group(1), False, None
 
@@ -157,7 +171,10 @@ def has_class_javadoc(lines: list) -> bool:
     for line in lines:
         text_before_class += line
         # 遇到 class/interface 声明时停止
-        if re.search(r'public\s+(class|interface|abstract\s+class)\s+\w+', text_before_class):
+        if re.search(
+            r'public\s+(?:(?:abstract|final|sealed|non-sealed)\s+)*(?:class|interface|record)\s+\w+',
+            text_before_class,
+        ):
             break
 
     # 找到最后一个 /** ... */ 块
@@ -176,7 +193,7 @@ def has_class_javadoc(lines: list) -> bool:
     return True
 
 
-def extract_methods(lines: list, is_interface: bool = False) -> list:
+def extract_methods(lines: list, is_interface: bool = False, class_name: Optional[str] = None) -> list:
     """
     提取所有 public 方法的签名信息和行号。
     对于接口，同时匹配省略 public 关键字的方法。
@@ -234,14 +251,16 @@ def extract_methods(lines: list, is_interface: bool = False) -> list:
         # 收集完整的方法签名（可能跨多行）
         sig_lines = [lines[i]]
         start_line = i
-        j = i + 1
-        while j < len(lines):
-            combined = "".join(sig_lines + [lines[j]])
-            if "{" in combined or (";" in combined and "(" in combined):
+        j = i
+        current_signature = "".join(sig_lines)
+        if "{" not in current_signature and not (";" in current_signature and "(" in current_signature):
+            j = i + 1
+            while j < len(lines):
                 sig_lines.append(lines[j])
-                break
-            sig_lines.append(lines[j])
-            j += 1
+                combined = "".join(sig_lines)
+                if "{" in combined or (";" in combined and "(" in combined):
+                    break
+                j += 1
 
         full_sig = "".join(sig_lines).strip()
 
@@ -254,6 +273,9 @@ def extract_methods(lines: list, is_interface: bool = False) -> list:
 
         # 过滤掉不是方法的关键字
         if method_name in ("if", "for", "while", "switch", "catch", "synchronized", "try", "return", "throw", "new"):
+            i = j + 1
+            continue
+        if class_name and method_name == class_name:
             i = j + 1
             continue
 
@@ -492,7 +514,7 @@ def analyze_method(lines: list, method_info: dict) -> MethodJavadocStatus:
         if return_type:
             status.missing_return = True
         status.missing_throws = sig_throws
-        status.empty_desc_params = sig_params  # 都算缺失
+        status.empty_desc_params = []
 
     # 判断是否完整
     status.is_complete = not status.needs_attention()
@@ -507,7 +529,7 @@ def analyze_file(file_path: str, root: Path) -> FileReport:
 
     class_name, is_interface, impl_interface = extract_class_name(lines)
     class_jd = has_class_javadoc(lines)
-    methods = extract_methods(lines, is_interface)
+    methods = extract_methods(lines, is_interface, class_name)
 
     relative = str(Path(file_path).relative_to(root))
 
@@ -531,7 +553,7 @@ def analyze_file(file_path: str, root: Path) -> FileReport:
 # 输出格式化
 # ============================================================
 
-def print_summary(reports: list):
+def print_summary(reports: list, include_details: bool = True):
     """打印汇总报告"""
     total_files = len(reports)
     total_methods = sum(len(r.methods) for r in reports)
@@ -552,6 +574,9 @@ def print_summary(reports: list):
     if bom_files:
         print(f"  ⚠ BOM 文件:  {len(bom_files)} 个 (UTF-8 with BOM — 建议先移除 BOM)")
     print()
+
+    if not include_details:
+        return
 
     # 按文件明细
     print("-" * 70)
@@ -669,11 +694,13 @@ def main():
         sys.exit(0)
 
     reports = []
+    parse_errors = 0
     for f in files:
         try:
             report = analyze_file(f, root)
             reports.append(report)
         except Exception as e:
+            parse_errors += 1
             print(f"警告: 解析 {f} 失败 — {e}", file=sys.stderr)
 
     if args.json:
@@ -681,10 +708,13 @@ def main():
     elif args.csv:
         print_csv(reports)
     else:
-        print_summary(reports)
+        print_summary(reports, include_details=not args.summary)
 
-    # 返回码: 有问题时非 0
-    has_issues = any(r.need_count() > 0 for r in reports)
+    if parse_errors:
+        sys.exit(2)
+
+    # 返回码: 缺少类级或方法级 JavaDoc 时非 0
+    has_issues = any(r.needs_attention() for r in reports)
     sys.exit(0 if not has_issues else 1)
 
 

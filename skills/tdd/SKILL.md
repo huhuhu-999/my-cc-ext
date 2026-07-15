@@ -9,44 +9,23 @@ description: Java TDD 工作流。Red-Green-Refactor 三阶段，自动检测 Ma
 
 ## Phase 1 — DETECT（探测测试基础设施）
 
-```bash
-# 检测构建系统
-ls pom.xml 2>/dev/null && echo "MAVEN"
-ls build.gradle* 2>/dev/null && echo "GRADLE"
+使用 Glob 递归定位所有模块的 `**/pom.xml`、`**/build.gradle`、`**/build.gradle.kts`、`**/src/test/**` 和 `**/*Test.java`。使用 Grep 在构建文件中检测 JUnit、TestNG、Mockito 和 JaCoCo。根据被测类所属模块选择对应构建文件，排除 `target/`、`build/` 和生成目录。
 
-# 检测测试框架
-grep -E "junit-jupiter|junit:junit|testng" pom.xml build.gradle* 2>/dev/null
-
-# 检测 Mockito
-grep -i "mockito" pom.xml build.gradle* 2>/dev/null
-
-# 检测 JaCoCo（覆盖率）
-grep -i "jacoco" pom.xml build.gradle* 2>/dev/null
-
-# 探测测试目录
-find src/test -type d 2>/dev/null | head -10
-
-# 定位已有测试文件作为风格参考
-find src/test -name "*Test.java" -o -name "*Tests.java" 2>/dev/null | head -5
-```
+执行命令时，Windows 优先 `mvnw.cmd` / `gradlew.bat`，Unix-like 环境优先 `./mvnw` / `./gradlew`；没有 wrapper 时使用系统 `mvn` / `gradle`。
 
 | 检测到 | 测试命令 | 覆盖率命令 |
 |--------|----------|-----------|
-| Maven + JUnit 5 | `mvn test -Dtest=XxxTest -pl <module> 2>&1` | `mvn test jacoco:report -pl <module> 2>&1` |
-| Maven + JUnit 4 | `mvn test -Dtest=XxxTest -pl <module> 2>&1` | `mvn test jacoco:report -pl <module> 2>&1` |
-| Gradle + JUnit 5 | `./gradlew test --tests "*XxxTest" 2>&1` | `./gradlew test jacocoTestReport 2>&1` |
+| Maven + JUnit 5 | `<maven> test -Dtest=XxxTest -pl <module> -am` | `<maven> test jacoco:report -pl <module> -am` |
+| Maven + JUnit 4 | `<maven> test -Dtest=XxxTest -pl <module> -am` | `<maven> test jacoco:report -pl <module> -am` |
+| Gradle + JUnit 5 | `<gradle-wrapper> :<module>:test --tests "*XxxTest"` | `<gradle-wrapper> :<module>:test :<module>:jacocoTestReport` |
 | 无测试框架 | 询问用户 | — |
 | 无 JaCoCo | 覆盖率门禁降级为"测试全部通过即可" | — |
 
+单模块 Maven 项目省略 `-pl <module> -am`；单模块 Gradle 项目省略 `:<module>:` 任务前缀。
+
 ### 1.1 定位目标
 
-```bash
-# 定位目标 Service 接口
-find src -name "*Service.java" -not -name "*Impl.java" | head -5
-
-# 定位目标 Service 实现
-find src -name "*ServiceImpl.java" | head -5
-```
+使用 Glob 递归定位 `**/*Service.java` 和 `**/*ServiceImpl.java`，根据包名、接口实现关系以及用户指定目标确定被测类，不能默认取搜索结果前五个。
 
 ### 1.2 读取风格参考
 
@@ -117,13 +96,13 @@ class XxxServiceImplTest {
 
 ```bash
 # Maven
-mvn test -Dtest=<TestClassName> -pl <module> 2>&1
+<maven> test -Dtest=<TestClassName> -pl <module> -am
 
 # Gradle
-./gradlew test --tests "*<TestClassName>" 2>&1
+<gradle-wrapper> :<module>:test --tests "*<TestClassName>"
 ```
 
-预期：**FAIL** — 被测方法未实现或返回 null。
+预期：**FAIL**，且失败原因必须是目标行为尚未实现或断言不满足。编译错误、依赖下载失败、环境错误不能作为有效 RED。
 
 ---
 
@@ -140,7 +119,7 @@ mvn test -Dtest=<TestClassName> -pl <module> 2>&1
 ### 运行测试确认 GREEN
 
 ```bash
-mvn test -Dtest=<TestClassName> -pl <module> 2>&1
+<maven> test -Dtest=<TestClassName> -pl <module> -am
 ```
 
 预期：**PASS** — 所有测试通过。
@@ -160,7 +139,7 @@ mvn test -Dtest=<TestClassName> -pl <module> 2>&1
 ### 重构后验证
 
 ```bash
-mvn test -Dtest=<TestClassName> -pl <module> 2>&1
+<maven> test -Dtest=<TestClassName> -pl <module> -am
 ```
 
 预期：**PASS** — 重构后所有测试仍通过。
@@ -173,10 +152,10 @@ mvn test -Dtest=<TestClassName> -pl <module> 2>&1
 
 ```bash
 # Maven + JaCoCo
-mvn test jacoco:report -pl <module> 2>&1
+<maven> test jacoco:report -pl <module> -am
 
 # Gradle + JaCoCo
-./gradlew test jacocoTestReport 2>&1
+<gradle-wrapper> :<module>:test :<module>:jacocoTestReport
 ```
 
 ### 覆盖率门禁
@@ -228,7 +207,7 @@ mvn test jacoco:report -pl <module> 2>&1
 |------|----------|
 | 没有检测到测试框架 | 询问用户使用 JUnit 5 / JUnit 4 / TestNG / Spock |
 | 没有测试目录 `src/test` | 按标准 Maven/Gradle 布局创建 `src/test/java/<package>` |
-| 被测方法依赖未创建的 Mapper/Repository | 先 Mock，在测试注释中标注 `@TBD: 待 Mapper 创建后替换为真实对象` |
+| 被测方法依赖未创建的 Mapper/Repository | 先定义最小可编译契约并 Mock；契约无法确定时停止并确认，不写 `TBD`、TODO 或待替换占位符 |
 | 项目已有测试但命名/风格不统一 | 沿用被测类同模块已有测试的风格 |
 | 需要 Spring 上下文 | 使用 `@SpringBootTest` + `@MockBean`，标注为集成测试而非单元测试 |
 | 被测方法 > 50 行 | 建议先拆分为小方法再 TDD，拆分为多个 TDD 子任务 |
@@ -242,4 +221,4 @@ mvn test jacoco:report -pl <module> 2>&1
 - 测试数据在方法内构造，不依赖外部文件或数据库
 - 不测试框架本身（如不验证 Spring DI 是否正确注入）
 - 不测试 getter/setter/toString/hashCode（Lombok 生成的不需要测试）
-- 被 `cmd-feature-dev` 内部调用时，只执行单方法 TDD，不启动完整流水线
+- 被 `feature-dev` Agent 调用时，只执行当前计划任务的 TDD 循环，不启动完整流水线

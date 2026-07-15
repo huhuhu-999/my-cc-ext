@@ -72,7 +72,8 @@ PostgreSQL DDL 生成模板。关键约定：
 - 列名最长 28 字符，列名/类型/约束三列对齐
 - 每列 + 表必须有 COMMENT
 - schema 必须询问用户，不默认写死
-- 授权角色必须向用户确认；默认使用 `r_pabemlmpdata_dml`（读写）和 `r_pabemlmpdata_qry`（只读），含 SEQUENCE 授权
+- 授权角色优先读取项目现有约定，无法确定时询问用户，不使用跨项目硬编码默认角色
+- 默认生成非破坏性建表脚本；只有用户明确确认重建目标环境和表名时才加入 `DROP TABLE IF EXISTS`
 - 输出到 `tmp/` 目录，文件名 `<yyyyMMdd>_<业务>_init.sql`
 
 详细模板见 `skills/gen-pgsql-ddl/SKILL.md`。

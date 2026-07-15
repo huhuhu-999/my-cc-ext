@@ -9,7 +9,6 @@
 -- ----------------------------
 -- 新建表 <schema_name>.<table_name>
 -- ----------------------------
-DROP TABLE IF EXISTS <schema_name>.<table_name>;
 CREATE TABLE <schema_name>.<table_name>
 (
     id                          bigserial,

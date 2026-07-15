@@ -9,27 +9,20 @@ description: Java 构建错误修复。检测 Maven/Gradle 构建系统，分组
 
 ## Phase 1 — DETECT（检测构建系统）
 
-```bash
-# 检测构建系统
-ls pom.xml 2>/dev/null && echo "MAVEN"
-ls build.gradle* 2>/dev/null && echo "GRADLE"
-ls gradlew* 2>/dev/null && echo "GRADLE_WRAPPER"
+使用 Glob 递归检测 `**/pom.xml`、`**/build.gradle`、`**/build.gradle.kts`、`mvnw*` 和 `gradlew*`，排除 `target/`、`build/` 和生成目录。根构建文件用于确定聚合项目，子目录构建文件用于确定模块边界。
 
-# Maven: 获取模块列表
-mvn help:evaluate -Dexpression=project.modules -q 2>/dev/null || echo "SINGLE_MODULE"
-
-# Gradle: 获取子项目列表
-./gradlew projects 2>/dev/null | grep "Project '"
-```
+执行构建时按操作系统选择命令：Windows 优先 `mvnw.cmd` / `gradlew.bat`，Unix-like 环境优先 `./mvnw` / `./gradlew`；没有 wrapper 时才使用系统的 `mvn` / `gradle`。
 
 | 检测到 | 构建命令 | 单模块编译 |
 |--------|----------|-----------|
-| `pom.xml` (多模块) | `mvn compile 2>&1` | `mvn compile -pl <module> 2>&1` |
-| `pom.xml` (单模块) | `mvn compile 2>&1` | — |
-| `build.gradle(.kts)` + `gradlew` | `./gradlew compileJava 2>&1` | `./gradlew :<module>:compileJava 2>&1` |
+| `pom.xml` (多模块) | `<maven> compile` | `<maven> compile -pl <module> -am` |
+| `pom.xml` (单模块) | `<maven> compile` | — |
+| `build.gradle(.kts)` + wrapper | `<gradle-wrapper> compileJava` | `<gradle-wrapper> :<module>:compileJava` |
 | `build.gradle(.kts)` 无 wrapper | `gradle compileJava 2>&1` | — |
 | 两者都有 | 优先 Maven | — |
 | 两者都没有 | 停止，询问用户 | — |
+
+单模块 Maven 项目省略 `-pl <module> -am`；单模块 Gradle 项目省略 `:<module>:` 任务前缀。
 
 ---
 
@@ -86,7 +79,7 @@ For each file in sorted error groups:
 - 每个文件修复间隔运行一次构建
 - 一个文件有多个错误时，一次性修复所有错误后再构建
 - 优先修复"根因"错误（如缺失 import 可能导致多个 `cannot find symbol`）
-- 只修复编译错误，不做逻辑重构（逻辑重构由 `refactor-clean` 处理）
+- 只修复编译错误，不做逻辑重构；需要重构时单独建立重构任务
 
 ---
 
@@ -98,9 +91,9 @@ For each file in sorted error groups:
 |----------|----------|------|
 | 修复引入更多错误 | 新错误数 > 修复消除的错误数 | 回退上次修改，告知用户 |
 | 同一错误 3 次后仍存在 | 同一文件同一行错误经 3 轮 fix-build 未解决 | 停止，建议分析更深层框架问题 |
-| 需要架构级变更 | 修复需要移动包、拆分模块、重构接口签名 | 停止，建议使用 `/cmd-feature-dev` 做完整开发 |
-| 缺失外部依赖 | `package does not exist` 且不在 pom.xml/build.gradle 中 | 建议 `mvn install` 或添加依赖声明 |
-| 错误涉及生成代码 | 路径含 `target/`、`build/`、`generated/` | 建议 `mvn clean` 后重新生成 |
+| 需要架构级变更 | 修复需要移动包、拆分模块、重构接口签名 | 停止，建议使用 `feature-dev` Agent 做完整开发 |
+| 缺失外部依赖 | `package does not exist` 且不在 pom.xml/build.gradle 中 | 建议用已选定的 Maven/Gradle 命令安装或添加依赖声明 |
+| 错误涉及生成代码 | 路径含 `target/`、`build/`、`generated/` | 建议用已选定的构建命令执行 clean 后重新生成 |
 | 超过 50 个错误 | 可能是系统性问题 | 展示前 10 个，询问是逐个修复还是分析根因 |
 
 ---
