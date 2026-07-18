@@ -26,7 +26,6 @@ skills/fix/SKILL.md                     # Skill: 系统化缺陷修复
 skills/add-javadoc/SKILL.md              # Skill: JavaDoc 文档注释补充
 skills/gen-java-entity/SKILL.md          # Skill: Java Entity + Mapper 生成
 skills/write-a-skill/SKILL.md            # Skill: 编写 Agent Skill
-skills/shared/index.md                  # 共享：Java 代码规范索引（Skill 只读索引，按需加载文档）
 skills/build-fix/SKILL.md                # Skill: Java 构建错误修复
 skills/tdd/SKILL.md                      # Skill: Java TDD 工作流
 ```

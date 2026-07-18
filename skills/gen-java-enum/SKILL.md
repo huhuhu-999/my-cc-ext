@@ -10,9 +10,20 @@ description: 当需要新建枚举类时使用。自动适配当前项目包路�
 - 新建 `code ↔ msg` 形式的枚举类
 - 为已有枚举补全 `getCodeByMsg` / `getMsgByCode` 双向查找方法
 
+## 前置探查
+
+生成代码前，按以下顺序探查项目环境：
+
+1. **包路径** — Grep 查找项目已有枚举类所在目录（如 `**/enums/**`），动态确定 `package`，禁止写死
+2. **Lombok** — 检查 `pom.xml` / `build.gradle` 是否包含 Lombok 依赖，决定是否使用 `@Getter`
+3. **StringUtils** — 检查项目是否已有字符串工具类依赖，优先级：Apache Commons Lang3 > Hutool > 无依赖
+4. **代码格式** — Read `E:\vibe_coding\doc\common\java\java-code-style.md`（行宽 160、链式调用、注解等）
+
 ## 模板
 
-包路径按当前项目实际枚举目录动态确定，禁止写死。
+包路径按项目实际枚举目录动态确定，禁止写死。
+
+### 标准模板（Lombok + Apache Commons Lang3）
 
 ```java
 package <动态确定>;
@@ -61,14 +72,42 @@ public enum <EnumName> {
 }
 ```
 
+### 无 Apache Commons Lang3 时的空安全写法
+
+将 `StringUtils.isEmpty(x)` 替换为 Java 原生判空：
+
+```java
+if (msg == null || msg.isEmpty()) return null;
+```
+
+若项目有 Hutool，可用 `StrUtil.isEmpty(msg)`，但优先推荐 Java 原生写法以减少非必要依赖。
+
+### 无 Lombok 时的 getter 写法
+
+去掉 `@Getter` 注解和对应 import，手写 getter：
+
+```java
+public String getCode() {
+    return code;
+}
+
+public String getMsg() {
+    return msg;
+}
+```
+
 ## 规则
 
-生成代码前 Read `skills/shared/index.md` 并按需加载对应规范文档。
-
-0. 包路径通过 Grep 已有枚举动态确定，不写死
-2. `getCodeByMsg` + `getMsgByCode` 缺一不可
-3. `StringUtils.isEmpty` 空安全，无匹配返回 `null`
-4. Lombok `@Getter`，不手写 getter
+1. 包路径通过 Grep 已有枚举动态确定，不写死
+2. `getCodeByMsg` + `getMsgByCode` 缺一不可，两者必须成对出现
+3. 空安全处理：null 或空字符串输入直接返回 `null`
+4. 若项目有 Lombok 则用 `@Getter`，否则手写 getter 方法
 5. 构造器显式写出，不用 `@AllArgsConstructor`
 6. 枚举值按 code 字典序排列
-7. `@since` 用当天日期
+7. `@since` 用当天日期（生成代码时的系统日期，格式 `yyyy-MM-dd`）
+8. 无匹配时返回 `null`（不抛异常）
+9. 代码格式遵循行宽 160、链式调用、注解等规范（见前置探查第 4 步）
+
+## 示例
+
+详见 [EXAMPLES.md](EXAMPLES.md)

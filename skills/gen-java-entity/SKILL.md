@@ -361,7 +361,7 @@ public interface <EntityName>Repository extends JpaRepository<<EntityName>Entity
 
 ## 规则
 
-生成代码前 Read `skills/shared/index.md` 并按需加载对应规范文档。
+生成代码前 Read `E:\vibe_coding\doc\common\java\java-code-style.md`，遵循行宽 160、链式调用、注解等代码格式规范。
 
 ### 命名映射
 

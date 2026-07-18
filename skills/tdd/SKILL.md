@@ -114,7 +114,7 @@ class XxxServiceImplTest {
 - 涉及新 Entity/DTO 时，遵循 `gen-java-entity` 的包路径动态探测
 - 构造器注入 + `final` 参数 + 项目业务异常类
 - 优先复用已有枚举、常量、工具类
-- 生成代码前 Read `skills/shared/index.md` 并按需加载对应规范文档
+- 生成代码前 Read `E:\vibe_coding\doc\common\java\java-code-style.md`，遵循行宽 160、链式调用、注解等代码格式规范
 
 ### 运行测试确认 GREEN
 
