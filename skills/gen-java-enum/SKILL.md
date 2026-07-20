@@ -8,7 +8,7 @@ description: 当需要新建枚举类时使用。自动适配当前项目包路�
 ## 适用场景
 
 - 新建 `code ↔ msg` 形式的枚举类
-- 为已有枚举补全 `getCodeByMsg` / `getMsgByCode` 双向查找方法
+- 为已有枚举补全 `getByCode` / `getCodeByMsg` / `getMsgByCode` 查找方法
 
 ## 前置探查
 
@@ -32,6 +32,9 @@ import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * <描述>
@@ -47,40 +50,49 @@ public enum <EnumName> {
     private final String code;
     private final String msg;
 
+    private static final Map<String, <EnumName>> CODE_MAP =
+        Arrays.stream(values()).collect(Collectors.toMap(<EnumName>::getCode, Function.identity()));
+
+    private static final Map<String, String> MSG_CODE_MAP =
+        Arrays.stream(values()).collect(Collectors.toMap(<EnumName>::getMsg, <EnumName>::getCode, (a, b) -> a));
+
     <EnumName>(String code, String msg) {
         this.code = code;
         this.msg = msg;
     }
 
+    public static <EnumName> getByCode(String code) {
+        if (StringUtils.isEmpty(code)) return null;
+        return CODE_MAP.get(code);
+    }
+
     public static String getCodeByMsg(String msg) {
         if (StringUtils.isEmpty(msg)) return null;
-        return Arrays.stream(values())
-                .filter(e -> e.msg.equals(msg))
-                .map(<EnumName>::getCode)
-                .findFirst()
-                .orElse(null);
+        return MSG_CODE_MAP.get(msg);
     }
 
     public static String getMsgByCode(String code) {
-        if (StringUtils.isEmpty(code)) return null;
-        return Arrays.stream(values())
-                .filter(e -> e.code.equals(code))
-                .map(<EnumName>::getMsg)
-                .findFirst()
-                .orElse(null);
+        <EnumName> e = getByCode(code);
+        return e != null ? e.getMsg() : null;
     }
 }
 ```
 
 ### 无 Apache Commons Lang3 时的空安全写法
 
-将 `StringUtils.isEmpty(x)` 替换为 Java 原生判空：
+将以下两处空判断替换为 Java 原生判空：
 
 ```java
+// getByCode / getMsgByCode
+if (code == null || code.isEmpty()) return null;
+
+// getCodeByMsg
 if (msg == null || msg.isEmpty()) return null;
 ```
 
 若项目有 Hutool，可用 `StrUtil.isEmpty(msg)`，但优先推荐 Java 原生写法以减少非必要依赖。
+
+其余结构（`CODE_MAP`、`MSG_CODE_MAP`、三个静态方法）与标准模板一致。
 
 ### 无 Lombok 时的 getter 写法
 
@@ -96,17 +108,20 @@ public String getMsg() {
 }
 ```
 
+其余结构（`CODE_MAP`、`MSG_CODE_MAP`、`getByCode`、`getCodeByMsg`、`getMsgByCode`）与标准模板一致。
+
 ## 规则
 
 1. 包路径通过 Grep 已有枚举动态确定，不写死
-2. `getCodeByMsg` + `getMsgByCode` 缺一不可，两者必须成对出现
-3. 空安全处理：null 或空字符串输入直接返回 `null`
-4. 若项目有 Lombok 则用 `@Getter`，否则手写 getter 方法
-5. 构造器显式写出，不用 `@AllArgsConstructor`
-6. 枚举值按 code 字典序排列
-7. `@since` 用当天日期（生成代码时的系统日期，格式 `yyyy-MM-dd`）
-8. 无匹配时返回 `null`（不抛异常）
-9. 代码格式遵循行宽 160、链式调用、注解等规范（见前置探查第 4 步）
+2. `getByCode` + `getCodeByMsg` + `getMsgByCode` 三个方法缺一不可
+3. `CODE_MAP`（code → 枚举实例）+ `MSG_CODE_MAP`（msg → code）静态缓存，类加载时一次性构建，后续查找 O(1)
+4. 空安全处理：null 或空字符串输入直接返回 `null`
+5. 若项目有 Lombok 则用 `@Getter`，否则手写 getter 方法
+6. 构造器显式写出，不用 `@AllArgsConstructor`
+7. 枚举值按 code 字典序排列
+8. `@since` 用当天日期（生成代码时的系统日期，格式 `yyyy-MM-dd`）
+9. 无匹配时返回 `null`（不抛异常）
+10. 代码格式遵循行宽 160、链式调用、注解等规范（见前置探查第 4 步）
 
 ## 示例
 

@@ -21,6 +21,9 @@ import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 订单状态枚举
@@ -39,27 +42,30 @@ public enum OrderStatusEnum {
     private final String code;
     private final String msg;
 
+    private static final Map<String, OrderStatusEnum> CODE_MAP =
+        Arrays.stream(values()).collect(Collectors.toMap(OrderStatusEnum::getCode, Function.identity()));
+
+    private static final Map<String, String> MSG_CODE_MAP =
+        Arrays.stream(values()).collect(Collectors.toMap(OrderStatusEnum::getMsg, OrderStatusEnum::getCode, (a, b) -> a));
+
     OrderStatusEnum(String code, String msg) {
         this.code = code;
         this.msg = msg;
     }
 
+    public static OrderStatusEnum getByCode(String code) {
+        if (StringUtils.isEmpty(code)) return null;
+        return CODE_MAP.get(code);
+    }
+
     public static String getCodeByMsg(String msg) {
         if (StringUtils.isEmpty(msg)) return null;
-        return Arrays.stream(values())
-                .filter(e -> e.msg.equals(msg))
-                .map(OrderStatusEnum::getCode)
-                .findFirst()
-                .orElse(null);
+        return MSG_CODE_MAP.get(msg);
     }
 
     public static String getMsgByCode(String code) {
-        if (StringUtils.isEmpty(code)) return null;
-        return Arrays.stream(values())
-                .filter(e -> e.code.equals(code))
-                .map(OrderStatusEnum::getMsg)
-                .findFirst()
-                .orElse(null);
+        OrderStatusEnum e = getByCode(code);
+        return e != null ? e.getMsg() : null;
     }
 }
 ```
@@ -67,6 +73,7 @@ public enum OrderStatusEnum {
 **要点**：
 - 枚举值按 code 字典序排列：`CANCELLED → COMPLETED → PENDING → PROCESSING`
 - `@since` 使用生成当天的日期
+- `CODE_MAP` + `MSG_CODE_MAP` 类加载时一次性构建，后续 `getByCode` / `getCodeByMsg` / `getMsgByCode` 均为 O(1)
 - Lombok `@Getter` 省去手写 getter
 
 ---
@@ -85,6 +92,9 @@ package com.example.payment.enums;
 import lombok.Getter;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 支付方式枚举
@@ -102,27 +112,30 @@ public enum PaymentMethodEnum {
     private final String code;
     private final String msg;
 
+    private static final Map<String, PaymentMethodEnum> CODE_MAP =
+        Arrays.stream(values()).collect(Collectors.toMap(PaymentMethodEnum::getCode, Function.identity()));
+
+    private static final Map<String, String> MSG_CODE_MAP =
+        Arrays.stream(values()).collect(Collectors.toMap(PaymentMethodEnum::getMsg, PaymentMethodEnum::getCode, (a, b) -> a));
+
     PaymentMethodEnum(String code, String msg) {
         this.code = code;
         this.msg = msg;
     }
 
+    public static PaymentMethodEnum getByCode(String code) {
+        if (code == null || code.isEmpty()) return null;
+        return CODE_MAP.get(code);
+    }
+
     public static String getCodeByMsg(String msg) {
         if (msg == null || msg.isEmpty()) return null;
-        return Arrays.stream(values())
-                .filter(e -> e.msg.equals(msg))
-                .map(PaymentMethodEnum::getCode)
-                .findFirst()
-                .orElse(null);
+        return MSG_CODE_MAP.get(msg);
     }
 
     public static String getMsgByCode(String code) {
-        if (code == null || code.isEmpty()) return null;
-        return Arrays.stream(values())
-                .filter(e -> e.code.equals(code))
-                .map(PaymentMethodEnum::getMsg)
-                .findFirst()
-                .orElse(null);
+        PaymentMethodEnum e = getByCode(code);
+        return e != null ? e.getMsg() : null;
     }
 }
 ```
@@ -130,7 +143,7 @@ public enum PaymentMethodEnum {
 **与标准模板的差异**：
 - 无 `import org.apache.commons.lang3.StringUtils`
 - `StringUtils.isEmpty(x)` → `x == null || x.isEmpty()`
-- 其余结构完全一致
+- 其余结构（`CODE_MAP`、`MSG_CODE_MAP`、三个静态方法）完全一致
 
 ---
 
@@ -146,6 +159,9 @@ public enum PaymentMethodEnum {
 package com.example.user.enums;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 用户角色枚举
@@ -162,6 +178,12 @@ public enum UserRoleEnum {
     private final String code;
     private final String msg;
 
+    private static final Map<String, UserRoleEnum> CODE_MAP =
+        Arrays.stream(values()).collect(Collectors.toMap(UserRoleEnum::getCode, Function.identity()));
+
+    private static final Map<String, String> MSG_CODE_MAP =
+        Arrays.stream(values()).collect(Collectors.toMap(UserRoleEnum::getMsg, UserRoleEnum::getCode, (a, b) -> a));
+
     UserRoleEnum(String code, String msg) {
         this.code = code;
         this.msg = msg;
@@ -175,22 +197,19 @@ public enum UserRoleEnum {
         return msg;
     }
 
+    public static UserRoleEnum getByCode(String code) {
+        if (code == null || code.isEmpty()) return null;
+        return CODE_MAP.get(code);
+    }
+
     public static String getCodeByMsg(String msg) {
         if (msg == null || msg.isEmpty()) return null;
-        return Arrays.stream(values())
-                .filter(e -> e.msg.equals(msg))
-                .map(UserRoleEnum::getCode)
-                .findFirst()
-                .orElse(null);
+        return MSG_CODE_MAP.get(msg);
     }
 
     public static String getMsgByCode(String code) {
-        if (code == null || code.isEmpty()) return null;
-        return Arrays.stream(values())
-                .filter(e -> e.code.equals(code))
-                .map(UserRoleEnum::getMsg)
-                .findFirst()
-                .orElse(null);
+        UserRoleEnum e = getByCode(code);
+        return e != null ? e.getMsg() : null;
     }
 }
 ```
@@ -202,9 +221,9 @@ public enum UserRoleEnum {
 
 ---
 
-## 示例 4：补全已有枚举 — 为旧枚举添加双向查找
+## 示例 4：补全已有枚举 — 为旧枚举添加 Map 缓存和双向查找
 
-**场景**：旧枚举只有 code/msg 字段和构造器，缺少 `getCodeByMsg` / `getMsgByCode` 方法。
+**场景**：旧枚举只有 code/msg 字段和构造器，缺少 `CODE_MAP`、`MSG_CODE_MAP` 和三个查找方法。
 
 **已有代码**（片段）：
 
@@ -226,29 +245,32 @@ public enum SexEnum {
 }
 ```
 
-**补全后**：在最后一个 `}` 前插入两个静态方法：
+**补全后**：在 `}` 前插入两个 Map + 三个静态方法：
 
 ```java
+    private static final Map<String, SexEnum> CODE_MAP =
+        Arrays.stream(values()).collect(Collectors.toMap(SexEnum::getCode, Function.identity()));
+
+    private static final Map<String, String> MSG_CODE_MAP =
+        Arrays.stream(values()).collect(Collectors.toMap(SexEnum::getMsg, SexEnum::getCode, (a, b) -> a));
+
+    public static SexEnum getByCode(String code) {
+        if (StringUtils.isEmpty(code)) return null;
+        return CODE_MAP.get(code);
+    }
+
     public static String getCodeByMsg(String msg) {
         if (StringUtils.isEmpty(msg)) return null;
-        return Arrays.stream(values())
-                .filter(e -> e.msg.equals(msg))
-                .map(SexEnum::getCode)
-                .findFirst()
-                .orElse(null);
+        return MSG_CODE_MAP.get(msg);
     }
 
     public static String getMsgByCode(String code) {
-        if (StringUtils.isEmpty(code)) return null;
-        return Arrays.stream(values())
-                .filter(e -> e.code.equals(code))
-                .map(SexEnum::getMsg)
-                .findFirst()
-                .orElse(null);
+        SexEnum e = getByCode(code);
+        return e != null ? e.getMsg() : null;
     }
 ```
 
-同时补充缺失的 import（`org.apache.commons.lang3.StringUtils`、`java.util.Arrays`）。
+同时补充缺失的 import（`org.apache.commons.lang3.StringUtils`、`java.util.Arrays`、`java.util.Map`、`java.util.function.Function`、`java.util.stream.Collectors`）。
 
 ---
 
@@ -265,6 +287,9 @@ import cn.hutool.core.util.StrUtil;
 import lombok.Getter;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 通知类型枚举
@@ -281,27 +306,30 @@ public enum NotifyTypeEnum {
     private final String code;
     private final String msg;
 
+    private static final Map<String, NotifyTypeEnum> CODE_MAP =
+        Arrays.stream(values()).collect(Collectors.toMap(NotifyTypeEnum::getCode, Function.identity()));
+
+    private static final Map<String, String> MSG_CODE_MAP =
+        Arrays.stream(values()).collect(Collectors.toMap(NotifyTypeEnum::getMsg, NotifyTypeEnum::getCode, (a, b) -> a));
+
     NotifyTypeEnum(String code, String msg) {
         this.code = code;
         this.msg = msg;
     }
 
+    public static NotifyTypeEnum getByCode(String code) {
+        if (StrUtil.isEmpty(code)) return null;
+        return CODE_MAP.get(code);
+    }
+
     public static String getCodeByMsg(String msg) {
         if (StrUtil.isEmpty(msg)) return null;
-        return Arrays.stream(values())
-                .filter(e -> e.msg.equals(msg))
-                .map(NotifyTypeEnum::getCode)
-                .findFirst()
-                .orElse(null);
+        return MSG_CODE_MAP.get(msg);
     }
 
     public static String getMsgByCode(String code) {
-        if (StrUtil.isEmpty(code)) return null;
-        return Arrays.stream(values())
-                .filter(e -> e.code.equals(code))
-                .map(NotifyTypeEnum::getMsg)
-                .findFirst()
-                .orElse(null);
+        NotifyTypeEnum e = getByCode(code);
+        return e != null ? e.getMsg() : null;
     }
 }
 ```
