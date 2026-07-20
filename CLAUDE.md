@@ -205,3 +205,4 @@ Agent（独立子进程）
 - Skill 通过 `description` 关键词自动匹配用户输入，无需显式调用。Agent 需通过 `/` 命令或 `Agent` 工具显式启动
 - Agent 可通过工具列表中的 `Skill` 工具调用项目内已安装的 Skill（如 `db-ops` → `gen-pgsql-ddl`）
 - `plugin.json` 中的 `name` 字段即安装后的插件标识，变更需同步调整引用
+- 修改 `plugin.json` 版本号时，**必须同步更新** `.claude-plugin/marketplace.json` 中 `plugins[0].version` 为相同版本号
