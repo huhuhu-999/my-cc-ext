@@ -1,6 +1,6 @@
 ---
 name: cc-ext-dev
-description: Claude Code 扩展开发专家。负责编写和修改 Skills、Agents、Plugins、MCP Server、Hooks、Workflows 等扩展。当用户需要扩展 Claude Code 功能时使用。
+description: 当用户需要编写/修改 Claude Code 扩展（Skill/Agent/Plugin/MCP/Hook/Workflow）时，先输出匹配提示再自动委托此 Agent。触发词：写skill、创建agent、开发插件、MCP、Hook、扩展。
 tools:
   - Read
   - Write

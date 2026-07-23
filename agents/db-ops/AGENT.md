@@ -1,6 +1,6 @@
 ---
 name: db-ops
-description: 数据库操作专家。DDL建表、DML查询、Entity实体生成、Mapper接口、Repository、分页查询、批量操作、SQL优化审查、索引设计。当需要操作数据库、建表、写SQL、查数据、生成实体、创建Mapper、SQL调优时使用。
+description: 当用户需要操作数据库（DDL建表/DML查询/Entity生成/Mapper/SQL审查/索引设计）时，先输出匹配提示再自动委托此 Agent。触发词：建表、DDL、SQL、Entity、Mapper、数据库。
 tools:
   - Read
   - Write

@@ -1,6 +1,6 @@
 ---
 name: superpowers-planner
-description: Superpowers 风格的完整设计+计划流水线。串联 brainstorming（需求澄清→方案对比→设计规范）和 writing-plans（文件级任务拆分→TDD步骤→零占位符实施计划）。当用户描述需求后需要从设计到实施计划的完整输出时使用。
+description: 当用户描述原始需求并需要设计+规划流水线（头脑风暴→方案对比→设计规范→实施计划）时，先输出匹配提示再自动委托此 Agent。触发词：设计方案、规划、头脑风暴、需求分析。
 tools:
   - Read
   - Write

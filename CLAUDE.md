@@ -187,8 +187,8 @@ Skill（内联执行）
   ├── 流程编排：implement-from-design / write-a-skill
   └── 所有 Skill 在当前会话直接执行，多 Phase + bash + 护栏
 
-用户输入 / / 命令
-  ↓ 显式调用
+用户输入
+  ↓ 主会话自动判断 + Agent 工具委托
 Agent（独立子进程）
   ├── db-ops：数据库操作（探查 → 委托 Skill / 手动生成）
   ├── cc-ext-dev：扩展开发（探查 → 生成 Skill/Agent/Plugin）
@@ -198,11 +198,32 @@ Agent（独立子进程）
 ```
 
 - **Skill（10 个）**：内联执行，自动触发，覆盖代码生成、质量保障、流程编排
-- **Agent（5 个）**：独立子进程，需 `/` 显式调用或通过 `Agent` 工具启动，探查项目上下文后执行复杂多步骤任务
+- **Agent（5 个）**：独立子进程，根据用户输入自动匹配委托，探查项目上下文后执行复杂多步骤任务
+
+## Agent 自动路由
+
+**重要：主会话根据用户输入自动判断并委托给合适的 Agent，用户无需手动指定。**
+
+| 用户意图 | 自动委托 Agent | 触发关键词 |
+|---------|---------------|-----------|
+| 扩展开发（写/改 Skill、Agent、Plugin、MCP、Hook、Workflow） | `my-ext:cc-ext-dev:cc-ext-dev` | 写skill、创建agent、开发插件、MCP、Hook、扩展 |
+| 数据库操作（DDL建表、DML查询、Entity/Mapper生成、SQL审查） | `my-ext:db-ops:db-ops` | 建表、DDL、SQL、Entity、Mapper、数据库、查询 |
+| 功能开发流水线（已有 PRD → 设计→计划→编码→审查） | `my-ext:feature-dev:feature-dev` | 开发功能、实现需求、按PRD开发 |
+| 复杂缺陷修复（跨模块排查、根因不明） | `my-ext:fix:fix` | 排查bug、复杂bug、深入看一下、跨模块 |
+| 设计规划（原始需求→头脑风暴→方案对比→计划） | `my-ext:superpowers-planner:superpowers-planner` | 设计方案、规划、头脑风暴、需求分析 |
+
+**判断标准**：
+- 用户请求涉及**多步骤、跨文件、需要独立上下文**的复杂任务 → 自动使用 `Agent` 工具委托
+- 简单单步任务（读文件、问问题、小修改、单文件编辑）→ 直接处理，不委托
+- 不确定时优先委托 — Agent 有独立上下文，执行更专注
+
+**委托时必须提示**：调用 Agent 工具前，先输出一行提示告知用户命中了哪个 Agent，格式：
+> 🎯 已匹配 Agent `my-ext:xxx:xxx`，正在委托...
 
 ## 注意事项
 
-- Skill 通过 `description` 关键词自动匹配用户输入，无需显式调用。Agent 需通过 `/` 命令或 `Agent` 工具显式启动
+- Skill 通过 `description` 关键词自动匹配用户输入，无需显式调用
+- Agent 由主会话根据上表自动判断并委托，用户无需手动 `@` 指定（当然手动指定仍然有效）
 - Agent 可通过工具列表中的 `Skill` 工具调用项目内已安装的 Skill（如 `db-ops` → `gen-pgsql-ddl`）
 - `plugin.json` 中的 `name` 字段即安装后的插件标识，变更需同步调整引用
 - 修改 `plugin.json` 版本号时，**必须同步更新** `.claude-plugin/marketplace.json` 中 `plugins[0].version` 为相同版本号
