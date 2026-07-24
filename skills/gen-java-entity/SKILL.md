@@ -15,7 +15,7 @@ description: 当需要根据建表 DDL 或表结构生成对应的 Java Entity �
 
 生成前必须确认项目使用的 ORM 框架，按优先级：
 
-1. 读取项目 `CLAUDE.md` 中声明的 ORM 框架
+1. 读取项目 `AGENTS.md`，若存在平台专用规则文件则继续读取，确认其中声明的 ORM 框架
 2. 检查 `pom.xml` 或 `build.gradle` 中的依赖：
    - `mybatis-plus-boot-starter` → MyBatis-Plus
    - `mybatis-spring-boot-starter` → MyBatis
@@ -27,7 +27,7 @@ description: 当需要根据建表 DDL 或表结构生成对应的 Java Entity �
 
 ### 包路径探测
 
-通过 Glob 搜索现有 Entity 和 Mapper 文件，动态确定包路径：
+通过文件模式搜索现有 Entity 和 Mapper 文件，动态确定包路径：
 
 ```
 # 搜索 Entity
@@ -361,7 +361,7 @@ public interface <EntityName>Repository extends JpaRepository<<EntityName>Entity
 
 ## 规则
 
-生成代码前 Read `E:\vibe_coding\doc\common\java\java-code-style.md`，遵循行宽 160、链式调用、注解等代码格式规范。
+生成代码前先读取当前项目的 `AGENTS.md` 和平台专用规则，再检查同模块现有代码，确认行宽、链式调用、注解和格式习惯。
 
 ### 命名映射
 
@@ -382,14 +382,14 @@ public interface <EntityName>Repository extends JpaRepository<<EntityName>Entity
 - 审计字段齐全：`createdDate`, `createdBy`, `updatedDate`, `updatedBy`, `isDelete`
 - 时间字段用 `LocalDateTime`，不用 `Date`
 - 禁止使用 `@Data` + `@AllArgsConstructor` 组合（会被序列化框架利用）
-- 包路径通过 Glob 已有 Entity 动态确定，不写死
+- 包路径通过搜索已有 Entity 动态确定，不写死
 
 ### Mapper 接口规范
 
 - MyBatis-Plus：继承 `BaseMapper<Entity>`，自带 CRUD，无须写 XML
 - MyBatis：声明基本 CRUD 方法，复杂查询在 XML 中实现
 - JPA：继承 `JpaRepository<Entity, Long>` + `JpaSpecificationExecutor<Entity>`
-- 包路径通过 Glob 已有 Mapper/Repository 动态确定，不写死
+- 包路径通过搜索已有 Mapper/Repository 动态确定，不写死
 
 ### Mapper XML 规范（仅 MyBatis 项目）
 

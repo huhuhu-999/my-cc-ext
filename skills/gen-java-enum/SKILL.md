@@ -14,10 +14,10 @@ description: 当需要新建枚举类时使用。自动适配当前项目包路�
 
 生成代码前，按以下顺序探查项目环境：
 
-1. **包路径** — Grep 查找项目已有枚举类所在目录（如 `**/enums/**`），动态确定 `package`，禁止写死
+1. **包路径** ：搜索项目已有枚举类所在目录（如 `**/enums/**`），动态确定 `package`，禁止写死
 2. **Lombok** — 检查 `pom.xml` / `build.gradle` 是否包含 Lombok 依赖，决定是否使用 `@Getter`
 3. **StringUtils** — 检查项目是否已有字符串工具类依赖，优先级：Apache Commons Lang3 > Hutool > 无依赖
-4. **代码格式** — Read `E:\vibe_coding\doc\common\java\java-code-style.md`（行宽 160、链式调用、注解等）
+4. **代码格式** — 读取当前项目的 `AGENTS.md` 和平台专用规则，再检查同模块现有代码，确认行宽、链式调用、注解和格式习惯
 
 ## 模板
 
@@ -112,7 +112,7 @@ public String getMsg() {
 
 ## 规则
 
-1. 包路径通过 Grep 已有枚举动态确定，不写死
+1. 包路径通过搜索已有枚举动态确定，不写死
 2. `getByCode` + `getCodeByMsg` + `getMsgByCode` 三个方法缺一不可
 3. `CODE_MAP`（code → 枚举实例）+ `MSG_CODE_MAP`（msg → code）静态缓存，类加载时一次性构建，后续查找 O(1)
 4. 空安全处理：null 或空字符串输入直接返回 `null`
