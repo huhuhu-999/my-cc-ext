@@ -31,24 +31,18 @@ description: 为 Service 接口和实现类补充 JavaDoc 文档注释。当用�
 
 ### 第一步：扫描
 
-运行扫描脚本获取需要补充的文件清单：
+先定位当前已加载 `add-javadoc` Skill 所在目录，再运行其中的脚本。仓库内开发时使用根目录相对路径：
 
 ```bash
-# 插件安装后运行时（脚本在 .claude/skills/ 下）：
-python .claude/skills/add-javadoc/scripts/scan_javadoc.py . --json
-
-# 本地开发调试时（脚本在 skills/ 下）：
 python skills/add-javadoc/scripts/scan_javadoc.py . --json
-
-# 扫描非 Service 文件（如 Controller）：
-python .claude/skills/add-javadoc/scripts/scan_javadoc.py . --json -p "**/*Controller.java"
+python skills/add-javadoc/scripts/scan_javadoc.py . --json -p "**/*Controller.java"
 ```
 
 退出码 `0` 表示 JavaDoc 完整，`1` 表示存在类级或方法级缺失，`2` 表示至少一个文件解析失败。
 
 ### 第二步：确认范围（如有必要）
 
-用户未明确指定范围时，用 AskUserQuestion 确认。已指定则跳过。
+用户未明确指定范围时，用当前平台的用户提问能力确认；已指定则跳过。
 
 ### 第三步：拆分子代理执行
 
