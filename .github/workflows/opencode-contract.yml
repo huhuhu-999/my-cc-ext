@@ -1,0 +1,37 @@
+name: OpenCode Contract
+
+on:
+  workflow_dispatch:
+    inputs:
+      git_spec:
+        description: "Immutable my-ext GitHub spec ending in #vX.Y.Z or a full 40-hex commit"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: ${{ matrix.os }} / OpenCode ${{ matrix.opencode }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        opencode: [1.15.10, latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.11
+      - name: Install OpenCode
+        run: npm install --global opencode-ai@${{ matrix.opencode }}
+      - name: Run repository tests
+        run: npm test
+      - name: Run real Git installation contract
+        run: npm run smoke:opencode
+        env:
+          MY_EXT_RUN_OPENCODE_SMOKE: "1"
+          MY_EXT_GIT_SPEC: ${{ inputs.git_spec }}

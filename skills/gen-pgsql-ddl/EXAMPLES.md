@@ -18,6 +18,11 @@
 CREATE TABLE lmp.outsrc_property_data_sync
 (
     id                   bigserial,
+    created_date         timestamp(6)  DEFAULT now(),
+    created_by           varchar(50)   DEFAULT 'system',
+    updated_date         timestamp(6)  DEFAULT now(),
+    updated_by           varchar(50)   DEFAULT 'system',
+    is_delete            int2          DEFAULT 0,
     system_id            varchar(100)  NOT NULL,
     building_no          varchar(100)  NOT NULL,
     building_name        varchar(200)  DEFAULT NULL,
@@ -26,15 +31,15 @@ CREATE TABLE lmp.outsrc_property_data_sync
     unit                 varchar(50)   DEFAULT '人民币',
     attachment_list      text          DEFAULT NULL,
     integrate_record_id  varchar(200)  DEFAULT NULL,
-    created_date         timestamp(6)  DEFAULT now(),
-    created_by           varchar(50)   DEFAULT 'system',
-    updated_date         timestamp(6)  DEFAULT now(),
-    updated_by           varchar(50)   DEFAULT 'system',
-    is_delete            int2          DEFAULT 0,
     CONSTRAINT "outsrc_property_data_sync_pkey" PRIMARY KEY ("id")
 );
 
 COMMENT ON COLUMN lmp.outsrc_property_data_sync."id"                  IS '主键';
+COMMENT ON COLUMN lmp.outsrc_property_data_sync."created_by"          IS '创建人';
+COMMENT ON COLUMN lmp.outsrc_property_data_sync."created_date"        IS '创建时间';
+COMMENT ON COLUMN lmp.outsrc_property_data_sync."updated_date"        IS '更新时间';
+COMMENT ON COLUMN lmp.outsrc_property_data_sync."updated_by"          IS '更新人';
+COMMENT ON COLUMN lmp.outsrc_property_data_sync."is_delete"           IS '是否删除(0-否;1-是)';
 COMMENT ON COLUMN lmp.outsrc_property_data_sync."system_id"           IS '运营商系统编码';
 COMMENT ON COLUMN lmp.outsrc_property_data_sync."building_no"         IS '项目编号';
 COMMENT ON COLUMN lmp.outsrc_property_data_sync."building_name"       IS '项目名称';
@@ -43,11 +48,7 @@ COMMENT ON COLUMN lmp.outsrc_property_data_sync."fill_time"           IS '填报
 COMMENT ON COLUMN lmp.outsrc_property_data_sync."unit"                IS '单位，固定：人民币';
 COMMENT ON COLUMN lmp.outsrc_property_data_sync."attachment_list"     IS '附件列表JSON';
 COMMENT ON COLUMN lmp.outsrc_property_data_sync."integrate_record_id" IS '关联 lmp_operator_import_record.data_number';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."created_by"          IS '创建人';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."created_date"        IS '创建时间';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."updated_date"        IS '更新时间';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."updated_by"          IS '更新人';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."is_delete"           IS '是否删除(0-否;1-是)';
+
 
 COMMENT ON TABLE lmp.outsrc_property_data_sync IS '委外-物业三表数据同步记录';
 

@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+跨平台公共规则见 `AGENTS.md`。本文件只补充 Claude Code 的插件安装、注册名称和自动路由约定；冲突时以更具体的项目规则为准。
+
 ## 仓库定位
 
 这是一个 Claude Code 插件仓库，提供数据库操作、代码审查、缺陷修复、功能开发流水线、设计规划和 Claude Code 扩展开发等 Agent 和 Skill。

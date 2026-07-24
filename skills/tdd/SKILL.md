@@ -9,7 +9,7 @@ description: Java TDD 工作流。Red-Green-Refactor 三阶段，自动检测 Ma
 
 ## Phase 1 — DETECT（探测测试基础设施）
 
-使用 Glob 递归定位所有模块的 `**/pom.xml`、`**/build.gradle`、`**/build.gradle.kts`、`**/src/test/**` 和 `**/*Test.java`。使用 Grep 在构建文件中检测 JUnit、TestNG、Mockito 和 JaCoCo。根据被测类所属模块选择对应构建文件，排除 `target/`、`build/` 和生成目录。
+递归搜索所有模块的 `**/pom.xml`、`**/build.gradle`、`**/build.gradle.kts`、`**/src/test/**` 和 `**/*Test.java`。在构建文件中搜索 JUnit、TestNG、Mockito 和 JaCoCo。根据被测类所属模块选择对应构建文件，排除 `target/`、`build/` 和生成目录。
 
 执行命令时，Windows 优先 `mvnw.cmd` / `gradlew.bat`，Unix-like 环境优先 `./mvnw` / `./gradlew`；没有 wrapper 时使用系统 `mvn` / `gradle`。
 
@@ -25,11 +25,11 @@ description: Java TDD 工作流。Red-Green-Refactor 三阶段，自动检测 Ma
 
 ### 1.1 定位目标
 
-使用 Glob 递归定位 `**/*Service.java` 和 `**/*ServiceImpl.java`，根据包名、接口实现关系以及用户指定目标确定被测类，不能默认取搜索结果前五个。
+递归搜索 `**/*Service.java` 和 `**/*ServiceImpl.java`，根据包名、接口实现关系以及用户指定目标确定被测类，不能默认取搜索结果前五个。
 
 ### 1.2 读取风格参考
 
-用 Read 工具读取 1-2 个已有测试文件，了解：
+读取 1-2 个已有测试文件，了解：
 - 使用的测试框架和扩展（`@ExtendWith(MockitoExtension.class)` vs `@SpringBootTest`）
 - 测试命名约定（`should*` / `test*` / `given*`）
 - Mock 方式（`@Mock` + `@InjectMocks` / `Mockito.mock()`）
@@ -114,7 +114,7 @@ class XxxServiceImplTest {
 - 涉及新 Entity/DTO 时，遵循 `gen-java-entity` 的包路径动态探测
 - 构造器注入 + `final` 参数 + 项目业务异常类
 - 优先复用已有枚举、常量、工具类
-- 生成代码前 Read `E:\vibe_coding\doc\common\java\java-code-style.md`，遵循行宽 160、链式调用、注解等代码格式规范
+- 生成代码前先读取当前项目的 `AGENTS.md` 和平台专用规则，再检查同模块现有代码，确认行宽、链式调用、注解和格式习惯
 
 ### 运行测试确认 GREEN
 

@@ -1,6 +1,59 @@
 # my-ext
 
-Java 开发全流程 Claude Code 插件。插件提供一组 Agent 和 Skill，覆盖需求规划、数据库操作、代码实现、代码审查、缺陷修复、构建修复、TDD 和 JavaDoc 补充等常见后端开发任务。
+Java 开发全流程 Agent 和 Skill 工具集，支持 Claude Code 与 OpenCode。根 `skills/` 是两端共享的唯一 Skill 内容源。
+
+## 平台选择
+
+| 平台 | 安装说明 |
+|---|---|
+| Claude Code | 保留下方 Marketplace 和本地插件安装流程 |
+| OpenCode >=1.15.10 | [OpenCode 安装说明](docs/README.opencode.md) |
+
+## OpenCode 用户级安装
+
+### 1. 检查环境
+
+```powershell
+opencode --version
+node --version
+```
+
+要求 OpenCode >=1.15.10、Node.js >=20.11。
+
+### 2. 打开用户级配置
+
+- Windows：`%USERPROFILE%\.config\opencode\opencode.json`
+- Linux / macOS：`~/.config/opencode/opencode.json`
+
+文件不存在时可以新建。如果已有配置，只追加 `plugin` 字段或数组项，不要覆盖其他配置：
+
+```json
+{
+  "plugin": [
+    "my-ext@git+https://github.com/huhuhu-999/my-cc-ext.git#v1.0.10"
+  ]
+}
+```
+
+必须使用包含 OpenCode 支持的固定发布标签或完整 40 位 commit，不要使用默认分支。当前开发分支尚未发布时，只能在本仓库根目录启动 `opencode` 进行本地测试，不能通过上面的远程引用完成用户级安装。
+
+### 3. 重启并验证
+
+完全退出并重新启动 OpenCode，然后执行：
+
+```powershell
+opencode debug config
+```
+
+解析后的配置应包含：
+
+- 指向插件包 `skills/` 的 `skills.paths`。
+- 指向 `.opencode/bootstrap.md` 的 `instructions`。
+- `my-ext-db-ops`、`my-ext-feature-dev`、`my-ext-fix`、`my-ext-superpowers-planner` 和 `my-ext-opencode-ext-dev` 这 5 个 Agent。
+
+安装后可以在 OpenCode 对话中使用 `@my-ext-feature-dev`、`@my-ext-db-ops` 等名称调用 Agent；共享 Skill 会由模型根据任务自动加载。
+
+升级、卸载、Windows 注意事项和 npm 兜底方式见 [完整 OpenCode 安装说明](docs/README.opencode.md)。
 
 ## 能力概览
 
@@ -28,7 +81,7 @@ Java 开发全流程 Claude Code 插件。插件提供一组 Agent 和 Skill，�
 | `add-javadoc` | 扫描并补充 Service 接口和实现类 JavaDoc |
 | `write-a-skill` | 辅助创建结构清晰、可复用的 Agent Skill |
 
-## 安装插件
+## Claude Code 安装插件
 
 ```bash
 /plugin marketplace add https://github.com/huhuhu-999/my-cc-ext.git
@@ -36,13 +89,13 @@ Java 开发全流程 Claude Code 插件。插件提供一组 Agent 和 Skill，�
 claude plugins enable my-ext
 ```
 
-## 卸载插件
+## Claude Code 卸载插件
 
 ```bash
 /plugin uninstall my-ext@my-cc-ext
 ```
 
-## 本地开发安装
+## Claude Code 本地开发安装
 
 在仓库根目录执行：
 
