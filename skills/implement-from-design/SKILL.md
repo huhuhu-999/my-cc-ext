@@ -11,9 +11,9 @@ description: 根据设计文档（PRD、技术方案、架构设计等）实现 
 
 实现前必须先了解项目上下文，按以下顺序获取信息：
 
-### 1. 阅读 CLAUDE.md
+### 1. 阅读项目规则
 
-首先读取项目根目录下的 `CLAUDE.md`，从中获取：
+首先读取项目根目录下的 `AGENTS.md`；若当前平台还有专用规则文件，再读取该文件作为补充。从项目规则中获取：
 - 项目定位、模块结构和分层约定
 - ORM 框架（JPA/Hibernate / MyBatis / MyBatis-Plus / JdbcTemplate）
 - DI 容器（Spring Boot / Guice / Quarkus / 无 DI）
@@ -31,14 +31,14 @@ Lombok 使用状态影响：构造器注入写法、getter/setter 生成方式�
 
 ### 3. 补充探测
 
-CLAUDE.md 未覆盖的信息通过文件系统探测：
+项目规则未覆盖的信息通过文件系统探测：
 
 - **构建工具**：`pom.xml` → Maven，`build.gradle` → Gradle
 - **ORM 框架**：依赖中查找 JPA/Hibernate、MyBatis/MyBatis-Plus、JdbcTemplate 等
 - **DI 容器**：依赖中查找 Spring、Guice、Quarkus 等
 - **分层结构**：通过目录结构推断模块划分和包路径
 
-> **核心原则**：CLAUDE.md > 依赖探测 > 通用规则。实现应与项目实际技术栈一致，不要引入项目未使用的框架或约定。
+> **核心原则**：项目规则 > 依赖探测 > 通用规则。实现应与项目实际技术栈一致，不要引入项目未使用的框架或约定。
 
 ---
 
@@ -50,12 +50,11 @@ CLAUDE.md 未覆盖的信息通过文件系统探测：
 
 1. 用户显式指定的文档路径
 2. `doc/features/<feature-name>/` 目录下的设计文档和实施计划（`feature-dev` 输出）
-3. `.claude/plan/` 目录下的规划文档
-4. `doc/plan/` 目录下的实施计划
-5. `doc/design/` 目录下的设计文档
-6. `doc/` 或 `docs/` 目录下的设计文档
-7. `doc/superpowers/specs/` 目录下的 Spec（`superpowers-planner` 输出）
-8. `specs/`、`design/` 目录下的规格说明
+3. `doc/plan/` 目录下的实施计划
+4. `doc/design/` 目录下的设计文档
+5. `doc/` 或 `docs/` 目录下的设计文档
+6. `doc/superpowers/specs/` 目录下的 Spec（`superpowers-planner` 输出）
+7. `specs/`、`design/` 目录下的规格说明
 
 读取后，提取以下信息：
 - **功能范围**：要实现哪些接口/模块
@@ -68,7 +67,7 @@ CLAUDE.md 未覆盖的信息通过文件系统探测：
 
 实现前先搜索项目中的可复用代码：
 
-1. 用 Grep 搜索同名或相似的 Entity/DTO/Enum，避免重复定义
+1. 搜索同名或相似的 Entity/DTO/Enum，避免重复定义
 2. 确认项目中已有的接口定义、常量和枚举
 3. 确认已有的 Service 和 Repository/Mapper，避免重复逻辑
 4. 参考同模块已有的实现模式（命名风格、异常处理、日志写法、分页方式）
@@ -118,12 +117,12 @@ CLAUDE.md 未覆盖的信息通过文件系统探测：
 - 绝对禁止写完一个 Java 文件就立即 `mvn compile` 的行为
 - **文档同步**：编码中发现实际实现与设计文档/实施计划不一致时（类名、方法签名、字段类型、业务逻辑等调整），必须同步更新对应的 `*-design.md` 和 `*-plan.md`。代码即文档，文档即代码，两者始终保持一致
 
-每实现一个文件必须遵循项目规范。生成代码前 Read `E:\vibe_coding\doc\common\java\java-code-style.md`，遵循行宽 160、链式调用、注解等代码格式规范。以下为模板示例，实际编码时以项目 CLAUDE.md 和现有代码风格为准。
+每实现一个文件必须遵循项目规范。生成代码前先读取当前项目的 `AGENTS.md` 和平台专用规则，再搜索同模块现有代码确认行宽、链式调用、注解和格式习惯。以下为模板示例，实际编码时以项目规则和现有代码风格为准。
 
 #### 包路径确定
 
 通过搜索已存在的同类文件动态确定，禁止写死。方法：
-1. 用 Glob 搜索同类文件（如 `**/service/**Impl.java`）
+1. 使用文件模式搜索同类文件（如 `**/service/**Impl.java`）
 2. 从中提取包路径前缀
 3. 新增文件放到与已有文件同级的对应子包中
 
@@ -196,7 +195,7 @@ Entity 和 Mapper 的生成模板统一委托给 `gen-java-entity` skill，该 s
 - **MyBatis**：纯 POJO + Mapper 接口 + 同名 XML（`resultMap`/`<sql>`/CRUD）
 - **JPA/Hibernate**：`@Entity` + `@Getter` + `JpaRepository` + `JpaSpecificationExecutor`
 
-需要生成 Entity/Mapper 时，先通过 Glob 探测项目 ORM 框架和包路径，然后按 `gen-java-entity` 的模板生成。核心规范摘要：
+需要生成 Entity/Mapper 时，先通过文件模式搜索探测项目 ORM 框架和包路径，然后按 `gen-java-entity` 的模板生成。核心规范摘要：
 
 - Entity 实现 `Serializable`，显式 `serialVersionUID`
 - 审计字段齐全：`createdDate`, `createdBy`, `updatedDate`, `updatedBy`, `isDelete`
