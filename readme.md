@@ -9,51 +9,23 @@ Java 开发全流程 Agent 和 Skill 工具集，支持 Claude Code 与 OpenCode
 | Claude Code | 保留下方 Marketplace 和本地插件安装流程 |
 | OpenCode >=1.15.10 | [OpenCode 安装说明](docs/README.opencode.md) |
 
-## OpenCode 用户级安装
+## OpenCode 用户级自动安装
 
-### 1. 检查环境
+当用户要求安装 my-ext 时，Agent 应直接完成配置，而不是只输出操作命令。先确认本机满足 OpenCode >=1.15.10、Node.js >=20.11；条件不满足时停止修改并说明缺失项。
 
-```powershell
-opencode --version
-node --version
-```
+修改用户级配置前必须先获得用户授权。获得授权后，Windows 使用 `%USERPROFILE%\.config\opencode\opencode.json`，Linux 和 macOS 使用 `~/.config/opencode/opencode.json`。如果目录中已经存在 `opencode.json` 或 `opencode.jsonc`，应读取现有文件并使用支持 JSON/JSONC 的结构化方式修改；如果两者都不存在，则创建 `opencode.json`。不得覆盖现有模型、MCP、权限、插件或其他用户配置。
 
-要求 OpenCode >=1.15.10、Node.js >=20.11。
-
-### 2. 打开用户级配置
-
-- Windows：`%USERPROFILE%\.config\opencode\opencode.json`
-- Linux / macOS：`~/.config/opencode/opencode.json`
-
-文件不存在时可以新建。如果已有配置，只追加 `plugin` 字段或数组项，不要覆盖其他配置：
+目标配置是在 `plugin` 数组中加入下面这个固定版本包：
 
 ```json
-{
-  "plugin": [
-    "my-ext@git+https://github.com/huhuhu-999/my-cc-ext.git#v1.0.10"
-  ]
-}
+"my-ext@git+https://github.com/huhuhu-999/my-cc-ext.git#v1.0.10"
 ```
 
-必须使用包含 OpenCode 支持的固定发布标签或完整 40 位 commit，不要使用默认分支。当前开发分支尚未发布时，只能在本仓库根目录启动 `opencode` 进行本地测试，不能通过上面的远程引用完成用户级安装。
+如果 `plugin` 字段不存在，则创建数组；如果字段存在，则只追加缺失的条目；如果相同条目已经存在，则保持文件不变。必须使用包含 OpenCode 支持的固定发布标签或完整 40 位 commit。固定引用不存在或无法访问时，应报告失败，不得退回默认分支或改用可变引用。在 my-ext 源码仓库中，本地 `.opencode/plugins/my-ext.js` 已经会被自动加载，不得再加入远程包，否则会重复加载插件。
 
-### 3. 重启并验证
+写入后重新读取配置，确认文件仍可解析且原有字段未丢失，再运行 `opencode debug config` 验证安装结果。解析后的配置必须包含指向插件包 `skills/` 的 `skills.paths`、指向 `.opencode/bootstrap.md` 的 `instructions`，以及 `my-ext-db-ops`、`my-ext-feature-dev`、`my-ext-fix`、`my-ext-superpowers-planner` 和 `my-ext-opencode-ext-dev` 这 5 个 Agent。任一检查失败时，只撤销本次添加的插件条目，保留用户原有配置，并报告具体错误。
 
-完全退出并重新启动 OpenCode，然后执行：
-
-```powershell
-opencode debug config
-```
-
-解析后的配置应包含：
-
-- 指向插件包 `skills/` 的 `skills.paths`。
-- 指向 `.opencode/bootstrap.md` 的 `instructions`。
-- `my-ext-db-ops`、`my-ext-feature-dev`、`my-ext-fix`、`my-ext-superpowers-planner` 和 `my-ext-opencode-ext-dev` 这 5 个 Agent。
-
-安装后可以在 OpenCode 对话中使用 `@my-ext-feature-dev`、`@my-ext-db-ops` 等名称调用 Agent；共享 Skill 会由模型根据任务自动加载。
-
-升级、卸载、Windows 注意事项和 npm 兜底方式见 [完整 OpenCode 安装说明](docs/README.opencode.md)。
+验证通过后，告知用户重新启动 OpenCode。安装完成后可在对话中使用 `@my-ext-feature-dev`、`@my-ext-db-ops` 等名称调用 Agent；共享 Skill 会由模型根据任务自动加载。升级、卸载、Windows 注意事项和 npm 兜底方式见 [完整 OpenCode 安装说明](docs/README.opencode.md)。
 
 ## 能力概览
 

@@ -55,14 +55,20 @@ test("main README links both platforms and preserves Claude commands and names",
   }
 });
 
-test("main README documents OpenCode user-level installation", async () => {
+test("main README gives agents an executable OpenCode user-level installation workflow", async () => {
   const source = await readFile(path.join(root, "readme.md"), "utf8");
-  assert.match(source, /^## OpenCode 用户级安装$/m);
+  assert.match(source, /^## OpenCode 用户级自动安装$/m);
+  assert.match(source, /Agent 应直接完成配置/);
+  assert.match(source, /修改用户级配置前必须先获得用户授权/);
   assert.match(source, /%USERPROFILE%\\\.config\\opencode\\opencode\.json/);
   assert.match(source, /~\/\.config\/opencode\/opencode\.json/);
+  assert.match(source, /`opencode\.json` 或 `opencode\.jsonc`/);
   assert.match(source, /my-cc-ext\.git#v1\.0\.10/);
   assert.match(source, /固定发布标签或完整 40 位 commit/);
+  assert.match(source, /不得覆盖现有模型、MCP、权限、插件或其他用户配置/);
+  assert.match(source, /相同条目已经存在，则保持文件不变/);
+  assert.match(source, /不得退回默认分支或改用可变引用/);
   assert.match(source, /opencode debug config/);
   assert.match(source, /my-ext-feature-dev/);
-  assert.match(source, /当前开发分支尚未发布.*不能.*远程引用/s);
+  assert.match(source, /只撤销本次添加的插件条目，保留用户原有配置/);
 });
