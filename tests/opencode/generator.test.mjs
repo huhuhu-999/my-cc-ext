@@ -62,6 +62,12 @@ test("exact prose replacements do not leave a search whitespace artifact", async
   assert.doesNotMatch(fix, /逐层\s+搜索/);
 });
 
+test("generated bodies contain no trailing whitespace", async () => {
+  for (const item of await generateAll(root)) {
+    assert.doesNotMatch(item.content, /[ \t]+$/m, item.mapping.output);
+  }
+});
+
 test("description is a JSON-quoted YAML scalar and rejects multiline syntax", () => {
   const mapping = { source: "agents/example/AGENT.md", name: "my-ext-example", taskAllow: [], replacements: [] };
   const description = 'Review: "quoted" # hash \\ path';

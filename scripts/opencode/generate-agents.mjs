@@ -36,6 +36,10 @@ function replaceAllLiteral(source, replacements) {
   return replacements.reduce((value, [from, to]) => value.replaceAll(from, to), source);
 }
 
+function stripTrailingWhitespace(source) {
+  return source.replace(/[ \t]+$/gm, "");
+}
+
 export function generateAgent(source, mapping) {
   const parsed = parseClaudeAgent(source, mapping.source);
   const digest = createHash("sha256").update(normalize(source)).digest("hex");
@@ -44,7 +48,9 @@ export function generateAgent(source, mapping) {
     bash: { ...PERMISSION_BASELINE.bash },
     task: Object.fromEntries([["*", "deny"], ...mapping.taskAllow.map((name) => [name, "allow"])]),
   };
-  const body = replaceAllLiteral(parsed.body, [...COMMON_REPLACEMENTS, ...mapping.replacements]);
+  const body = stripTrailingWhitespace(
+    replaceAllLiteral(parsed.body, [...COMMON_REPLACEMENTS, ...mapping.replacements]),
+  );
   return [
     "---",
     `name: ${mapping.name}`,
