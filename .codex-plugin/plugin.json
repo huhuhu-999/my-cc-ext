@@ -1,0 +1,25 @@
+{
+  "name": "my-ext",
+  "version": "1.1.0",
+  "description": "Java 开发全流程工具集。覆盖设计规划、数据库操作、代码实现、代码审查、缺陷修复和扩展开发。",
+  "author": {
+    "name": "yuanziquan"
+  },
+  "repository": "https://github.com/huhuhu-999/my-cc-ext",
+  "license": "MIT",
+  "keywords": ["java", "database", "sql", "mybatis", "code-review", "tdd", "skill", "agent"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Java Development Toolchain",
+    "shortDescription": "Java 后端开发 Agent 与 Skill 工具集",
+    "longDescription": "覆盖需求规划、数据库操作、代码实现、审查、缺陷修复、构建修复、TDD 和扩展开发。",
+    "developerName": "yuanziquan",
+    "category": "Developer Tools",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://github.com/huhuhu-999/my-cc-ext",
+    "defaultPrompt": [
+      "使用 my-ext 规划并实现这个 Java 后端需求。",
+      "使用 my-ext 审查并修复当前 Java 代码。"
+    ]
+  }
+}

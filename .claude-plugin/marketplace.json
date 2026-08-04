@@ -3,13 +3,13 @@
   "owner": {
     "name": "yuanziquan"
   },
-  "description": "Java 开发全流程 Claude Code 工具集",
+  "description": "Java 开发全流程 Claude Code 与 Codex 工具集",
   "plugins": [
     {
       "name": "my-ext",
       "displayName": "Java Development Toolchain",
-      "version": "1.0.10",
-      "description": "Java 开发全流程工具集。提供设计规划、功能开发、数据库操作和 Claude Code 扩展开发 Agent，以及 DDL、Entity、枚举、TDD、构建修复、代码审查、缺陷修复和 JavaDoc 等 Skill。",
+      "version": "1.1.0",
+      "description": "Java 开发全流程工具集。提供设计规划、功能开发、数据库操作和扩展开发 Agent 工作流，以及 DDL、Entity、枚举、TDD、构建修复、代码审查、缺陷修复和 JavaDoc 等 Skill，支持 Claude Code 与 Codex。",
       "source": ".",
       "license": "MIT",
       "keywords": ["java", "database", "sql", "ddl", "postgresql", "mybatis", "jpa", "tdd", "code-review", "claude-code", "agent", "skill", "extension"]
