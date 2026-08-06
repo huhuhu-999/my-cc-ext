@@ -208,7 +208,7 @@ Agent（独立子进程）
 |---------|---------------|-----------|
 | 扩展开发（写/改 Skill、Agent、Plugin、MCP、Hook、Workflow） | `my-ext:cc-ext-dev:cc-ext-dev` | 写skill、创建agent、开发插件、MCP、Hook、扩展 |
 | 数据库操作（DDL建表、DML查询、Entity/Mapper生成、SQL审查） | `my-ext:db-ops:db-ops` | 建表、DDL、SQL、Entity、Mapper、数据库、查询 |
-| 功能开发流水线（已有 PRD → 设计→计划→编码→审查） | `my-ext:feature-dev:feature-dev` | 开发功能、实现需求、按PRD开发 |
+| 功能开发流水线（已有 PRD → 设计→计划→编码→审查） | `my-ext:feature-dev:feature-dev` | 开发功能、实现需求、按PRD、参数调整、需求变更、调整接口、修改参数、新增字段、对接调整、根据文档修改、按需求改 |
 | 复杂缺陷修复（跨模块排查、根因不明） | `my-ext:fix:fix` | 排查bug、复杂bug、深入看一下、跨模块 |
 | 设计规划（原始需求→头脑风暴→方案对比→计划） | `my-ext:superpowers-planner:superpowers-planner` | 设计方案、规划、头脑风暴、需求分析 |
 
