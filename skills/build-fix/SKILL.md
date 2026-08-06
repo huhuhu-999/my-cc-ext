@@ -9,7 +9,7 @@ description: Java 构建错误修复。检测 Maven/Gradle 构建系统，分组
 
 ## Phase 1 — DETECT（检测构建系统）
 
-使用 Glob 递归检测 `**/pom.xml`、`**/build.gradle`、`**/build.gradle.kts`、`mvnw*` 和 `gradlew*`，排除 `target/`、`build/` 和生成目录。根构建文件用于确定聚合项目，子目录构建文件用于确定模块边界。
+递归搜索 `**/pom.xml`、`**/build.gradle`、`**/build.gradle.kts`、`mvnw*` 和 `gradlew*`，排除 `target/`、`build/` 和生成目录。根构建文件用于确定聚合项目，子目录构建文件用于确定模块边界。
 
 执行构建时按操作系统选择命令：Windows 优先 `mvnw.cmd` / `gradlew.bat`，Unix-like 环境优先 `./mvnw` / `./gradlew`；没有 wrapper 时才使用系统的 `mvn` / `gradle`。
 
@@ -67,9 +67,9 @@ description: Java 构建错误修复。检测 Maven/Gradle 构建系统，分组
 
 ```
 For each file in sorted error groups:
-  1. READ   — Read 工具读取文件（错误行 ± 15 行上下文）
+1. READ   ：读取文件（错误行 ± 15 行上下文）
   2. DIAGNOSE — 对照分类表确定根因
-  3. FIX    — Edit 工具做最小变更
+  3. FIX    — 使用当前平台的文件编辑工具做最小变更
   4. BUILD  — 重新运行构建命令
   5. CHECK  — 确认该错误消失且无新错误引入
   6. NEXT   — 继续下一个错误

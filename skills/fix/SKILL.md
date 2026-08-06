@@ -44,7 +44,7 @@ Controller → Service → Repository → 数据库/外部调用
 - [ ] 并发安全？（共享变量、锁范围）
 - [ ] 外部依赖是否处理了超时和降级？
 
-使用 Grep 搜索相关代码路径，确认调用链完整。
+搜索相关代码路径，确认调用链完整。
 
 ### 第三步：编写复现测试（RED）
 
@@ -101,11 +101,7 @@ void shouldXxxWhenYyy() {
 
 ### 第六步：代码审查
 
-调用 `code-reviewer` 审查修复代码：
-
-```
-Skill(skill: "code-reviewer")
-```
+使用当前平台的 Skill 加载能力加载 `code-reviewer`，审查修复代码。
 
 确保修复：
 - [ ] 没有引入新问题
