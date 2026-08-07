@@ -15,16 +15,20 @@
 | 规则 | 说明 |
 |------|------|
 | 主键 | `id bigserial`，无 DEFAULT |
-| 唯一标识列 | `varchar(200) NOT NULL` |
-| 短码/类型列 | `varchar(100) NOT NULL`（如 system_id、report_type） |
-| 格式化时间列 | `varchar(20) NOT NULL`（如 fill_time，格式 yyyy-MM，非 timestamp） |
-| 普通文本 | `varchar(200)` 或 `varchar(500)`，`DEFAULT NULL` |
+| 数据标识/编码 | `varchar(200)`（如 data_number、building_no） |
+| 短码/项目编号 | `varchar(100)`（如 project_no、system_id） |
+| 名称 | `varchar(256)`（如 project_name、block_name） |
+| 格式化时间 | `varchar(20)`（如 data_date、fill_time，格式 yyyy-MM，非 timestamp） |
+| 计数 | `integer`（如 member_count） |
+| 金额/占比 | `numeric(22, 4)`（如 member_sales_amt、proportion_of_member） |
+| 普通文本 | `varchar(200)` 或 `varchar(500)` |
 | 固定值列 | `varchar(50) DEFAULT '<固定值>'`（如 unit DEFAULT '人民币'） |
 | 长文本 | `text DEFAULT NULL`（如 JSON、内容字段） |
 | 外键关联列 | `varchar(200) DEFAULT NULL`（如 integrate_record_id，COMMENT 注明关联表.列） |
 | 时间戳 | `timestamp(6) DEFAULT now()` |
 | 审计字段 | `created_date` → `created_by` → `updated_date` → `updated_by` → `is_delete` 固定顺序 |
 | 删除标记 | `int2 DEFAULT 0` |
+| 业务列约束 | 是否加 NOT NULL 按项目约定；PAIC 项目不加，校验由应用层负责 |
 | 对齐 | 列名、类型、约束三列对齐（列名最长 28 字符 + 2 空格后接类型） |
 
 ## COMMENT
@@ -35,7 +39,7 @@
   - `created_date` — `'创建时间'`
   - `updated_date` — `'更新时间'`
   - `updated_by` — `'更新人'`
-  - `is_delete` — `'是否删除(0-否;1-是)'`
+  - `is_delete` — `'删除标识（0-未删除，1-已删除）'`
 - 枚举/类型列在注释中标注可选值：`'报表类型(operator_balance_sheet/operator_profit_statement/operator_cash_flow)'`
 - 外键关联列在注释中注明关联关系：`'关联 lmp_operator_import_record.data_number'`
 - `COMMENT ON TABLE` 一行描述表用途

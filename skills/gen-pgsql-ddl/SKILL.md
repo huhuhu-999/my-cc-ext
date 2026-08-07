@@ -19,6 +19,7 @@ gen-pgsql-ddl/
 
 ## 快速开始
 
+0. **加载项目知识库**：按 CLAUDE.md 中配置的知识库路径，加载数据库/建表相关规范文档
 1. 收集用户的列定义（列名、类型、是否必填、注释）
 2. 询问用户目标 schema；未提供时必须先确认，不默认写死
 3. 确认操作模式；默认“仅创建”，只有用户明确确认目标环境并允许重建时才使用“删除并重建”
@@ -41,15 +42,20 @@ gen-pgsql-ddl/
 | 列类型 | DDL 写法 | 示例列名 |
 |--------|----------|----------|
 | 主键 | `id bigserial` | `id` |
-| 短码/类型列 | `varchar(100) NOT NULL` | `system_id`, `report_type` |
-| 唯一标识列 | `varchar(200) NOT NULL` | `building_no` |
-| 格式化时间列 | `varchar(20) NOT NULL` | `fill_time`（格式 yyyy-MM） |
-| 普通文本 | `varchar(200)` / `varchar(500)` `DEFAULT NULL` | `building_name` |
+| 数据标识/编码 | `varchar(200)` | `data_number`、`building_no` |
+| 短码/项目编号 | `varchar(100)` | `project_no`、`system_id` |
+| 名称 | `varchar(256)` | `project_name`、`block_name` |
+| 格式化时间 | `varchar(20)` | `data_date`（yyyy-MM）、`fill_time` |
+| 计数 | `integer` | `member_count` |
+| 金额/占比 | `numeric(22, 4)` | `member_sales_amt`、`proportion_of_member` |
+| 普通文本 | `varchar(200)` 或 `varchar(500)` | `building_name` |
 | 固定值列 | `varchar(50) DEFAULT '<固定值>'` | `unit DEFAULT '人民币'` |
 | 长文本/JSON | `text DEFAULT NULL` | `attachment_list` |
 | 外键关联列 | `varchar(200) DEFAULT NULL` | `integrate_record_id` |
-| 时间戳 | `timestamp(6) DEFAULT now()` | `created_date` |
+| 时间戳 | `timestamp(6) DEFAULT now()` | `created_date`、`last_update_date` |
 | 删除标记 | `int2 DEFAULT 0` | `is_delete` |
+
+> 业务列是否加 NOT NULL 按项目约定；PAIC 项目不加 NOT NULL，校验由应用层负责。
 
 审计字段固定顺序：`created_date` → `created_by` → `updated_date` → `updated_by` → `is_delete`
 

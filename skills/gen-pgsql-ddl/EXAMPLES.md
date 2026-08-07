@@ -15,7 +15,7 @@
 -- ----------------------------
 -- 新建表 lmp.outsrc_property_data_sync
 -- ----------------------------
-CREATE TABLE lmp.outsrc_property_data_sync
+CREATE TABLE IF NOT EXISTS lmp.outsrc_property_data_sync
 (
     id                   bigserial,
     created_date         timestamp(6)  DEFAULT now(),
