@@ -1,98 +1,42 @@
 # EXAMPLES — DDL 范例
 
-## 示例 1：建表 + 改表组合
+> 项目真实表示例见项目知识库，路径按 CLAUDE.md 配置。
 
-来自 `委外-物业三表数据同步记录` 需求。
-
-### 新建表
+## 已有表新增/修改字段
 
 ```sql
--- =============================================
--- 委外-物业三表数据同步记录表 - DDL
--- 创建时间: 2026-06-25
--- =============================================
-
 -- ----------------------------
--- 新建表 lmp.outsrc_property_data_sync
+-- {schema}.{表名} 新增字段
 -- ----------------------------
-CREATE TABLE IF NOT EXISTS lmp.outsrc_property_data_sync
-(
-    id                   bigserial,
-    created_date         timestamp(6)  DEFAULT now(),
-    created_by           varchar(50)   DEFAULT 'system',
-    updated_date         timestamp(6)  DEFAULT now(),
-    updated_by           varchar(50)   DEFAULT 'system',
-    is_delete            int2          DEFAULT 0,
-    system_id            varchar(100)  NOT NULL,
-    building_no          varchar(100)  NOT NULL,
-    building_name        varchar(200)  DEFAULT NULL,
-    report_type          varchar(100)  NOT NULL,
-    fill_time            varchar(20)   NOT NULL,
-    unit                 varchar(50)   DEFAULT '人民币',
-    attachment_list      text          DEFAULT NULL,
-    integrate_record_id  varchar(200)  DEFAULT NULL,
-    CONSTRAINT "outsrc_property_data_sync_pkey" PRIMARY KEY ("id")
-);
+ALTER TABLE {schema}.{表名} ADD COLUMN IF NOT EXISTS {字段名} {类型} DEFAULT {默认值};
+COMMENT ON COLUMN {schema}.{表名}."{字段名}" IS '{字段说明}';
 
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."id"                  IS '主键';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."created_by"          IS '创建人';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."created_date"        IS '创建时间';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."updated_date"        IS '更新时间';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."updated_by"          IS '更新人';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."is_delete"           IS '是否删除(0-否;1-是)';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."system_id"           IS '运营商系统编码';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."building_no"         IS '项目编号';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."building_name"       IS '项目名称';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."report_type"         IS '报表类型(operator_balance_sheet/operator_profit_statement/operator_cash_flow)';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."fill_time"           IS '填报时间，格式yyyy-MM';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."unit"                IS '单位，固定：人民币';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."attachment_list"     IS '附件列表JSON';
-COMMENT ON COLUMN lmp.outsrc_property_data_sync."integrate_record_id" IS '关联 lmp_operator_import_record.data_number';
-
-
-COMMENT ON TABLE lmp.outsrc_property_data_sync IS '委外-物业三表数据同步记录';
-
--- r_pabemlmpdata_dml
-GRANT SELECT, UPDATE, DELETE, INSERT ON lmp.outsrc_property_data_sync TO r_pabemlmpdata_dml;
-GRANT SELECT, UPDATE ON SEQUENCE lmp.outsrc_property_data_sync_id_seq TO r_pabemlmpdata_dml;
-
--- r_pabemlmpdata_qry
-GRANT SELECT ON lmp.outsrc_property_data_sync TO r_pabemlmpdata_qry;
-GRANT SELECT ON SEQUENCE lmp.outsrc_property_data_sync_id_seq TO r_pabemlmpdata_qry;
+ALTER TABLE {schema}.{表名} ALTER COLUMN {字段名} TYPE {新类型};
+COMMENT ON COLUMN {schema}.{表名}."{字段名}" IS '{新注释}';
 ```
 
-> 本示例使用需求所属项目已经确认的授权角色。其他项目必须读取其现有约定或询问用户，不得直接复用这些角色。
-
-### 删除并重建（仅在明确确认后）
+## 删除并重建（仅在明确确认后）
 
 只有用户明确确认目标环境、表名以及允许丢弃现有数据时，才在 `CREATE TABLE` 前添加：
 
 ```sql
 -- 重建确认: <环境> / <确认时间> / <确认人或确认来源>
-DROP TABLE IF EXISTS <schema_name>.<table_name>;
+DROP TABLE IF EXISTS {schema}.{表名};
 ```
 
-### 已有表新增/修改字段
+## 列类型选型说明
 
-```sql
--- ----------------------------
--- lmp_operator_import_record 新增字段：存储多 fileKey
--- ----------------------------
-ALTER TABLE lmp.lmp_operator_import_record ADD COLUMN IF NOT EXISTS file_keys text DEFAULT NULL;
-COMMENT ON COLUMN lmp.lmp_operator_import_record."file_keys" IS '多文件Key的JSON数组';
+| 列用途 | 类型 | 示例 |
+|--------|------|------|
+| 数据标识/编码 | `varchar(200)` | data_number |
+| 短码 | `varchar(100)` | system_id |
+| 名称 | `varchar(256)` | project_name |
+| 格式化时间 | `varchar(20)` | data_date（yyyy-MM） |
+| 计数 | `integer` | member_count |
+| 金额/占比 | `numeric(22, 4)` | sales_amt |
+| 固定值 | `varchar(50) DEFAULT '<值>'` | unit DEFAULT '人民币' |
+| 长文本 | `text DEFAULT NULL` | attachment_list |
+| 外键 | `varchar(200) DEFAULT NULL` | integrate_record_id |
+| 时间戳 | `timestamp(6) DEFAULT now()` | created_date |
 
-ALTER TABLE lmp.lmp_operator_import_record ALTER COLUMN file_name TYPE text;
-COMMENT ON COLUMN lmp.lmp_operator_import_record."file_name" IS '上传文件名称（多附件逗号拼接）';
-```
-
-### 列类型选型说明
-
-| 列名 | 选型 | 理由 |
-|------|------|------|
-| `system_id` | `varchar(100) NOT NULL` | 运营商编码，短码必填 |
-| `building_no` | `varchar(100) NOT NULL` | 项目编号，短码必填 |
-| `report_type` | `varchar(100) NOT NULL` | 枚举类型列，COMMENT 标注可选值 |
-| `fill_time` | `varchar(20) NOT NULL` | 格式化时间 yyyy-MM，非时间戳 |
-| `unit` | `varchar(50) DEFAULT '人民币'` | 固定值列，有业务默认值 |
-| `attachment_list` | `text DEFAULT NULL` | JSON 数组，长文本 |
-| `integrate_record_id` | `varchar(200) DEFAULT NULL` | 外键关联，COMMENT 注明来源表.列 |
+> 具体项目的 schema、授权角色、NOT NULL 策略按项目知识库约定填写。
