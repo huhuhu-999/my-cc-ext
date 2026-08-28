@@ -26,7 +26,7 @@ gen-pgsql-ddl/
 4. 从项目配置或已有 DDL 获取授权角色；无法确定时询问用户，用户不需要授权时省略 GRANT
 5. 从 `template/` 复制对应模板
 6. 按 REFERENCE.md 中的列定义规则替换 `<占位符>`
-7. 输出到 `tmp/` 目录
+7. 输出到 `doc/features/<feature-name>/sql/` 目录（`<feature-name>` 为对应功能目录名；不属于功能开发流程时向用户确认目标目录）
 
 ## 核心规则
 
@@ -35,7 +35,7 @@ gen-pgsql-ddl/
 - **schema**：必须询问用户目标 schema，并将 SQL 中所有 `<schema_name>` 替换为用户确认值
 - **操作模式**：默认仅生成 `CREATE TABLE`。仅当用户明确确认“允许删除并重建”，并确认目标环境和表名后，才在脚本中加入 `DROP TABLE IF EXISTS`
 - **授权角色**：优先复用项目已有 DDL 或配置中的角色；无法确定时必须询问用户，不得使用项目外的硬编码默认角色。用户明确不需要授权时，移除 GRANT 段落
-- **业务名**：用于输出文件名，按 snake_case 转换
+- **业务名**：用于输出文件名，按英文 kebab-case 转换
 
 ### 列定义速查
 
@@ -73,7 +73,7 @@ gen-pgsql-ddl/
 
 ### 文件
 
-- 存放路径 `tmp/`，文件名 `<yyyyMMdd>_<业务>_init.sql`
+- 存放路径 `doc/features/<feature-name>/sql/`，文件名 `<yyyy-MM-dd>-<业务>-init.sql`
 - 默认建表脚本不得包含 `DROP TABLE`、`TRUNCATE` 等破坏性语句
 - 重建模式必须在脚本头部标注目标环境和用户确认结果
 - ALTER TABLE 不需要重复 GRANT

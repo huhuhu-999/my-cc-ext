@@ -77,7 +77,7 @@ description: <一句话描述触发场景和使用时机>
 - 明确适用场景
 - 提供模板（SQL、代码、配置等）
 - 列出规则清单（用表格）
-- 引用项目中的参考文件（如 `tmp/xxx.sql`）
+- 引用项目中的参考文件（如 `doc/features/<feature-name>/sql/xxx.sql`）
 - 输出路径约定
 
 ### Skill 调用

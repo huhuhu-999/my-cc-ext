@@ -8,7 +8,7 @@
 | 操作模式 | 默认仅创建；删除并重建必须由用户明确确认目标环境和表名 |
 | DML 授权角色 | 优先读取项目已有 DDL/配置；无法确定时询问用户；不需要授权时省略 |
 | QRY 授权角色 | 优先读取项目已有 DDL/配置；无法确定时询问用户；不需要授权时省略 |
-| 输出文件名 | `tmp/<yyyyMMdd>_<业务>_init.sql`，业务名使用 snake_case |
+| 输出文件名 | `doc/features/<feature-name>/sql/<yyyy-MM-dd>-<业务>-init.sql`，业务名使用英文 kebab-case |
 
 ## 列定义
 
@@ -57,10 +57,10 @@
 
 ## 文件
 
-- 存放路径：`tmp/` 目录
+- 存放路径：`doc/features/<feature-name>/sql/` 目录（`<feature-name>` 为对应功能目录名；不属于功能开发流程时向用户确认目标目录）
 - 默认脚本从 `CREATE TABLE` 开始，不包含任何删除语句
 - 仅在用户明确确认“删除并重建”后加入 `DROP TABLE IF EXISTS`，并在脚本头部记录目标环境和确认信息
-- 文件名：`<yyyyMMdd>_<业务>_init.sql`
+- 文件名：`<yyyy-MM-dd>-<业务>-init.sql`
 
 ## 参考
 

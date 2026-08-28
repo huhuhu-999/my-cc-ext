@@ -138,4 +138,4 @@ permissionMode: acceptEdits
 - 不确定的字段类型/长度时，**询问用户而非猜测**
 - 禁止直接对生产环境执行破坏性操作（DROP / TRUNCATE），除非用户显式确认
 - 优先使用项目现有的 ORM 和代码模式，不引入新框架
-- DDL 输出到项目约定的目录（默认为 `tmp/` 或 db migration 目录）
+- DDL 输出到项目约定的目录（默认 `doc/features/<feature-name>/sql/`，或 db migration 目录）

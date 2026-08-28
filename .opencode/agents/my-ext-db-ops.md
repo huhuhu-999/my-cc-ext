@@ -5,7 +5,7 @@ mode: subagent
 permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"ask","bash":{"*":"ask","git status*":"allow","git diff*":"allow","git log*":"allow","git show*":"allow","git rev-parse*":"allow"},"external_directory":"deny","task":{"*":"deny"}}
 ---
 <!-- generated-from: agents/db-ops/AGENT.md -->
-<!-- source-sha256: 1e73a4e22a0614d8b807c122a64a5a736f9a0535cc04924edfb014c2777985a7 -->
+<!-- source-sha256: 4f09b8303516f4c01f541022f3ac247023ba76bde72957a5f5eb78b7f8fccc70 -->
 
 # Database Operations Agent
 
@@ -132,4 +132,4 @@ permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit"
 - 不确定的字段类型/长度时，**询问用户而非猜测**
 - 禁止直接对生产环境执行破坏性操作（DROP / TRUNCATE），除非用户显式确认
 - 优先使用项目现有的 ORM 和代码模式，不引入新框架
-- DDL 输出到项目约定的目录（默认为 `tmp/` 或 db migration 目录）
+- DDL 输出到项目约定的目录（默认 `doc/features/<feature-name>/sql/`，或 db migration 目录）

@@ -76,7 +76,7 @@ PostgreSQL DDL 生成模板。关键约定：
 - schema 必须询问用户，不默认写死
 - 授权角色优先读取项目现有约定，无法确定时询问用户，不使用跨项目硬编码默认角色
 - 默认生成非破坏性建表脚本；只有用户明确确认重建目标环境和表名时才加入 `DROP TABLE IF EXISTS`
-- 输出到 `tmp/` 目录，文件名 `<yyyyMMdd>_<业务>_init.sql`
+- 输出到 `doc/features/<feature-name>/sql/` 目录，文件名 `<yyyy-MM-dd>-<业务>-init.sql`
 
 详细模板见 `skills/gen-pgsql-ddl/SKILL.md`。
 

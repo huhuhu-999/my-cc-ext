@@ -5,7 +5,7 @@ mode: subagent
 permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"ask","bash":{"*":"ask","git status*":"allow","git diff*":"allow","git log*":"allow","git show*":"allow","git rev-parse*":"allow"},"external_directory":"deny","task":{"*":"deny","my-ext-feature-dev":"allow"}}
 ---
 <!-- generated-from: agents/superpowers-planner/AGENT.md -->
-<!-- source-sha256: 4190560f3fa0f195319ae496ce8b5a2ee55dba1e21ab906e1ffebf09a6fbc5d7 -->
+<!-- source-sha256: 1ff61e7e556bb01acf50a84c41e42acf8a276bf52718b98bc830777122faf68e -->
 
 # Superpowers Planner
 
@@ -35,8 +35,8 @@ doc/features/<feature-name>/.superpowers-planner-state.md
 feature: <feature-name>
 sub_feature: <sub-feature>
 source: <用户原始需求摘要>
-design_file: doc/features/<feature-name>/<sub-feature>-design.md
-plan_file: doc/features/<feature-name>/<sub-feature>-plan.md
+design_file: doc/features/<feature-name>/<yyyy-MM-dd>-<sub-feature>-design.md
+plan_file: doc/features/<feature-name>/<yyyy-MM-dd>-<sub-feature>-plan.md
 
 brainstorm: pending | done
 design: pending | done
@@ -54,6 +54,8 @@ last_updated: <yyyy-MM-dd HH:mm>
 - 每完成一个阶段，必须更新状态文件，再 STOP 或进入下一阶段
 - 用户要求“修改设计”时，回退 `design: pending` 和 `plan: pending`
 - 用户要求“调整计划”时，回退 `plan: pending`
+- `.superpowers-planner-state.md` 是本地状态文件，**不提交 git**（加入 `.gitignore` 或不做 `git add`），避免跨会话恢复状态污染仓库历史
+- 功能目录下建立 `archive/` 归档目录：**已完成/过时的 design、plan 移入 `doc/features/<feature-name>/archive/`**，当前进行中的文档保留在功能目录根，避免根目录堆积
 
 ### 阶段检测（每次调用必须先执行）
 
@@ -135,13 +137,16 @@ last_updated: <yyyy-MM-dd HH:mm>
 
 将验证后的设计保存为 Spec 文件：
 
-**路径**：`doc/features/<feature-name>/<sub-feature>-design.md`
+**路径**：`doc/features/<feature-name>/<yyyy-MM-dd>-<sub-feature>-design.md`
 
 > 命名规则：
+> - 文件名固定为 `<yyyy-MM-dd>-<sub-feature>-design.md` / `<yyyy-MM-dd>-<sub-feature>-plan.md`
+> - 日期前缀取**当天**，格式 `yyyy-MM-dd`（如 `2026-08-28-ai-approval-result-design.md`），用于区分同一子功能的不同迭代版本
 > - `<feature-name>`：功能大类（如 `agent-building-rel`）
-> - `<sub-feature>`：子功能名（如 `addAgentInfo`），不建子目录，用文件名前缀区分
-> - 一次流程只生成和推进一个 `<sub-feature>`；同一功能下多个子功能通过多个 `<sub-feature>-design.md` / `<sub-feature>-plan.md` 文件沉淀
-> - 首次生成时创建或更新 `README.md` 索引文件，列出当前 `feature` 下所有子功能及其 design/plan 路径
+> - `<sub-feature>`：子功能名（如 `add-agent-info`），保持英文 kebab-case，不建子目录，用文件名前缀区分
+> - 一次流程只生成和推进一个 `<sub-feature>`；同一功能下多个子功能通过多个 `<yyyy-MM-dd>-<sub-feature>-design.md` / `<yyyy-MM-dd>-<sub-feature>-plan.md` 文件沉淀
+> - 已完成/过时的 design、plan 归档到 `doc/features/<feature-name>/archive/`，当前进行中的文档保留在根目录
+> - 首次生成时创建或更新 `README.md` 索引文件，列出当前 `feature` 下所有子功能及其 design/plan 路径（归档文件标注 `archive/` 位置）
 > - 与 `my-ext-feature-dev` 共用 `doc/features/<feature-name>/` 输出目录，确保两个 Agent 产出可无缝衔接
 
 **必须包含的章节**：
@@ -167,7 +172,7 @@ last_updated: <yyyy-MM-dd HH:mm>
 - 关键设计决策
 
 ## 5. 数据模型
-- 新增表 DDL
+- 新增表 DDL（脚本输出到 `doc/features/<feature-name>/sql/`）
 - 字段说明
 - 禁止字段清单
 
@@ -201,21 +206,21 @@ last_updated: <yyyy-MM-dd HH:mm>
 ### 提交 Spec
 
 ```bash
-git add doc/features/<feature-name>/<sub-feature>-design.md
+git add doc/features/<feature-name>/<yyyy-MM-dd>-<sub-feature>-design.md
 git commit -m "docs: add <feature-name> design spec"
 ```
 
 ### 用户审查门槛
 
 输出：
-> 设计规范已保存到 `doc/features/<feature-name>/<sub-feature>-design.md`。请审查，如需修改请告知。
+> 设计规范已保存到 `doc/features/<feature-name>/<yyyy-MM-dd>-<sub-feature>-design.md`。请审查，如需修改请告知。
 >
 > **下一步**：确认设计规范无误后，回复"继续"进入实施计划阶段。
 
 同时更新状态文件：
 
 ```markdown
-design_file: doc/features/<feature-name>/<sub-feature>-design.md
+design_file: doc/features/<feature-name>/<yyyy-MM-dd>-<sub-feature>-design.md
 brainstorm: done
 design: done
 plan: pending
@@ -375,7 +380,7 @@ git commit -m "feat(xxx): add template validation"
 ```markdown
 # <功能名称> 实施计划
 
-> **设计文档**: doc/features/<feature-name>/<sub-feature>-design.md
+> **设计文档**: doc/features/<feature-name>/<yyyy-MM-dd>-<sub-feature>-design.md
 > **目标**: <一句话>
 > **架构**: <2-3 句话>
 > **技术栈**: <按 AGENTS.md and platform-specific project rules 实际探测结果>
@@ -421,17 +426,17 @@ git commit -m "feat(xxx): add template validation"
 
 ### 写入文件并提交
 
-**路径**：`doc/features/<feature-name>/<sub-feature>-plan.md`
+**路径**：`doc/features/<feature-name>/<yyyy-MM-dd>-<sub-feature>-plan.md`
 
 ```bash
-git add doc/features/<feature-name>/<sub-feature>-plan.md
+git add doc/features/<feature-name>/<yyyy-MM-dd>-<sub-feature>-plan.md
 git commit -m "plan: add <feature-name> implementation plan"
 ```
 
 写入并提交 Plan 后更新状态文件：
 
 ```markdown
-plan_file: doc/features/<feature-name>/<sub-feature>-plan.md
+plan_file: doc/features/<feature-name>/<yyyy-MM-dd>-<sub-feature>-plan.md
 plan: done
 handoff: pending
 ```
@@ -442,7 +447,7 @@ handoff: pending
 
 计划完成后，用普通文本询问用户是否交给 `my-ext-feature-dev` subagent 执行编码流水线，不依赖专有交互工具。输出：
 
-> 实施计划已保存到 `doc/features/<feature-name>/<sub-feature>-plan.md`。
+> 实施计划已保存到 `doc/features/<feature-name>/<yyyy-MM-dd>-<sub-feature>-plan.md`。
 >
 > 是否交给 `my-ext-feature-dev` subagent 执行编码流水线（编码 → 审查 → 修复 → 报告）？
 >
@@ -479,3 +484,5 @@ last_updated: <yyyy-MM-dd HH:mm>
 - 不允许跳过规范阶段直接写计划
 - 不允许在用户审查规范前进入实施计划阶段
 - Spec 和 Plan 都必须提交到 git
+- `.superpowers-planner-state.md` 状态文件**不提交 git**，写入 `.gitignore` 或不做 `git add`
+- 已完成/过时的 design、plan 移入 `doc/features/<feature-name>/archive/` 归档，当前进行中的文档保留在功能目录根
