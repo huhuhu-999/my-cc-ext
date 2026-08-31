@@ -155,48 +155,7 @@ last_updated: <yyyy-MM-dd HH:mm>
 > - 首次生成时创建或更新 `README.md` 索引文件，列出当前 `feature` 下所有子功能及其 design/plan 路径（归档文件标注 `archive/` 位置）
 > - 与 `feature-dev` 共用 `doc/features/<feature-name>/` 输出目录，确保两个 Agent 产出可无缝衔接
 
-**必须包含的章节**：
-```markdown
-# <功能名称> 设计规范
-
-## 1. 概述
-- 一句话描述
-- 交付物清单
-
-## 2. 需求分析
-- 原始需求
-- 关键讨论
-- 边界与护栏（明确不做什么）
-
-## 3. 方案选择
-- 考虑过的方案
-- 选定方案及理由
-
-## 4. 架构设计
-- 模块职责分配
-- 调用链
-- 关键设计决策
-
-## 5. 数据模型
-- 新增表 DDL（脚本输出到 `doc/features/<feature-name>/sql/`）
-- 字段说明
-- 禁止字段清单
-
-## 6. API 设计
-- 接口路径、方法、签名
-- 请求/响应 DTO
-- 枚举和常量
-
-## 7. 错误处理
-- 异常场景 → 错误码 → 用户提示
-
-## 8. 测试策略
-- 单元测试范围
-- 集成测试场景
-
-## 9. 验收标准
-- [ ] 可验证的完成条件
-```
+**必须包含的章节**（如某章节不适用，显式说明"不适用/无需"，不得省略整个文档骨架）：骨架模板通过 `design-doc-writer` skill 获取——**写入 Spec 前必须调用 `design-doc-writer` skill 并读取其 `templates/spec-skeleton.md`**，按骨架输出完整章节。
 
 ### 规范自检
 
@@ -253,120 +212,9 @@ Plan 的定位是可执行实施文档，不是普通任务清单。任何开发
 - 如果实现依赖 design.md 中的关键结论，必须在 Plan 中摘要落地约束，不能只写“见设计文档”
 - 允许引用对应 design 文件作为背景资料，但编码任务必须以 plan.md 为主入口
 
-### 文件结构映射
+### 模板文件
 
-在定义任务之前，明确每个文件：
-
-```
-创建：
-  <api-module>/src/main/java/.../XxxRequest.java    — 请求 DTO
-  <api-module>/src/main/java/.../XxxResponse.java   — 响应 DTO
-  ...
-
-修改：
-  <app-module>/src/main/java/.../XxxController.java:80-120  — 新增接口方法
-  ...
-
-测试：
-  <test-module>/src/test/java/.../XxxServiceTest.java
-  ...
-```
-
-### 任务粒度
-
-每个任务是一个动作（2-5 分钟），格式：
-
-````markdown
-### 任务 N：<任务名>
-
-**文件：**
-- 创建：`exact/path/to/NewFile.java`
-- 修改：`exact/path/to/Existing.java:80-120`
-- 测试：`exact/path/to/Test.java`
-
-- [ ] **步骤 1：编写失败测试**
-
-```java
-package com.xxx.service;
-
-import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-class TemplateValidationServiceTest {
-
-    private final TemplateValidationService service = new TemplateValidationService();
-
-    @Test
-    void shouldReturnErrorWhenTemplateMismatch() {
-        TemplateValidationResult result = service.validate("invalid_template.xlsx", "OPERATOR_IMPORT");
-
-        assertThat(result.isMatched()).isFalse();
-        assertThat(result.getCheckMsg()).contains("模板不符合");
-    }
-}
-```
-
-- [ ] **步骤 2：运行测试验证失败**
-
-```bash
-mvn -pl pare-lmp-integrate-component -am test -Dtest=XxxServiceTest#shouldReturnErrorWhenTemplateMismatch
-```
-预期：FAIL
-
-- [ ] **步骤 3：编写最小实现**
-
-```java
-package com.xxx.service;
-
-public class TemplateValidationService {
-
-    public TemplateValidationResult validate(final String fileName, final String expectedTemplateCode) {
-        if (!"operator_import_template.xlsx".equals(fileName) || !"OPERATOR_IMPORT".equals(expectedTemplateCode)) {
-            return new TemplateValidationResult(false, "模板不符合");
-        }
-        return new TemplateValidationResult(true, "模板校验通过");
-    }
-}
-```
-
-```java
-package com.xxx.service;
-
-public class TemplateValidationResult {
-
-    private final boolean matched;
-    private final String checkMsg;
-
-    public TemplateValidationResult(final boolean matched, final String checkMsg) {
-        this.matched = matched;
-        this.checkMsg = checkMsg;
-    }
-
-    public boolean isMatched() {
-        return matched;
-    }
-
-    public String getCheckMsg() {
-        return checkMsg;
-    }
-}
-```
-
-- [ ] **步骤 4：运行测试验证通过**
-
-```bash
-mvn -pl pare-lmp-integrate-component -am test -Dtest=XxxServiceTest#shouldReturnErrorWhenTemplateMismatch
-```
-预期：PASS
-
-- [ ] **步骤 5：提交**
-
-```bash
-git add src/test/.../XxxServiceTest.java src/main/.../XxxServiceImpl.java
-git commit -m "feat(xxx): add template validation"
-```
-````
+文件结构映射、任务粒度、计划文档头部、并行执行波次的模板通过 `design-doc-writer` skill 获取——**编写 Plan 前必须调用 `design-doc-writer` skill 并读取其 `templates/plan-skeleton.md`**，按模板输出任务与波次。
 
 ### 零占位符原则
 
@@ -380,45 +228,6 @@ git commit -m "feat(xxx): add template validation"
 - **步骤 3 不能只有 `// 具体代码...`** — 必须是完整的实现代码（含 package、import、类声明、方法体）
 
 **计划的上下文独立标准**：任何开发者仅凭 plan.md、仓库代码和其中引用的 design 文件就能完成编码，不需要查阅聊天记录。
-
-### 计划文档头部
-
-```markdown
-# <功能名称> 实施计划
-
-> **设计文档**: doc/features/<feature-name>/<yyyy-MM-dd>-<sub-feature>-design.md
-> **目标**: <一句话>
-> **架构**: <2-3 句话>
-> **技术栈**: <按 CLAUDE.md 实际探测结果>
-
----
-```
-
-### 并行执行波次
-
-```markdown
-## 执行波次
-
-### Wave 1 (Foundation) — 并行
-├── Task 1: DDL 和实体
-├── Task 2: 枚举和常量
-└── Task 3: DTO 定义
-
-### Wave 2 (Persistence + Logic) — 依赖 Wave 1
-├── Task 4: Mapper 实现 (depends: 1)
-├── Task 5: Excel 解析 (depends: 3)
-└── Task 6: 业务写入 (depends: 1,4)
-
-### Wave 3 (API + Integration) — 依赖 Wave 2
-├── Task 7: Controller 接口 (depends: 3,5,6)
-└── Task 8: 集成测试 (depends: 5,6,7)
-
-### Wave FINAL — 审查
-├── F1: 计划合规审计
-├── F2: 代码质量审查
-├── F3: 端到端 QA
-└── F4: 范围一致性检查
-```
 
 ### 计划自检
 
@@ -486,6 +295,8 @@ last_updated: <yyyy-MM-dd HH:mm>
 - **只做设计和计划**：不编写任何业务代码，不调用 implement-from-design、code-reviewer 等编码 Skill。你的产出是 Spec 和 Plan 文档
 - 先搜索现有代码，确认可复用模块和命名规范
 - 设计文档必须包含护栏（禁止事项），防止范围蔓延
+- **设计文档必须按「必须包含的章节」模板输出完整骨架**：含文档头（状态/版本/日期）、方案选择、内部接口定义、对外 API、DDL/DML、字段映射、非功能需求、影响面与回滚；某章节不适用时显式说明"不适用/无需"，不得省略骨架
+- **设计文档必须包含「核心逻辑伪代码」**：关键流程/方法用伪代码呈现，使阅读者仅凭设计文档即可掌握大部分逻辑；实施计划(plan)必须将伪代码补充为完整实现代码，不能省略或占位
 - 计划中的每个任务必须可独立验证（有验收标准和 QA 场景）
 - 不允许跳过规范阶段直接写计划
 - 不允许在用户审查规范前进入实施计划阶段
