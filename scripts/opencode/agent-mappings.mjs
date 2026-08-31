@@ -35,7 +35,7 @@ export const COMMON_REPLACEMENTS = [
 
 export const AGENT_MAPPINGS = [
   { source: "agents/db-ops/AGENT.md", output: ".opencode/agents/my-ext-db-ops.md", name: "my-ext-db-ops", taskAllow: [], replacements: [] },
-  { source: "agents/feature-dev/AGENT.md", output: ".opencode/agents/my-ext-feature-dev.md", name: "my-ext-feature-dev", taskAllow: ["my-ext-superpowers-planner"], replacements: [["`superpowers-planner`", "`my-ext-superpowers-planner`"], ["由 superpowers-planner 产出", "由 my-ext-superpowers-planner 产出"]] },
+  { source: "agents/feature-dev/AGENT.md", output: ".opencode/agents/my-ext-feature-dev.md", name: "my-ext-feature-dev", taskAllow: ["my-ext-superpowers-planner", "my-ext-code-review"], replacements: [["`superpowers-planner`", "`my-ext-superpowers-planner`"], ["由 superpowers-planner 产出", "由 my-ext-superpowers-planner 产出"], ["`code-review`", "`my-ext-code-review`"]] },
   { source: "agents/fix/AGENT.md", output: ".opencode/agents/my-ext-fix.md", name: "my-ext-fix", taskAllow: [], replacements: [] },
-  { source: "agents/superpowers-planner/AGENT.md", output: ".opencode/agents/my-ext-superpowers-planner.md", name: "my-ext-superpowers-planner", taskAllow: ["my-ext-feature-dev"], replacements: [["`feature-dev` Agent", "`my-ext-feature-dev` subagent"], ["`feature-dev`", "`my-ext-feature-dev`"], ["交给 feature-dev", "交给 my-ext-feature-dev"]] },
+  { source: "agents/superpowers-planner/AGENT.md", output: ".opencode/agents/my-ext-superpowers-planner.md", name: "my-ext-superpowers-planner", taskAllow: ["my-ext-feature-dev"], replacements: [["`feature-dev` Agent", "`my-ext-feature-dev` subagent"], ["`feature-dev`", "`my-ext-feature-dev`"], ["交给 feature-dev", "交给 my-ext-feature-dev"], ["`code-review`", "`my-ext-code-review`"]] },
 ];

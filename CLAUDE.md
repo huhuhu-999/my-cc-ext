@@ -17,7 +17,7 @@ agents/cc-ext-dev/AGENT.md              # Agent: Claude Code 扩展开发专家
 agents/feature-dev/AGENT.md             # Agent: 功能开发流水线编排
 agents/superpowers-planner/AGENT.md     # Agent: 设计+计划流水线
 agents/fix/AGENT.md                    # Agent: 缺陷修复流水线编排
-agents/code-review/AGENT.md            # Agent: 深度代码审查
+agents/code-review/AGENT.md            # Agent: 全维度深度代码审查
 skills/gen-pgsql-ddl/                       # Skill: PostgreSQL DDL 生成
 skills/gen-pgsql-ddl/SKILL.md              #   主指令（快速参考）
 skills/gen-pgsql-ddl/REFERENCE.md          #   列定义、COMMENT、GRANT 完整规则
@@ -97,7 +97,7 @@ Claude Code 扩展开发专家。覆盖 Claude Code 全部扩展机制：Skill�
 
 ### Agent: feature-dev
 
-功能开发流水线编排者。从已有 PRD 出发，串联 **设计文档（Spec） → 实施计划（Plan） → 开发目录确认 → implement-from-design 编码 → code-reviewer 审查 → 修复 CRITICAL → 开发报告** 的完整流程。文档统一输出到 `doc/features/<feature-name>/`，一次只推进一个 `sub-feature`，并通过 `.feature-dev-state.md` 状态文件支持跨会话恢复。
+功能开发流水线编排者。从已有 PRD 出发，串联 **设计文档（Spec） → 实施计划（Plan） → 开发目录确认 → implement-from-design 编码 → code-review Agent 全维度深度审查 → 修复 CRITICAL → 开发报告** 的完整流程。审查环节统一委托 `code-review` Agent（全维度：覆盖 `code-reviewer` skill 的 7 维——分层架构、ORM/DB、异常处理、安全性、代码质量、测试、日志——以及代码样式与循环内数据库操作/N+1、事务、并发、资源、空指针、死循环、索引失效等重大逻辑缺陷），调用时必须传递任务背景/目标、设计文档与实施计划路径。文档统一输出到 `doc/features/<feature-name>/`，一次只推进一个 `sub-feature`，并通过 `.feature-dev-state.md` 状态文件支持跨会话恢复。
 
 与 `superpowers-planner` 的区别：`feature-dev` 从**已有 PRD** 出发，不需要头脑风暴；`superpowers-planner` 从**原始需求**出发，包含头脑风暴和方案对比。
 
@@ -105,7 +105,7 @@ Claude Code 扩展开发专家。覆盖 Claude Code 全部扩展机制：Skill�
 
 ### Agent: superpowers-planner
 
-设计+计划流水线。从**原始需求**出发，三阶段：**头脑风暴（需求澄清 + 方案对比）→ 设计规范 Spec → 实施计划 Plan**（含 TDD 任务拆分、波次规划、依赖矩阵）。输出到 `doc/features/<feature-name>/`（与 `feature-dev` 共用目录），一次只规划一个 `sub-feature`。
+设计+计划流水线。从**原始需求**出发，三阶段：**头脑风暴（需求澄清 + 方案对比）→ 设计规范 Spec → 实施计划 Plan**（含 TDD 任务拆分、波次规划、依赖矩阵）。输出到 `doc/features/<feature-name>/`（与 `feature-dev` 共用目录），一次只规划一个 `sub-feature`。完成后交接给 `feature-dev` 执行编码流水线，审查环节由 `code-review` Agent 全维度深度审查。
 
 与 `feature-dev` 的区别：`superpowers-planner` 适合需求不明确、需要方案对比的场景；`feature-dev` 适合已有 PRD、直接进入设计+计划的场景。
 
@@ -121,9 +121,9 @@ Claude Code 扩展开发专家。覆盖 Claude Code 全部扩展机制：Skill�
 
 ### Agent: code-review
 
-深度代码审查。独立子进程执行，审查重点聚焦两大维度：**代码样式**（命名、格式、注释、分层等是否符合项目规范）和**重大逻辑缺陷**（循环内数据库操作/N+1、事务边界、并发安全、资源未释放、空指针、死循环、索引失效等）。支持 git diff、文件/目录、功能调用链三种审查范围，跨文件追踪调用链后定性，输出 CRITICAL/WARNING/INFO 三级报告。**只读审查**——只报告问题，不修改代码；修复委托 `fix` Agent 或 `fix` skill。
+全维度深度代码审查，是 `code-reviewer` skill 的**超集**。独立子进程执行，审查覆盖三大部分：**7 维全面检查**（分层架构、ORM/数据库、异常处理、安全性、代码质量、测试、日志——继承 `code-reviewer` skill 全部检查项）、**代码样式**（命名、格式、注释、分层等是否符合项目规范）和**重大逻辑缺陷**（循环内数据库操作/N+1、事务边界、并发安全、资源未释放、空指针、死循环、索引失效等）。支持 git diff、文件/目录、功能调用链三种审查范围，跨文件追踪调用链后定性，输出 CRITICAL/WARNING/INFO 三级报告。**只读审查**——只报告问题，不修改代码；修复委托 `fix` Agent 或 `fix` skill。
 
-与 `code-reviewer` skill 的区别：`code-reviewer` skill 是内联轻量审查（git diff + 7 维全面检查，提交前快速检查）；`code-review` Agent 是深度审查（独立上下文 + 跨文件调用链追踪，重点查逻辑缺陷与代码风格）。
+与 `code-reviewer` skill 的关系：`code-reviewer` skill 是内联轻量审查（基于 git diff 在当前会话执行 7 维检查，适合提交前快速检查）；`code-review` Agent 是独立子进程全维度深度审查（独立上下文 + 跨文件调用链追踪，能力**包含** skill 的全部 7 维，并叠加代码样式与重大逻辑缺陷深度检查）。
 
 详细流程见 `agents/code-review/AGENT.md`。
 
@@ -147,7 +147,7 @@ Java `code ↔ msg` 枚举生成模板。自动探测项目包路径，生成含
 
 ### Skill: code-reviewer
 
-Java 代码审查。对 git diff 变更进行 7 维审查（分层架构、JPA/DB、异常处理、安全、代码质量、测试、日志），输出 CRITICAL/WARNING/INFO 三级报告。
+Java 代码审查。对 git diff 变更进行 7 维审查（分层架构、JPA/DB、异常处理、安全、代码质量、测试、日志），输出 CRITICAL/WARNING/INFO 三级报告。内联轻量快速检查，适合提交前自查；`code-review` Agent 是其超集（全维度深度审查），深度审查任务请委托 Agent。
 
 详细规则见 `skills/code-reviewer/SKILL.md`。
 
@@ -205,7 +205,7 @@ Agent（独立子进程）
   ├── cc-ext-dev：扩展开发（探查 → 生成 Skill/Agent/Plugin）
   ├── feature-dev：功能开发流水线（PRD → Spec → Plan → 编码→审查→修复）
   ├── fix：缺陷修复流水线（Bug 报告 → 根因定位 → 复现→修复→审查→报告）
-  ├── code-review：深度代码审查（代码样式 + 重大逻辑缺陷 → 跨文件调用链追踪 → 报告）
+  ├── code-review：全维度深度代码审查（7 维全面 + 代码样式 + 重大逻辑缺陷 → 跨文件调用链追踪 → 报告）
   └── superpowers-planner：设计规划（头脑风暴→Spec→Plan）
 ```
 
@@ -222,14 +222,14 @@ Agent（独立子进程）
 | 数据库操作（DDL建表、DML查询、Entity/Mapper生成、SQL审查） | `my-ext:db-ops:db-ops` | 建表、DDL、SQL、Entity、Mapper、数据库、查询 |
 | 功能开发流水线（已有 PRD → 设计→计划→编码→审查） | `my-ext:feature-dev:feature-dev` | 开发功能、实现需求、按PRD、参数调整、需求变更、调整接口、修改参数、新增字段、对接调整、根据文档修改、按需求改 |
 | 复杂缺陷修复（跨模块排查、根因不明） | `my-ext:fix:fix` | 排查bug、复杂bug、深入看一下、跨模块 |
-| 深度代码审查（代码样式 + 重大逻辑缺陷，跨文件追踪） | `my-ext:code-review:code-review` | 代码审查、审查代码、深度审查、样式检查、逻辑审查、N+1、循环查库、性能审查、review 整个模块 |
+| 全维度深度代码审查（7 维全面 + 代码样式 + 重大逻辑缺陷，跨文件追踪） | `my-ext:code-review:code-review` | 代码审查、审查代码、深度审查、样式检查、逻辑审查、N+1、循环查库、性能审查、review 整个模块 |
 | 设计规划（原始需求→头脑风暴→方案对比→计划） | `my-ext:superpowers-planner:superpowers-planner` | 设计方案、规划、头脑风暴、需求分析 |
 
 **判断标准**：
 - 用户请求涉及**多步骤、跨文件、需要独立上下文**的复杂任务 → 自动使用 `Agent` 工具委托
 - 简单单步任务（读文件、问问题、小修改、单文件编辑）→ 直接处理，不委托
 - 不确定时优先委托 — Agent 有独立上下文，执行更专注
-- 代码审查类请求的区分：**提交前对 `git diff` 做快速全面检查** → 直接使用 `code-reviewer` skill（内联执行，不委托）；**需要跨文件追踪调用链、重点检查循环内数据库操作/N+1 等重大逻辑缺陷、或审查指定模块/功能** → 委托 `code-review` Agent
+- 代码审查类请求的区分：**提交前对 `git diff` 做快速检查** → 直接使用 `code-reviewer` skill（内联执行，不委托）；**需要全维度深度审查（7 维全面 + 代码样式 + 重大逻辑缺陷，跨文件追踪调用链）或审查指定模块/功能** → 委托 `code-review` Agent（能力包含 skill 全部 7 维，是其超集）
 
 **委托 `code-review` Agent 时必须传递任务上下文**：调用 `my-ext:code-review:code-review` 时，需一并转述本次任务的**背景及目标**，并给出**设计文档 / PRD / 路径**（若有）——Agent 需据此对照设计意图审查实现是否偏离；缺少时 Agent 会基于代码现状审查并在报告开头标注。主会话不得只丢一句「审查这个模块」就委托。
 

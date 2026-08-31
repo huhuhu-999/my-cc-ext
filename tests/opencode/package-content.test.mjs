@@ -52,6 +52,7 @@ test("npm package contains production files and excludes caches, tests and devel
   assert.deepEqual(
     files.filter((file) => file.startsWith(".opencode/agents/") && file.endsWith(".md")).sort(),
     [
+      ".opencode/agents/my-ext-code-review.md",
       ".opencode/agents/my-ext-db-ops.md",
       ".opencode/agents/my-ext-feature-dev.md",
       ".opencode/agents/my-ext-fix.md",

@@ -9,6 +9,7 @@ tools:
   - Grep
   - Bash
   - Skill
+  - Agent
 model: claude-opus-4-8
 permissionMode: acceptEdits
 ---
@@ -105,7 +106,7 @@ last_updated: <yyyy-MM-dd HH:mm>
 ## 工作流
 
 ```
-PRD → 设计文档(Spec) → 实施计划(Plan) → [确认开发目录] → implement-from-design → code-reviewer → 修复 CRITICAL → 输出报告
+PRD → 设计文档(Spec) → 实施计划(Plan) → [确认开发目录] → implement-from-design → `code-review` Agent → 修复 CRITICAL → 输出报告
 ```
 
 ## 执行步骤
@@ -501,7 +502,7 @@ implementation: pending
 
 - 只根据 `plan_file` 完成编码和测试
 - 不输出最终开发报告
-- 如果它已经执行了 code-reviewer，只记录结果；正式审查仍由本 Agent 第六步统一收口
+- 如果它内部已执行过 code-reviewer 快速检查，只记录结果作参考；正式审查仍由本 Agent 第六步委托 `code-review` Agent 统一收口
 - **编译纪律**：禁止逐文件编译。按波次（Wave）批量完成所有文件后，统一编译验证。一个 Wave 内只允许编译 1 次
 - **文档同步**：编码过程中如果发现设计与实际实现有偏差（如类名调整、方法签名变更、字段修改、业务逻辑与设计不符等），必须同步更新 `design_file` 和 `plan_file`，保持文档与代码一致。修正代码 = 修正文档，不是二选一
 
@@ -512,13 +513,19 @@ implementation: done
 review: pending
 ```
 
-### 第六步：调用 code-reviewer 审查代码（编码完成后自动进入）
+### 第六步：委托 `code-review` Agent 全维度深度审查（编码完成后自动进入）
 
-优先检查第五步是否已经产生 code-reviewer 审查结果：
+通过 `Agent` 工具调用 `code-review` Agent，对本次编码成果做**全维度深度审查**——覆盖 `code-reviewer` skill 的全部 7 维（分层架构、ORM/DB、异常处理、安全性、代码质量、测试、日志），并检查**代码样式**与**重大逻辑缺陷**（循环内数据库操作/N+1、事务边界、并发安全、资源未释放、空指针、死循环、索引失效）。**无需再单独调用 `code-reviewer` skill**。调用时必须遵守 code-review 的「输入约定」，随任务一并传递以下上下文：
 
-- 如果已有审查结果，读取并复核是否覆盖本次 diff
-- 如果没有审查结果，调用 `code-reviewer` 技能，对本次 diff 进行 7 维审查
-- 无论结果来自哪里，都由本 Agent 统一记录 CRITICAL / WARNING / INFO 数量
+- **任务背景与目标** — 本次 sub-feature 为什么做（背景）、要达成什么（目标）
+- **设计文档路径** — `design_file`（`doc/features/<feature-name>/<yyyy-MM-dd>-<sub-feature>-design.md`）
+- **实施计划路径** — `plan_file`（`doc/features/<feature-name>/<yyyy-MM-dd>-<sub-feature>-plan.md`）
+- **审查范围** — 本次编码涉及的文件 / git diff（未提交变更）
+
+委托时明确告知 `code-review` Agent **只审查不修改**，报告按 CRITICAL / WARNING / INFO 三级输出。
+
+- 第五步 implement-from-design 内部产生的 code-reviewer 快速检查结果仅作参考，不作为正式审查结论
+- 正式审查结果以 `code-review` Agent 报告为准，由本 Agent 统一记录 CRITICAL / WARNING / INFO 数量
 
 ### 第七步：处理审查结果
 
@@ -528,7 +535,7 @@ review: pending
 | **WARNING** | 逐个修复，无法确定的和用户确认 |
 | **INFO** | 选择性修复 |
 
-修复后再次调用 `code-reviewer` 验证，直到没有 CRITICAL 问题。
+修复后**再次调用 `code-review` Agent 验证**（同样传入任务背景/目标、`design_file`、`plan_file`），直到没有 CRITICAL 问题。
 
 审查通过后更新状态文件：
 

@@ -12,7 +12,7 @@
 ```json
 {
   "plugin": [
-    "my-ext@git+https://github.com/huhuhu-999/my-cc-ext.git#v1.0.13"
+    "my-ext@git+https://github.com/huhuhu-999/my-cc-ext.git#v1.0.14"
   ]
 }
 ```
@@ -27,7 +27,7 @@ OpenCode 当前委托 Bun 安装包，因此 Git 安装是已验证的兼容路�
 
 - 将根目录 `skills/` 追加到 `skills.paths`。
 - 将 `.opencode/bootstrap.md` 追加到 `config.instructions`。
-- 从包内 Markdown 读取 5 个 `my-ext-*` Agent，并以内联提示词形式注册到 `config.agent`；包内 Agent 文件不会被自动发现。
+- 从包内 Markdown 读取 6 个 `my-ext-*` Agent，并以内联提示词形式注册到 `config.agent`；包内 Agent 文件不会被自动发现。
 
 共享 Skill 保留现有的不带前缀名称。其他插件注册同名 Skill 时会发生冲突，需要移除其中一个冲突包。对于 Agent，存在同名用户 Agent 时以用户配置为准，插件不会覆盖它。
 

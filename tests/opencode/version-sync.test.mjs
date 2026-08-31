@@ -46,18 +46,18 @@ async function setPackageVersion(fixture, version) {
 test("package version drives both manifests and pinned docs", () => {
   const result = run(root, "--check");
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /version 1\.0\.10 is synchronized/);
+  assert.match(result.stdout, /version 1\.0\.14 is synchronized/);
 });
 
 test("check mode reports manifest and documentation drift with file context", async (t) => {
   const fixture = await createFixture(t);
-  await replace(path.join(fixture, ".claude-plugin", "plugin.json"), '"version": "1.0.10"', '"version": "9.9.9"');
-  await replace(path.join(fixture, "docs", "README.opencode.md"), /#v1\.0\.10/g, "#v9.9.9");
+  await replace(path.join(fixture, ".claude-plugin", "plugin.json"), '"version": "1.0.14"', '"version": "9.9.9"');
+  await replace(path.join(fixture, "docs", "README.opencode.md"), /#v1\.0\.14/g, "#v9.9.9");
 
   const result = run(fixture, "--check");
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /\.claude-plugin\/plugin\.json has 9\.9\.9, expected 1\.0\.10/);
-  assert.match(result.stderr, /docs\/README\.opencode\.md is missing #v1\.0\.10/);
+  assert.match(result.stderr, /\.claude-plugin\/plugin\.json has 9\.9\.9, expected 1\.0\.14/);
+  assert.match(result.stderr, /docs\/README\.opencode\.md is missing #v1\.0\.14/);
 });
 
 test("write mode synchronizes every target without changing package version", async (t) => {
@@ -97,12 +97,12 @@ test("write mode is byte-for-byte unchanged when every target is synchronized", 
   const fixture = await createFixture(t);
   await writeFile(
     path.join(fixture, ".claude-plugin", "plugin.json"),
-    '{"name":"my-ext","version":"1.0.10","keywords":["java","tdd"]}\r\n',
+    '{"name":"my-ext","version":"1.0.14","keywords":["java","tdd"]}\r\n',
     "utf8",
   );
   await writeFile(
     path.join(fixture, ".claude-plugin", "marketplace.json"),
-    '{\r\n  "plugins":[{"name":"my-ext","version" : "1.0.10","keywords":["java","tdd"]}]\r\n}\r\n',
+    '{\r\n  "plugins":[{"name":"my-ext","version" : "1.0.14","keywords":["java","tdd"]}]\r\n}\r\n',
     "utf8",
   );
   const files = [

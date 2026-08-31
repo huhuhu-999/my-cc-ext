@@ -7,7 +7,7 @@ const root = path.resolve(import.meta.dirname, "../..");
 
 test("OpenCode 中文文档使用固定 Git 引用并说明 npm 兜底风险", async () => {
   const source = await readFile(path.join(root, "docs", "README.opencode.md"), "utf8");
-  assert.match(source, /my-cc-ext\.git#v1\.0\.10/);
+  assert.match(source, /my-cc-ext\.git#v1\.0\.14/);
   assert.match(source, /完整的? 40 位 commit/);
   assert.match(source, /Bun/);
   assert.match(source, /npm 兜底/);
@@ -50,7 +50,7 @@ test("main README links both platforms and preserves Claude commands and names",
   ]) {
     assert.ok(source.includes(command), `README.md is missing ${command}`);
   }
-  for (const name of ["db-ops", "cc-ext-dev", "feature-dev", "superpowers-planner"]) {
+  for (const name of ["db-ops", "cc-ext-dev", "feature-dev", "superpowers-planner", "code-review"]) {
     assert.ok(source.includes(`| \`${name}\` |`), `README.md is missing ${name}`);
   }
 });
@@ -60,7 +60,7 @@ test("main README documents OpenCode user-level installation", async () => {
   assert.match(source, /^## OpenCode 用户级安装$/m);
   assert.match(source, /%USERPROFILE%\\\.config\\opencode\\opencode\.json/);
   assert.match(source, /~\/\.config\/opencode\/opencode\.json/);
-  assert.match(source, /my-cc-ext\.git#v1\.0\.10/);
+  assert.match(source, /my-cc-ext\.git#v1\.0\.14/);
   assert.match(source, /固定发布标签或完整 40 位 commit/);
   assert.match(source, /opencode debug config/);
   assert.match(source, /my-ext-feature-dev/);

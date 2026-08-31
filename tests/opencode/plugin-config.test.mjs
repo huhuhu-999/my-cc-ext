@@ -5,12 +5,14 @@ import test from "node:test";
 import { createPackageFixture, importPlugin } from "./helpers/package-fixture.mjs";
 
 const names = [
+  "my-ext-code-review",
   "my-ext-db-ops",
   "my-ext-feature-dev",
   "my-ext-fix",
   "my-ext-opencode-ext-dev",
   "my-ext-superpowers-planner",
 ];
+const baselinePermissionAgents = ["my-ext-db-ops", "my-ext-feature-dev", "my-ext-fix", "my-ext-opencode-ext-dev", "my-ext-superpowers-planner"];
 
 test("config preserves and idempotently appends paths, instructions, agents and permissions", async (t) => {
   const root = await createPackageFixture(t);
@@ -37,7 +39,10 @@ test("config preserves and idempotently appends paths, instructions, agents and 
   for (const name of names) {
     assert.equal(config.agent[name].mode, "subagent");
     assert.equal(config.agent[name].model, undefined);
-    assert.equal(config.agent[name].permission.edit, "ask");
+    assert.equal(
+      config.agent[name].permission.edit,
+      baselinePermissionAgents.includes(name) ? "ask" : "deny",
+    );
     assert.equal(config.agent[name].permission.external_directory, "deny");
     assert.ok(config.agent[name].prompt.length > 0);
   }
@@ -253,7 +258,7 @@ test("local repository plus self Git or package spec warns while registration st
       assert.match(warnings[0], /uninstall|INSTALL\.md/i);
       assert.equal(config.skills.paths.length, 1);
       assert.equal(config.instructions.length, 1);
-      assert.equal(Object.keys(config.agent).length, 5);
+      assert.equal(Object.keys(config.agent).length, 6);
     });
   }
 
@@ -274,7 +279,7 @@ test("local repository plus self Git or package spec warns while registration st
       }).config(config);
 
       assert.deepEqual(warnings, []);
-      assert.equal(Object.keys(config.agent).length, 5);
+      assert.equal(Object.keys(config.agent).length, 6);
     });
   }
 });

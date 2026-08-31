@@ -24,6 +24,7 @@ test("root skills remain the single shared source", async () => {
     "add-javadoc",
     "build-fix",
     "code-reviewer",
+    "design-doc-writer",
     "fix",
     "gen-java-entity",
     "gen-java-enum",
@@ -42,6 +43,7 @@ test("root skills remain the single shared source", async () => {
 test("Claude Code agent names remain unchanged", async () => {
   assert.deepEqual(await directories(claudeAgentsRoot), [
     "cc-ext-dev",
+    "code-review",
     "db-ops",
     "feature-dev",
     "fix",
