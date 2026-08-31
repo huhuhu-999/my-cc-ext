@@ -1,6 +1,6 @@
 # 实施计划（Plan）模板
 
-> 用法：superpowers-planner 编写 `doc/features/<feature-name>/<yyyy-MM-dd>-<sub-feature>-plan.md` 前，必须先用 Read 读取本文件，按以下模板输出任务与波次。
+> 用法：superpowers-planner 编写 `doc/features/<feature-name>/<yyyy-MM-dd>-<sub-feature>-plan.md` 前，必须优先读取本文件，按以下模板输出任务与波次。
 
 ## 计划文档头部
 
@@ -10,7 +10,7 @@
 > **设计文档**: doc/features/<feature-name>/<yyyy-MM-dd>-<sub-feature>-design.md
 > **目标**: <一句话>
 > **架构**: <2-3 句话>
-> **技术栈**: <按 CLAUDE.md 实际探测结果>
+> **技术栈**: <按 CLAUDE.md/AGENTS.md 实际探测结果>
 
 ---
 ```
