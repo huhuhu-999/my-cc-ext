@@ -22,6 +22,7 @@ Agent name mapping:
 | feature-dev | my-ext-feature-dev |
 | fix | my-ext-fix |
 | cc-ext-dev | my-ext-opencode-ext-dev |
+| code-review | my-ext-code-review |
 | superpowers-planner | my-ext-superpowers-planner |
 
 Package agents are registered explicitly by the plugin config hook; package files under `.opencode/agents` are not auto-discovered. Keep Claude Code lifecycle automation platform-specific instead of transplanting it into this bootstrap.
