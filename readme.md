@@ -29,6 +29,7 @@ Java 开发全流程 Agent 和 Skill 工具集，支持 Claude Code、OpenCode �
 | `gen-pgsql-ddl` | 生成 PostgreSQL DDL，schema 需询问用户，授权角色需确认并默认使用项目固定角色 |
 | `gen-java-entity` | 根据 DDL 或表结构生成 Entity、Mapper 或 Repository |
 | `gen-java-enum` | 生成 `code` / `msg` 风格 Java 枚举 |
+| `gen-api-doc` | 从 Controller 代码生成前端对接用的接口文档（入参 / 出参 / 示例 / 错误码） |
 | `implement-from-design` | 根据设计文档和实施计划完成 Java 编码 |
 | `code-reviewer` | 对 Java git diff 进行分层架构、数据库、安全、异常、测试等维度审查（内联快速检查；`code-review` Agent 是其超集） |
 | `fix` | 按 TDD 流程定位、复现和修复缺陷 |

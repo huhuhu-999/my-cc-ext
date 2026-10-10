@@ -26,6 +26,7 @@ test("root skills remain the single shared source", async () => {
     "code-reviewer",
     "design-doc-writer",
     "fix",
+    "gen-api-doc",
     "gen-java-entity",
     "gen-java-enum",
     "gen-pgsql-ddl",

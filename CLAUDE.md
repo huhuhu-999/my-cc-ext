@@ -29,6 +29,9 @@ skills/implement-from-design/SKILL.md   # Skill: 按设计文档编码
 skills/fix/SKILL.md                     # Skill: 系统化缺陷修复
 skills/add-javadoc/SKILL.md              # Skill: JavaDoc 文档注释补充
 skills/gen-java-entity/SKILL.md          # Skill: Java Entity + Mapper 生成
+skills/gen-api-doc/SKILL.md              # Skill: 接口文档生成（前端对接）
+skills/gen-api-doc/REFERENCE.md          #   读代码链路细则、类型映射表
+skills/gen-api-doc/EXAMPLES.md           #   输出格式模板与完整示例
 skills/write-a-skill/SKILL.md            # Skill: 编写 Agent Skill
 skills/build-fix/SKILL.md                # Skill: Java 构建错误修复
 skills/kb-loader/SKILL.md               # Skill: 知识库规范解析器（编码/审查/生成前加载）
@@ -134,6 +137,12 @@ Java `code ↔ msg` 枚举生成模板。自动探测项目包路径，生成含
 
 详细模板见 `skills/gen-java-enum/SKILL.md`。
 
+### Skill: gen-api-doc
+
+从 Controller 代码生成「前端对接用」的接口文档。逐个读取端点路径、HTTP 方法、Request/Response DTO 与 Service 错误分支，产出含入参 / 出参 / 请求响应示例 / 错误码表的 Markdown。字段、必填、错误码与文案一律取自代码；入参不写服务端注入项（`@CurrentUser` 等）；统一响应体 `SUC0001` + `object`、null 序列化为空串、超长 `Long` 输出字符串等坑位必须显式提示。落盘到 `doc/features/<YYYY-MM>/<功能名>/<日期>-<功能名>-接口文档.md`。
+
+详细流程见 `skills/gen-api-doc/SKILL.md`。
+
 ### Skill: gen-java-entity
 
 根据 DDL 或表结构生成 Java Entity + Mapper/Repository。自动适配项目 ORM 框架（MyBatis-Plus / MyBatis / JPA）和包路径。关键约定：
@@ -200,7 +209,7 @@ Java TDD 工作流命令。5 Phase 流程：Detect 探测测试基础设施 → 
 用户输入
   ↓ 自动匹配 description 关键词
 Skill（内联执行）
-  ├── 代码生成：gen-pgsql-ddl / gen-java-entity / gen-java-enum
+  ├── 代码生成：gen-pgsql-ddl / gen-java-entity / gen-java-enum / gen-api-doc
   ├── 质量保障：code-reviewer / fix / build-fix / tdd / add-javadoc
   ├── 流程编排：implement-from-design / write-a-skill
   └── 所有 Skill 在当前会话直接执行，多 Phase + bash + 护栏
@@ -216,7 +225,7 @@ Agent（独立子进程）
   └── superpowers-planner：设计规划（头脑风暴→Spec→Plan）
 ```
 
-- **Skill（11 个）**：内联执行，自动触发，覆盖代码生成、质量保障、流程编排、规范加载
+- **Skill（12 个）**：内联执行，自动触发，覆盖代码生成、质量保障、流程编排、规范加载
 - **Agent（6 个）**：独立子进程，根据用户输入自动匹配委托，探查项目上下文后执行复杂多步骤任务
 
 ## Agent 自动路由
