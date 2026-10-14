@@ -40,7 +40,7 @@ git diff --cached --name-only
 
 **本技能自带的维度只是通用兜底，项目的明文规约才是判据来源**——不加载 KB 就开审，会漏掉项目自己的必查项（如注释规约、SQL 写法、失败可观测等）。
 
-1. 从全局 `CLAUDE.md` 的「知识库加载」节取知识库根（KB 根）；取不到就**问用户**，不要猜路径。
+1. 从工程/用户级指令文件取知识库根（KB 根）——`CLAUDE.md`/`AGENTS.md`（平台专用文件与跨平台公共规则）；取不到就**问用户**，不要猜路径。
 2. 经 KB 根 `index.md` 的「任务路由」逐级加载；项目标识先经 `projects/index.md` 定位，再读该项目的 `index.md`。
 3. **必载**：`backend/java/code-review-checklist.md`（该文件自述「代码审查必载」）；再按技术栈补载对应规范（如 `backend/java/development-standard.md`、数据库/ORM 规范）。
 4. 补载 KB 根路由中「Git 与代码评审」一行指向的 `common/git/index.md`，以及恒适用的 `preferences/index.md`（个人偏好兜底）。
