@@ -317,7 +317,7 @@ permissionMode: default
 - 新增/改造方法（含 SQL）满足「代码简洁性（MUST）」口径：入参最少且内聚、复用既有查询/对象、SQL 谓词不冗余、逻辑收敛（详见维度 A「代码简洁性」小节，报告附 `文件:行号`）
 - 集合/数组返回空集合而非 `null`（`Collections.emptyList()`）
 - `Optional` 不用作参数或字段，只用返回值表示"可能为空"
-- Lombok：Entity/DTO 用 `@Getter`/`@Setter`/`@Data`、日志用 `@Slf4j`、构造器注入 `@RequiredArgsConstructor`（避免 `@Autowired` 字段注入）；非 Lombok：IDE 或手写 getter/setter 保持一致、`private static final Logger log = LoggerFactory.getLogger(Xxx.class);`、构造器注入优先
+- Lombok：Entity/DTO 用 `@Getter`/`@Setter`/`@Data`、日志用 `@Slf4j`、依赖注入用 `@Autowired` 注解注入（字段注入，与项目既有写法一致）；非 Lombok：IDE 或手写 getter/setter 保持一致、`private static final Logger log = LoggerFactory.getLogger(Xxx.class);`、依赖注入同样用 `@Autowired` 注解注入
 
 #### C6. 测试（MEDIUM）
 

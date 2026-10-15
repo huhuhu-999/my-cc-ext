@@ -80,6 +80,7 @@ git diff --cached --name-only
 - Mapper XML 中禁止 `${}` 拼接用户输入值（仅可用于动态表名/列名且必须白名单校验）
 - 批量操作使用 `<foreach>` 分页或分批处理
 - 注意 MyBatis-Plus `LambdaQueryWrapper` 优于字符串字段名
+- **Service 层批量操作方法调用前必须校验入参集合非 `null` 且非空（`size > 0`）**——含框架自带方法（`saveBatch` / `saveOrUpdateBatch` / `updateBatchById` / `removeByIds` / `removeBatchByIds` 等）与自定义批量方法；空集合时先返回、不做写入。判空用项目工具类（`CollUtils.isEmpty` / `CollectionUtils.isEmpty` / `CollUtil.isEmpty`，按项目规范选），**判空即覆盖 `null` 与空集合两种情况，不要写 `list == null || list.size() == 0` 这类冗余双写**。缺失该校验 → 至少 WARNING；若因为空集合被静默吞掉而**整批业务数据未落库且任务仍报成功**，按影响面判 CRITICAL（与 2.3「失败可观测」、KB `backend/java/code-review-checklist.md` 第 3 项同源：剔除/未落库必须留痕，不能静默成功）
 
 ### 2.3 异常处理（CRITICAL）
 
@@ -114,12 +115,12 @@ git diff --cached --name-only
 **Lombok（如项目使用）：**
 - Entity/DTO 使用 `@Getter`/`@Setter`/`@Data`，不手写 getter/setter
 - 日志使用 `@Slf4j`，不手写 Logger 声明
-- 依赖注入使用构造器注入 + `@RequiredArgsConstructor`，避免 `@Autowired` 字段注入
+- 依赖注入使用 `@Autowired` 注解注入（字段注入），与项目既有写法一致；不要凭"构造器注入更优"要求改造既有风格
 
 **无 Lombok（如项目不使用）：**
 - 使用 IDE 生成或手写 getter/setter，保持一致性
 - 日志声明：`private static final Logger log = LoggerFactory.getLogger(Xxx.class);`
-- 依赖注入优先构造器注入（`final` 字段 + 构造器），避免字段注入
+- 依赖注入使用 `@Autowired` 注解注入（字段注入），与项目既有写法一致
 
 ### 2.6 测试（MEDIUM）
 
