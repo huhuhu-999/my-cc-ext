@@ -27,7 +27,7 @@ description: 根据设计文档（PRD、技术方案、架构设计等）实现 
 1. 检查 `pom.xml` 或 `build.gradle` 中是否有 `lombok` 依赖
 2. 检查项目中是否存在 `@Slf4j`、`@Data`、`@Getter` 等 Lombok 注解的实际使用
 
-Lombok 使用状态影响：构造器注入写法、getter/setter 生成方式、日志声明方式。
+Lombok 使用状态影响：getter/setter 生成方式、日志声明方式（依赖注入统一 `@Autowired` 注解注入，不随 Lombok 变化）。
 
 ### 3. 补充探测
 
@@ -127,16 +127,15 @@ Lombok 使用状态影响：构造器注入写法、getter/setter 生成方式�
 2. 从中提取包路径前缀
 3. 新增文件放到与已有文件同级的对应子包中
 
-#### 构造器注入——Lombok 项目
+#### 依赖注入——Lombok 项目（`@Autowired` 注解注入）
 
 ```java
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class XxxServiceImpl implements XxxService {
 
-    private final XxxRepository xxxRepository;
-    // 构造器由 @RequiredArgsConstructor 自动生成，不使用 @Autowired 字段注入
+    @Autowired
+    private XxxRepository xxxRepository;
 
     // 方法 < 50 行，参数加 final
     public XxxDto doSomething(final String param) {
@@ -152,7 +151,7 @@ public class XxxServiceImpl implements XxxService {
 }
 ```
 
-#### 构造器注入——无 Lombok 项目
+#### 依赖注入——无 Lombok 项目（同样用 `@Autowired`）
 
 ```java
 @Service
@@ -160,12 +159,8 @@ public class XxxServiceImpl implements XxxService {
 
     private static final Logger log = LoggerFactory.getLogger(XxxServiceImpl.class);
 
-    private final XxxRepository xxxRepository;
-
-    // 手动构造器注入
-    public XxxServiceImpl(final XxxRepository xxxRepository) {
-        this.xxxRepository = xxxRepository;
-    }
+    @Autowired
+    private XxxRepository xxxRepository;
 
     public XxxDto doSomething(final String param) {
         if (param == null || param.isBlank()) {
@@ -176,6 +171,8 @@ public class XxxServiceImpl implements XxxService {
     }
 }
 ```
+
+> 依赖注入统一用 `@Autowired` 注解注入（字段注入），与项目既有写法一致；**不要**改造成构造器注入 + `@RequiredArgsConstructor` / `final` 字段——除非项目规范明确要求。
 
 #### DTO 规范
 
@@ -307,7 +304,7 @@ class XxxServiceImplIT {
 
 - 遵循分层架构，Controller → Service → Repository
 - 异常使用项目业务异常类，Controller 统一异常处理
-- 构造器注入，参数不可变
+- 依赖注入用 `@Autowired` 注解注入（字段注入），不改造既有风格
 
 ### code-reviewer 结果
 

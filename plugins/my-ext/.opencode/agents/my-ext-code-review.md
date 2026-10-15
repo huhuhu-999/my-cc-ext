@@ -5,7 +5,7 @@ mode: subagent
 permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"deny","bash":{"*":"deny","git status --short":"allow","git diff --no-ext-diff --no-textconv":"allow","git diff --cached --no-ext-diff --no-textconv":"allow","git log -5 --oneline":"allow"},"external_directory":"ask","task":{"*":"deny"}}
 ---
 <!-- generated-from: agents/code-review/AGENT.md -->
-<!-- source-sha256: 5cff2682166672e29f387b1c20b3bf5155b20541610abcce4b6ad53fa563295e -->
+<!-- source-sha256: 6280ebb33609cf2fdad28365b7d7090dc392c0ec604cd15666e0aa06914b4cef -->
 
 OpenCode 只读执行：编辑与委派被禁止。读取文件使用读取/搜索能力；Git 检查仅使用权限清单中的完整命令，不追加参数。
 允许的 shell 命令：
@@ -322,7 +322,7 @@ OpenCode 只读执行：编辑与委派被禁止。读取文件使用读取/搜�
 - 新增/改造方法（含 SQL）满足「代码简洁性（MUST）」口径：入参最少且内聚、复用既有查询/对象、SQL 谓词不冗余、逻辑收敛（详见维度 A「代码简洁性」小节，报告附 `文件:行号`）
 - 集合/数组返回空集合而非 `null`（`Collections.emptyList()`）
 - `Optional` 不用作参数或字段，只用返回值表示"可能为空"
-- Lombok：Entity/DTO 用 `@Getter`/`@Setter`/`@Data`、日志用 `@Slf4j`、构造器注入 `@RequiredArgsConstructor`（避免 `@Autowired` 字段注入）；非 Lombok：IDE 或手写 getter/setter 保持一致、`private static final Logger log = LoggerFactory.getLogger(Xxx.class);`、构造器注入优先
+- Lombok：Entity/DTO 用 `@Getter`/`@Setter`/`@Data`、日志用 `@Slf4j`、依赖注入用 `@Autowired` 注解注入（字段注入，与项目既有写法一致）；非 Lombok：IDE 或手写 getter/setter 保持一致、`private static final Logger log = LoggerFactory.getLogger(Xxx.class);`、依赖注入同样用 `@Autowired` 注解注入
 
 #### C6. 测试（MEDIUM）
 
