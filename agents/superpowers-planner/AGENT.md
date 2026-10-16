@@ -9,7 +9,7 @@ tools:
   - Grep
   - Bash
   - Skill
-model: claude-opus-4-8
+model: inherit
 permissionMode: acceptEdits
 ---
 

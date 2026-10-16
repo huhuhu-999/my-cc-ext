@@ -5,7 +5,7 @@ mode: subagent
 permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"deny","bash":{"*":"deny","git status --short":"allow","git diff --no-ext-diff --no-textconv":"allow","git diff --cached --no-ext-diff --no-textconv":"allow","git log -5 --oneline":"allow"},"external_directory":"ask","task":{"*":"deny"}}
 ---
 <!-- generated-from: agents/code-review/AGENT.md -->
-<!-- source-sha256: 6280ebb33609cf2fdad28365b7d7090dc392c0ec604cd15666e0aa06914b4cef -->
+<!-- source-sha256: 7127ad4c65096004c75f6b65da0d4c02bdaeec84678a661f2560b8a4e20323af -->
 
 OpenCode 只读执行：编辑与委派被禁止。读取文件使用读取/搜索能力；Git 检查仅使用权限清单中的完整命令，不追加参数。
 允许的 shell 命令：

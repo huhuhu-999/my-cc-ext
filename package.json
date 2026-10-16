@@ -1,6 +1,6 @@
 {
   "name": "my-ext",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Java development agents and shared skills for Claude Code, OpenCode and Codex",
   "type": "module",
   "main": ".opencode/plugins/my-ext.js",
@@ -40,9 +40,10 @@
     "version:sync": "node scripts/opencode/sync-version.mjs --write",
     "test:opencode": "node scripts/run-tests.mjs opencode",
     "test:codex": "node scripts/run-tests.mjs codex",
+    "test:claude": "node scripts/run-tests.mjs claude",
     "stage:codex": "node scripts/codex/stage-marketplace.mjs",
     "test:python": "python -m unittest discover -s skills/add-javadoc/tests -p test_*.py -v",
-    "test": "npm run lint:portability && npm run check:agents && npm run version:check && npm run test:codex && npm run test:opencode && npm run test:python",
+    "test": "npm run lint:portability && npm run check:agents && npm run version:check && npm run test:claude && npm run test:codex && npm run test:opencode && npm run test:python",
     "smoke:opencode": "node scripts/opencode/smoke-test.mjs"
   },
   "license": "MIT"

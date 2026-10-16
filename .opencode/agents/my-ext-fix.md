@@ -5,7 +5,7 @@ mode: subagent
 permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"ask","bash":{"*":"ask","git status*":"allow","git diff*":"allow","git log*":"allow","git show*":"allow","git rev-parse*":"allow"},"external_directory":"ask","task":{"*":"deny"}}
 ---
 <!-- generated-from: agents/fix/AGENT.md -->
-<!-- source-sha256: 3fe1f9f17c62163047de22bc1a3104547bb016fb64d92852be038c301a8bf025 -->
+<!-- source-sha256: d64fc21ffd6fb8f596f7a49e7f4b9d4b6e1039764824e4c9a538ef1c7f9ff2ad -->
 
 # Bug Fixer
 

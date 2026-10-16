@@ -5,7 +5,7 @@ mode: subagent
 permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"ask","bash":{"*":"ask","git status*":"allow","git diff*":"allow","git log*":"allow","git show*":"allow","git rev-parse*":"allow"},"external_directory":"ask","task":{"*":"deny"}}
 ---
 <!-- generated-from: agents/db-ops/AGENT.md -->
-<!-- source-sha256: 4f09b8303516f4c01f541022f3ac247023ba76bde72957a5f5eb78b7f8fccc70 -->
+<!-- source-sha256: e93b5ce6ca1edf5c0da0b33909a4870e069e24cee9f697e07f57f1ec9d39ccf1 -->
 
 # Database Operations Agent
 

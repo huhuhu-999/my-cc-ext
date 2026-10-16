@@ -5,7 +5,7 @@ mode: subagent
 permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"ask","bash":{"*":"ask","git status*":"allow","git diff*":"allow","git log*":"allow","git show*":"allow","git rev-parse*":"allow"},"external_directory":"ask","task":{"*":"deny","my-ext-superpowers-planner":"allow","my-ext-code-review":"allow"}}
 ---
 <!-- generated-from: agents/feature-dev/AGENT.md -->
-<!-- source-sha256: 09289b63bb2af55037ea1d9daa955077c28f9e8bd4970d43b2e53e82ca1fcfea -->
+<!-- source-sha256: 4af8bd730309dd98dbf8407ba1a1996c87bf0fff034a17690050d3cb38dbb919 -->
 
 # Feature Developer
 

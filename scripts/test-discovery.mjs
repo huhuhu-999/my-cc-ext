@@ -1,7 +1,7 @@
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 
-export const SUITES = ["codex", "opencode"];
+export const SUITES = ["claude", "codex", "opencode"];
 
 /**
  * 发现某个测试套件下全部用例文件，返回可直接作为 spawn 参数的有序绝对路径。

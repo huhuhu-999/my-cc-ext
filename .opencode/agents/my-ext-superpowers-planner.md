@@ -5,7 +5,7 @@ mode: subagent
 permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"ask","bash":{"*":"ask","git status*":"allow","git diff*":"allow","git log*":"allow","git show*":"allow","git rev-parse*":"allow"},"external_directory":"ask","task":{"*":"deny","my-ext-feature-dev":"allow"}}
 ---
 <!-- generated-from: agents/superpowers-planner/AGENT.md -->
-<!-- source-sha256: 4aa021b47545edf64deebceb4118a6b1a61e3590da83226474c8b7f0af6d7e36 -->
+<!-- source-sha256: 5461e84301b21bb924293144e54685916c1c990fe87ba8f07f62f59efcecf6e7 -->
 
 # Superpowers Planner
 

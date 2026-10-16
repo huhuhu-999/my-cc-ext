@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 
@@ -69,4 +69,18 @@ test("OpenCode guide documents user-level installation", async () => {
   assert.match(source, /opencode debug config/);
   assert.match(source, /my-ext-feature-dev/);
   assert.match(source, /当前开发分支尚未发布.*不能.*远程引用/s);
+});
+
+test("main README lists every agent and skill shipped by the repository", async () => {
+  const source = await readFile(path.join(root, "readme.md"), "utf8");
+  for (const kind of ["agents", "skills"]) {
+    const names = (await readdir(path.join(root, kind), { withFileTypes: true }))
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort();
+    assert.ok(names.length > 0, `${kind}/ contains no directories`);
+    for (const name of names) {
+      assert.ok(source.includes(`| \`${name}\` |`), `readme.md is missing ${kind} row: ${name}`);
+    }
+  }
 });

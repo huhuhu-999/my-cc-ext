@@ -9,7 +9,7 @@ tools:
   - Grep
   - Bash
   - Skill
-model: claude-opus-4-8
+model: inherit
 permissionMode: acceptEdits
 ---
 
@@ -109,7 +109,7 @@ tools:                       # 可用工具列表
   - Grep
   - Bash
   - Skill                    # 如需调用 skill
-model: claude-opus-4-8        # 模型：claude-opus-4-8 | claude-sonnet-4-6 | claude-haiku-4-5 | claude-fable-5
+model: inherit                # 模型：inherit（跟随会话）| claude-opus-5 | claude-sonnet-5-5 | claude-haiku-5-5
 permissionMode: acceptEdits  # 权限模式：acceptEdits | default | bypassPermissions | plan
 ---
 ```
