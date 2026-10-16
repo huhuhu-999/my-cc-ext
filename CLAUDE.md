@@ -36,6 +36,8 @@ skills/write-a-skill/SKILL.md            # Skill: 编写 Agent Skill
 skills/build-fix/SKILL.md                # Skill: Java 构建错误修复
 skills/kb-loader/SKILL.md               # Skill: 知识库规范解析器（编码/审查/生成前加载）
 skills/tdd/SKILL.md                      # Skill: Java TDD 工作流
+hooks/hooks.json                          # Hook 定义：知识库项目识别（UserPromptSubmit）
+hooks/kb-project-detect.ps1               # Hook 脚本：按工作目录匹配项目注册表
 ```
 
 - **Agent** (`agents/<name>/AGENT.md`): 带 YAML frontmatter 定义工具集、模型、权限模式；正文为系统提示词
@@ -179,6 +181,12 @@ Java 代码审查。对 git diff 变更进行 7 维审查（分层架构、JPA/D
 
 详细流程见 `skills/kb-loader/SKILL.md`。
 
+### Skill: design-doc-writer
+
+设计规范（Spec）与实施计划（Plan）的标准骨架模板。编写设计文档、实施计划，或 `superpowers-planner` 需要 Spec/Plan 骨架时使用。
+
+详细模板见 `skills/design-doc-writer/SKILL.md`。
+
 ### Skill: add-javadoc
 
 为 Service 接口和实现类补充 JavaDoc 文档注释。自动扫描未注释方法，生成符合项目风格的中文 JavaDoc（`@param`、`@return`、`@throws`）。
@@ -203,6 +211,12 @@ Java TDD 工作流命令。5 Phase 流程：Detect 探测测试基础设施 → 
 
 详细流程见 `skills/tdd/SKILL.md`。
 
+### Hook: 知识库项目识别
+
+`UserPromptSubmit` Hook：每次提交输入时按当前工作目录匹配知识库项目注册表（`projects/index.md` 的「代码目录」列，取路径最具体的匹配项），命中则把项目标识注入上下文，提醒先加载规范。知识库根解析顺序为「环境变量 `KB_ROOT` → 当前平台用户级指令文件中的「知识库根：」声明」，解析不到即静默退出，不影响没有知识库的环境。
+
+定义在 `hooks/hooks.json`，脚本 `hooks/kb-project-detect.ps1`（需 PowerShell 7 及以上）。仅 Claude Code 侧生效，Codex 与 OpenCode 不读取该目录。
+
 ## 架构概览
 
 ```
@@ -225,7 +239,7 @@ Agent（独立子进程）
   └── superpowers-planner：设计规划（头脑风暴→Spec→Plan）
 ```
 
-- **Skill（12 个）**：内联执行，自动触发，覆盖代码生成、质量保障、流程编排、规范加载
+- **Skill（13 个）**：内联执行，自动触发，覆盖代码生成、质量保障、流程编排、规范加载
 - **Agent（6 个）**：独立子进程，根据用户输入自动匹配委托，探查项目上下文后执行复杂多步骤任务
 
 ## Agent 自动路由

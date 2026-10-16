@@ -1,0 +1,22 @@
+{
+  "description": "知识库项目识别：按当前工作目录匹配项目注册表，命中时注入项目标识提醒（Claude Code 侧；KB 根由用户级指令文件声明）",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh",
+            "args": [
+              "-NoProfile",
+              "-File",
+              "${CLAUDE_PLUGIN_ROOT}/hooks/kb-project-detect.ps1"
+            ],
+            "timeout": 10,
+            "statusMessage": "识别知识库项目..."
+          }
+        ]
+      }
+    ]
+  }
+}
