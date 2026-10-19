@@ -5,7 +5,7 @@ mode: subagent
 permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"deny","bash":{"*":"deny","git status --short":"allow","git diff --no-ext-diff --no-textconv":"allow","git diff --cached --no-ext-diff --no-textconv":"allow","git log -5 --oneline":"allow"},"external_directory":"ask","task":{"*":"deny"}}
 ---
 <!-- generated-from: agents/code-review/AGENT.md -->
-<!-- source-sha256: 68ba4bc9ed3788aba404c66c6f85461339eb543110f5a18340bebea8f3c20a97 -->
+<!-- source-sha256: 96a146f3df233fd5555cfd0fef0194c7cb3e8acaca7f279253571901becaa662 -->
 
 OpenCode 只读执行：编辑与委派被禁止。读取文件使用读取/搜索能力；Git 检查仅使用权限清单中的完整命令，不追加参数。
 允许的 shell 命令：
@@ -146,6 +146,7 @@ OpenCode 只读执行：编辑与委派被禁止。读取文件使用读取/搜�
 审查**本次新增代码**时，注释采用统一精简口径，不模仿旧代码参差风格（有的字段有注释、有的没有、长短不一）：
 
 - **字段**：一句话中文 JavaDoc 说明业务语义并带量纲/单位（如「违退数（违约退租合同数，个）」）；不要展开过程
+- **Map 入参逐 key 注释（必查项）**：构建 Map 形式的请求/入参（`map.put("key", value)`，尤其对接外部系统、智能体的请求体）时，**每个 key 必须有行内注释说明业务含义**，带单位或示例值更佳（如 `stat.put("total", total + "条"); // 采集数据，如 120条`）；缺 key 注释判 **WARNING**（key 是字符串字面量，无注释时评审与排错都无从判断语义，且与接口文档的字段易错配）
 - **转换/逻辑行**：只注释代码不自明的一点（为什么这样写 / 业务量纲 / 边界考虑），一行以内；禁止逐行复述三目/判空等代码在做什么的过程性注释（如「空/缺失→null，非空→xxx」这类描述代码分支的）
 - **Mapper XML 列映射**等本身自明处不加噪音注释
 - **注释不写**「Excel 文本 String 接收」这类对代码结构的复述；设计背景/取舍理由写入 design/plan 文档，不进代码
