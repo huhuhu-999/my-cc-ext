@@ -5,7 +5,7 @@ mode: subagent
 permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"deny","bash":{"*":"deny","git status --short":"allow","git diff --no-ext-diff --no-textconv":"allow","git diff --cached --no-ext-diff --no-textconv":"allow","git log -5 --oneline":"allow"},"external_directory":"ask","task":{"*":"deny"}}
 ---
 <!-- generated-from: agents/code-review/AGENT.md -->
-<!-- source-sha256: 96a146f3df233fd5555cfd0fef0194c7cb3e8acaca7f279253571901becaa662 -->
+<!-- source-sha256: 10daa9e01ebb026549c392691698032b8b12d15aa970f807d498714c1f29dd65 -->
 
 OpenCode 只读执行：编辑与委派被禁止。读取文件使用读取/搜索能力；Git 检查仅使用权限清单中的完整命令，不追加参数。
 允许的 shell 命令：
@@ -327,7 +327,7 @@ OpenCode 只读执行：编辑与委派被禁止。读取文件使用读取/搜�
 
 - 方法 ≤ 50 行，类 ≤ 800 行（核心逻辑超出时拆分）；嵌套层次 ≤ 4 层，用 early return / guard clause 减少嵌套
 - 消除魔法数字和魔法字符串，使用命名常量或枚举
-- 变量和参数尽量不可变（`final` 关键字）；方法参数 ≤ 5 个，超过时封装为参数对象
+- 变量按需不可变（`final`）；方法参数 ≤ 5 个，超过时封装为参数对象；**项目既有代码未使用 `final` 时不作为问题**
 - 新增/改造方法（含 SQL）满足「代码简洁性（MUST）」口径：入参最少且内聚、复用既有查询/对象、SQL 谓词不冗余、逻辑收敛（详见维度 A「代码简洁性」小节，报告附 `文件:行号`）
 - 集合/数组返回空集合而非 `null`（`Collections.emptyList()`）
 - `Optional` 不用作参数或字段，只用返回值表示"可能为空"

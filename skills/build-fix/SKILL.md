@@ -7,6 +7,8 @@ description: Java 构建错误修复。检测 Maven/Gradle 构建系统，分组
 
 修复 Java 项目的编译/构建错误。在当前会话内联执行，逐个修复直至构建通过。
 
+> **知识库规范**：动手前先调用 `kb-loader` 技能获取加载清单并按其读取；KB 明文规约优先于本技能中的示例与默认口径。
+
 ## Phase 1 — DETECT（检测构建系统）
 
 递归搜索 `**/pom.xml`、`**/build.gradle`、`**/build.gradle.kts`、`mvnw*` 和 `gradlew*`，排除 `target/`、`build/` 和生成目录。根构建文件用于确定聚合项目，子目录构建文件用于确定模块边界。

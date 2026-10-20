@@ -13,6 +13,8 @@ description: 根据设计文档（PRD、技术方案、架构设计等）实现 
 
 ### 1. 阅读项目规则
 
+> **知识库规范**：动手前先调用 `kb-loader` 技能获取加载清单并按其读取；KB 明文规约优先于本技能中的示例与默认口径。
+
 首先读取项目根目录下的 `AGENTS.md`；若当前平台还有专用规则文件，再读取该文件作为补充。从项目规则中获取：
 - 项目定位、模块结构和分层约定
 - ORM 框架（JPA/Hibernate / MyBatis / MyBatis-Plus / JdbcTemplate）
@@ -137,7 +139,7 @@ public class XxxServiceImpl implements XxxService {
     @Autowired
     private XxxRepository xxxRepository;
 
-    // 方法 < 50 行，参数加 final
+    // 方法 < 50 行；参数是否 final 随项目既有风格，不强制
     public XxxDto doSomething(final String param) {
         // 参数校验在方法开头
         if (param == null || param.isBlank()) {
@@ -274,7 +276,7 @@ class XxxServiceImplIT {
 - [ ] DTO 和 Entity 没有跨层混用
 - [ ] 没有硬编码密钥、Token、密码或敏感信息
 - [ ] 异常不吞掉（空 catch），日志不打印敏感信息
-- [ ] 参数使用 `final`，返回值不返回 null（返空集合）
+- [ ] 参数风格随项目既有写法（不强制 `final`）；返回值不返回 null（返空集合）
 - [ ] 方法 < 50 行，嵌套层次 ≤ 4
 - [ ] 包路径动态确定，没有写死
 - [ ] 测试可运行且覆盖核心分支和边界条件
