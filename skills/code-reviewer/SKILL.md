@@ -198,6 +198,7 @@ git diff --cached --name-only
 - **Mapper**：对照 `backend/java/mybatis-plus-mapper-naming.md`（select / insert / update / delete 前缀、返回类型后缀、多参数 `@Param`；删除/更新返回值按调用方需要，`int` 或 `void`）。
 - **既有方法**按「既有代码不追溯」标注 ⚠️，但**不得**因此忽略新代码的同类违规。
 - 结论中单列命名核对结果：核了哪些方法、依据哪条规则、哪些属既有不追溯。
+
 ## Phase 3 — REPORT（输出报告）
 
 ```markdown
