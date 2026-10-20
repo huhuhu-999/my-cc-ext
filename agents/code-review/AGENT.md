@@ -113,7 +113,7 @@ permissionMode: default
 
 对照项目规范逐条核对：
 
-- **命名规范** — 类名 PascalCase、方法/变量 camelCase、常量 UPPER_SNAKE；枚举、布尔值语义清晰；不缩写、不拼音、不中英混杂
+- **命名规范** — 类名 PascalCase、方法/变量 camelCase、常量 UPPER_SNAKE；枚举、布尔值语义清晰；不缩写、不拼音、不中英混杂。方法命名另须对照 KB：公开方法动词集（`backend/java/development-standard.md`「方法命名」）、私有辅助前缀表（`backend/java/method-naming.md`）、Mapper 命名（`backend/java/mybatis-plus-mapper-naming.md`）；`recreate`、`parse`、`format` 等表外动词视为违规
 - **格式规范** — 缩进、换行、大括号风格与项目一致；方法过长（体量默认值见 KB「代码风格」）提示拆分
 - **注释规范** — 类/方法 JavaDoc（中文）、关键逻辑有注释；**新增/改动方法的注释遵守下方「文档注释完整性」与「注释精简口径」**；无废话注释；`TODO` / `FIXME` 标注明确
 - **方法注释结构规范** — 方法 JavaDoc 先一句话职责，再以**编号逻辑步骤（1. 2. 3. …）**描述主流程、分支归属与边界；禁止把判定规则、边界、TODO/设计代号等揉成一大段 `<p>` 叙述；方法体关键节点用简短内联注释，不写长句小作文

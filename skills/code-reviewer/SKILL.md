@@ -42,10 +42,10 @@ git diff --cached --name-only
 
 1. 从工程/用户级指令文件取知识库根（KB 根）——`CLAUDE.md`/`AGENTS.md`（平台专用文件与跨平台公共规则）；取不到就**问用户**，不要猜路径。
 2. 经 KB 根 `index.md` 的「任务路由」逐级加载；项目标识先经 `projects/index.md` 定位，再读该项目的 `index.md`。
-3. **必载**：`backend/java/code-review-checklist.md`（该文件自述「代码审查必载」）；再按技术栈补载对应规范（如 `backend/java/development-standard.md`、数据库/ORM 规范）。
+3. **必载**：`backend/java/code-review-checklist.md`（该文件自述「代码审查必载」）、`backend/java/method-naming.md`、`backend/java/mybatis-plus-mapper-naming.md`（命名判据）；再按技术栈补载对应规范（如 `backend/java/development-standard.md`、数据库/ORM 规范）。
 4. 补载 KB 根路由中「Git 与代码评审」一行指向的 `common/git/index.md`，以及恒适用的 `preferences/index.md`（个人偏好兜底）。
 5. **优先级**：KB 明文规约 > 本技能的通用维度；项目规约 > 通用规范。**新代码违背明文规范至少 WARNING，不得因仓库存在历史先例而降级为 INFO 或忽略**。
-6. 报告开头列出本次实际加载了哪些规约文件；**未能加载时必须在报告开头标注**，不得只凭通用规则下结论。
+6. 报告开头列出本次实际加载了哪些规约文件；**未能加载时必须在报告开头标注**，不得只凭通用规则下结论。清单里列出的文档必须真正读取，不能只列进清单不读。
 
 ---
 
@@ -121,6 +121,7 @@ git diff --cached --name-only
 - 日志声明：`private static final Logger log = LoggerFactory.getLogger(Xxx.class);`
 - 依赖注入使用 `@Autowired` 注解注入（字段注入），与项目既有写法一致
 
+
 ### 2.6 测试（MEDIUM）
 
 - 新增 Service/Component 的 public 方法应有对应单元测试
@@ -188,6 +189,15 @@ git diff --cached --name-only
 
 ---
 
+### 2.9 命名（HIGH）
+
+命名不只是大小写风格，须对照 KB 三份命名规范逐方法核对新增/修改的代码：
+
+- **公开方法**：动词落在 `backend/java/development-standard.md`「方法命名」的集合内（get / list / page / create / update / delete / validate / is / has）；`recreate`、`parse`、`format` 等表外动词视为违规；方法名表达业务动作，不泄漏 SQL 语义（Service 侧不得叫 `selectXxxList`）。
+- **私有辅助方法**：对照 `backend/java/method-naming.md` 前缀表（build / resolve / load / fill / validate / is / match / select / list / save / insert / handle / try / read / cache）；`validate*` 与 `is*`/`has*` 不得互替，`build*` 与 `fill*` 不得混用。
+- **Mapper**：对照 `backend/java/mybatis-plus-mapper-naming.md`（select / insert / update / delete 前缀、返回类型后缀、多参数 `@Param`；删除/更新返回值按调用方需要，`int` 或 `void`）。
+- **既有方法**按「既有代码不追溯」标注 ⚠️，但**不得**因此忽略新代码的同类违规。
+- 结论中单列命名核对结果：核了哪些方法、依据哪条规则、哪些属既有不追溯。
 ## Phase 3 — REPORT（输出报告）
 
 ```markdown

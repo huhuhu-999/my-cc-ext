@@ -5,7 +5,7 @@ mode: subagent
 permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"deny","bash":{"*":"deny","git status --short":"allow","git diff --no-ext-diff --no-textconv":"allow","git diff --cached --no-ext-diff --no-textconv":"allow","git log -5 --oneline":"allow"},"external_directory":"ask","task":{"*":"deny"}}
 ---
 <!-- generated-from: agents/code-review/AGENT.md -->
-<!-- source-sha256: 5b97bd407819116f3a4c219e0c69a387da840fad3b3756101b018ff0c2b373e4 -->
+<!-- source-sha256: 3052b5233e3d4d8c54ff5a80f4670d2f59f5d32db81d1bc1dbcd1a5d9f6cefb0 -->
 
 OpenCode 只读执行：编辑与委派被禁止。读取文件使用读取/搜索能力；Git 检查仅使用权限清单中的完整命令，不追加参数。
 允许的 shell 命令：
@@ -118,7 +118,7 @@ OpenCode 只读执行：编辑与委派被禁止。读取文件使用读取/搜�
 
 对照项目规范逐条核对：
 
-- **命名规范** — 类名 PascalCase、方法/变量 camelCase、常量 UPPER_SNAKE；枚举、布尔值语义清晰；不缩写、不拼音、不中英混杂
+- **命名规范** — 类名 PascalCase、方法/变量 camelCase、常量 UPPER_SNAKE；枚举、布尔值语义清晰；不缩写、不拼音、不中英混杂。方法命名另须对照 KB：公开方法动词集（`backend/java/development-standard.md`「方法命名」）、私有辅助前缀表（`backend/java/method-naming.md`）、Mapper 命名（`backend/java/mybatis-plus-mapper-naming.md`）；`recreate`、`parse`、`format` 等表外动词视为违规
 - **格式规范** — 缩进、换行、大括号风格与项目一致；方法过长（体量默认值见 KB「代码风格」）提示拆分
 - **注释规范** — 类/方法 JavaDoc（中文）、关键逻辑有注释；**新增/改动方法的注释遵守下方「文档注释完整性」与「注释精简口径」**；无废话注释；`TODO` / `FIXME` 标注明确
 - **方法注释结构规范** — 方法 JavaDoc 先一句话职责，再以**编号逻辑步骤（1. 2. 3. …）**描述主流程、分支归属与边界；禁止把判定规则、边界、TODO/设计代号等揉成一大段 `<p>` 叙述；方法体关键节点用简短内联注释，不写长句小作文
