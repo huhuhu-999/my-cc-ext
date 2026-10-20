@@ -67,7 +67,7 @@ git diff --cached --name-only
 
 **通用规则：**
 - SQL 参数必须使用参数化查询或 ORM 提供的绑定方式，禁止字符串拼接用户输入
-- 批量操作必须分页或限制 IN 子句大小（≤ 1000），防止 OOM
+- 批量操作必须分页或分批（`IN` 子句口径见 KB `backend/java/development-standard.md`「数据库访问」），防止 OOM
 - 注意 N+1 查询：关联查询优先使用 JOIN / fetch / 批量加载，避免循环内查库
 
 **JPA/Hibernate（如项目使用）：**
@@ -104,13 +104,12 @@ git diff --cached --name-only
 
 ### 2.5 代码质量（HIGH）
 
-- 方法 ≤ 50 行，类 ≤ 800 行（核心逻辑超出时拆分为多个私有方法或独立类）
-- 嵌套层次 ≤ 4 层，使用 early return / guard clause 减少嵌套
+- 方法/类/嵌套/参数体量按 KB「代码风格」的默认值核对（方法 ≤ 50 行、类 ≤ 800 行、嵌套 ≤ 4 层、参数 ≤ 5 个；项目规范可覆盖）
+- 使用 early return / guard clause 减少嵌套
 - 消除魔法数字和魔法字符串，使用命名常量或枚举
 - 变量按需不可变（`final` 或不可变类）；**项目既有代码未使用 `final` 时不作为问题**
-- 方法参数 ≤ 5 个，超过时封装为参数对象
 - 集合/数组返回空集合而非 `null`（`Collections.emptyList()`）
-- `Optional` 不用作参数或字段，只用返回值表示"可能为空"
+- `Optional` 用法见 KB「集合与空值」：只用返回值表示「可能为空」，不用作参数或字段
 
 **Lombok（如项目使用）：**
 - Entity/DTO 使用 `@Getter`/`@Setter`/`@Data`，不手写 getter/setter

@@ -5,7 +5,7 @@ mode: subagent
 permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"deny","bash":{"*":"deny","git status --short":"allow","git diff --no-ext-diff --no-textconv":"allow","git diff --cached --no-ext-diff --no-textconv":"allow","git log -5 --oneline":"allow"},"external_directory":"ask","task":{"*":"deny"}}
 ---
 <!-- generated-from: agents/code-review/AGENT.md -->
-<!-- source-sha256: 10daa9e01ebb026549c392691698032b8b12d15aa970f807d498714c1f29dd65 -->
+<!-- source-sha256: 5b97bd407819116f3a4c219e0c69a387da840fad3b3756101b018ff0c2b373e4 -->
 
 OpenCode 只读执行：编辑与委派被禁止。读取文件使用读取/搜索能力；Git 检查仅使用权限清单中的完整命令，不追加参数。
 允许的 shell 命令：
@@ -119,7 +119,7 @@ OpenCode 只读执行：编辑与委派被禁止。读取文件使用读取/搜�
 对照项目规范逐条核对：
 
 - **命名规范** — 类名 PascalCase、方法/变量 camelCase、常量 UPPER_SNAKE；枚举、布尔值语义清晰；不缩写、不拼音、不中英混杂
-- **格式规范** — 缩进、换行、大括号风格与项目一致；方法过长（>50 行）提示拆分
+- **格式规范** — 缩进、换行、大括号风格与项目一致；方法过长（体量默认值见 KB「代码风格」）提示拆分
 - **注释规范** — 类/方法 JavaDoc（中文）、关键逻辑有注释；**新增/改动方法的注释遵守下方「文档注释完整性」与「注释精简口径」**；无废话注释；`TODO` / `FIXME` 标注明确
 - **方法注释结构规范** — 方法 JavaDoc 先一句话职责，再以**编号逻辑步骤（1. 2. 3. …）**描述主流程、分支归属与边界；禁止把判定规则、边界、TODO/设计代号等揉成一大段 `<p>` 叙述；方法体关键节点用简短内联注释，不写长句小作文
 - **注释精简化（必查项，违者报 WARNING 要求清理）** — 注释只写代码**不自明**的意图/边界/取舍；**违禁形态（逐一扫描，命中即报告）**：① 类级「平行于某场景 / 差异在… / 业务表 xxx（键列=…）、附件 obj_type 等」流水账式说明；② 在代码注释里写**设计代号 / 文档内部引用**（如 `D1~D7`、`TODO-T1~Tn`、`见 design-xxx §x`）；③ 逐行复述代码本身的废话注释（`// 把 X 赋给 Y` 之类）；`TODO`/`FIXME` 仅允许真实待办且写明内容
@@ -294,7 +294,7 @@ OpenCode 只读执行：编辑与委派被禁止。读取文件使用读取/搜�
 
 **通用规则：**
 - SQL 参数必须使用参数化查询或 ORM 提供的绑定方式，禁止字符串拼接用户输入
-- 批量操作必须分页或限制 IN 子句大小（≤ 1000），防止 OOM
+- 批量操作必须分页或分批（`IN` 子句口径见 KB `backend/java/development-standard.md`「数据库访问」），防止 OOM
 - N+1 / 循环内查库深查见「维度 B1」；关联查询优先 JOIN / fetch / 批量加载
 
 **JPA/Hibernate（如项目使用）：**
@@ -325,12 +325,12 @@ OpenCode 只读执行：编辑与委派被禁止。读取文件使用读取/搜�
 
 #### C5. 代码质量（HIGH）
 
-- 方法 ≤ 50 行，类 ≤ 800 行（核心逻辑超出时拆分）；嵌套层次 ≤ 4 层，用 early return / guard clause 减少嵌套
+- 体量默认值见 KB「代码风格」（方法 ≤ 50 行、类 ≤ 800 行、嵌套 ≤ 4 层、参数 ≤ 5 个；项目规范可覆盖）；用 early return / guard clause 减少嵌套
 - 消除魔法数字和魔法字符串，使用命名常量或枚举
-- 变量按需不可变（`final`）；方法参数 ≤ 5 个，超过时封装为参数对象；**项目既有代码未使用 `final` 时不作为问题**
+- 变量按需不可变（`final`）；**项目既有代码未使用 `final` 时不作为问题**
 - 新增/改造方法（含 SQL）满足「代码简洁性（MUST）」口径：入参最少且内聚、复用既有查询/对象、SQL 谓词不冗余、逻辑收敛（详见维度 A「代码简洁性」小节，报告附 `文件:行号`）
 - 集合/数组返回空集合而非 `null`（`Collections.emptyList()`）
-- `Optional` 不用作参数或字段，只用返回值表示"可能为空"
+- `Optional` 用法见 KB「集合与空值」：只用返回值表示「可能为空」
 - Lombok：Entity/DTO 用 `@Getter`/`@Setter`/`@Data`、日志用 `@Slf4j`、依赖注入用 `@Autowired` 注解注入（字段注入，与项目既有写法一致）；非 Lombok：IDE 或手写 getter/setter 保持一致、`private static final Logger log = LoggerFactory.getLogger(Xxx.class);`、依赖注入同样用 `@Autowired` 注解注入
 
 #### C6. 测试（MEDIUM）
