@@ -5,7 +5,7 @@ mode: subagent
 permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"ask","bash":{"*":"ask","git status*":"allow","git diff*":"allow","git log*":"allow","git show*":"allow","git rev-parse*":"allow"},"external_directory":"ask","task":{"*":"deny","my-ext-superpowers-planner":"allow","my-ext-code-review":"allow"}}
 ---
 <!-- generated-from: agents/feature-dev/AGENT.md -->
-<!-- source-sha256: 67783d554df49f0540f6d32d6648c0c4031249f7ebc83c6f1f1e928f98755507 -->
+<!-- source-sha256: e7228e8a54ea0b0c802cb58f1a088c474478d8f04482aa82117e4e9db16aff75 -->
 
 # Feature Developer
 
@@ -154,6 +154,7 @@ PRD → 设计文档(Spec) → 实施计划(Plan) → [确认开发目录] → i
 > - 文件名固定为 `<yyyy-MM-dd>-<sub-feature>-design.md` / `<yyyy-MM-dd>-<sub-feature>-plan.md`
 > - 日期前缀取**当天**，格式 `yyyy-MM-dd`（如 `2026-09-02-add-breach-cancel-count-design.md`），用于区分同一子功能的不同迭代版本
 > - `<sub-feature>` 用接口名或功能模块名（如 `add-agent-info`、`list-agent-infos`），保持英文 kebab-case
+> - **多子功能需求额外产出「总览」**：同一需求含 **≥2 个可独立验收的子功能**时，除各子功能 `<yyyy-MM-dd>-<sub-feature>-design.md`，另产出 `<yyyy-MM-dd>-00-overview-design.md`（骨架见 `design-doc-writer` 的 `templates/overview-skeleton.md`），按「**需求 → 改造点 → 影响接口**」组织；`README.md` 保持**纯索引**（子功能表 + 归档 + 附属资源），**不复述**总览内容
 > - DDL/SQL 等附属资源保存到 `doc/features/<yyyy-MM>/<feature-name>/sql/`（目录不存在则创建，与当月 design/plan 同夹沉淀）
 > - 已完成/过时的 design、plan 归档到 `doc/features/<yyyy-MM>/<feature-name>/archive/`（平铺存放）；由于年月已隔离跨月，`archive/` 只用于当月夹内过时版本，当前进行中的文档保留在功能月目录 `doc/features/<yyyy-MM>/<feature-name>/` 内
 > - 首次在某功能某月生成文档时创建 `doc/features/<yyyy-MM>/<feature-name>/README.md` 索引文件：索引该功能该月的各子功能 design/plan（归档文件标注 `archive/` 位置）；文档间相对引用：同夹（design/plan/README）互引用相对文件名即可，跨月/归档引用写明相对仓库根完整路径
