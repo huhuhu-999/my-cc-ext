@@ -18,6 +18,14 @@ description: 当需要新建枚举类时使用。自动适配当前项目包路�
 2. **Lombok** — 检查 `pom.xml` / `build.gradle` 是否包含 Lombok 依赖，决定是否使用 `@Getter`
 3. **StringUtils** — 检查项目是否已有字符串工具类依赖，优先级：Apache Commons Lang3 > Hutool > 无依赖
 4. **代码格式** — 读取当前项目的 `AGENTS.md` 和平台专用规则，再检查同模块现有代码，确认行宽、链式调用、注解和格式习惯
+5. **知识库规范** — 调用 `kb-loader` 技能取加载清单并按其读取（枚举口径以 KB `backend/java/enum-standard.md` 为准）
+
+## 规则（与 KB enum-standard 一致）
+
+- 枚举常量按 `code` 字典序排列
+- `getByCode` / `getCodeByMsg` 对 null 或空串返回 null；无匹配返回 null，不抛异常
+- `msg` 允许为 null，构建 msg→code 缓存前先过滤 null
+- 三个查找方法名不可改：`getByCode` / `getCodeByMsg` / `getMsgByCode`
 
 ## 模板
 
@@ -121,7 +129,7 @@ public String getMsg() {
 7. 枚举值按 code 字典序排列
 8. `@since` 用当天日期（生成代码时的系统日期，格式 `yyyy-MM-dd`）
 9. 无匹配时返回 `null`（不抛异常）
-10. 代码格式遵循行宽 160、链式调用、注解等规范（见前置探查第 4 步）
+10. 代码格式遵循项目规范与 KB（默认行宽上限 200，超出才折行；见前置探查第 4/5 步）
 
 ## 示例
 

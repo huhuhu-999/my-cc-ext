@@ -42,14 +42,16 @@ git diff --cached --name-only
 
 1. 从工程/用户级指令文件取知识库根（KB 根）——`CLAUDE.md`/`AGENTS.md`（平台专用文件与跨平台公共规则）；取不到就**问用户**，不要猜路径。
 2. 经 KB 根 `index.md` 的「任务路由」逐级加载；项目标识先经 `projects/index.md` 定位，再读该项目的 `index.md`。
-3. **必载**：`backend/java/code-review-checklist.md`（该文件自述「代码审查必载」）；再按技术栈补载对应规范（如 `backend/java/development-standard.md`、数据库/ORM 规范）。
+3. **必载**：`backend/java/code-review-checklist.md`（该文件自述「代码审查必载」）、`backend/java/method-naming.md`、`backend/java/mybatis-plus-mapper-naming.md`（命名判据）；再按技术栈补载对应规范（如 `backend/java/development-standard.md`、数据库/ORM 规范）。
 4. 补载 KB 根路由中「Git 与代码评审」一行指向的 `common/git/index.md`，以及恒适用的 `preferences/index.md`（个人偏好兜底）。
 5. **优先级**：KB 明文规约 > 本技能的通用维度；项目规约 > 通用规范。**新代码违背明文规范至少 WARNING，不得因仓库存在历史先例而降级为 INFO 或忽略**。
-6. 报告开头列出本次实际加载了哪些规约文件；**未能加载时必须在报告开头标注**，不得只凭通用规则下结论。
+6. 报告开头列出本次实际加载了哪些规约文件；**未能加载时必须在报告开头标注**，不得只凭通用规则下结论。清单里列出的文档必须真正读取，不能只列进清单不读。
 
 ---
 
 ## Phase 2 — REVIEW（逐文件审查）
+
+**审查姿态**：以高级开发工程师的视角逐方法通读变更代码，而不是只勾规范清单——除下方维度外，主动识别分支间重复条件/重复取值、复制粘贴的组装逻辑、可提前计算或提取的公共部分；发现即按影响判级并给出重构写法。
 
 ### 2.1 分层架构（CRITICAL）
 
@@ -67,7 +69,7 @@ git diff --cached --name-only
 
 **通用规则：**
 - SQL 参数必须使用参数化查询或 ORM 提供的绑定方式，禁止字符串拼接用户输入
-- 批量操作必须分页或限制 IN 子句大小（≤ 1000），防止 OOM
+- 批量操作必须分页或分批（`IN` 子句口径见 KB `backend/java/development-standard.md`「数据库访问」），防止 OOM
 - 注意 N+1 查询：关联查询优先使用 JOIN / fetch / 批量加载，避免循环内查库
 
 **JPA/Hibernate（如项目使用）：**
@@ -104,13 +106,14 @@ git diff --cached --name-only
 
 ### 2.5 代码质量（HIGH）
 
-- 方法 ≤ 50 行，类 ≤ 800 行（核心逻辑超出时拆分为多个私有方法或独立类）
-- 嵌套层次 ≤ 4 层，使用 early return / guard clause 减少嵌套
+- 方法/类/嵌套/参数体量按 KB「代码风格」的默认值核对（方法 ≤ 50 行、类 ≤ 800 行、嵌套 ≤ 4 层、参数 ≤ 5 个；项目规范可覆盖）
+- 使用 early return / guard clause 减少嵌套
 - 消除魔法数字和魔法字符串，使用命名常量或枚举
-- 变量和参数尽量不可变（`final` 关键字，或使用不可变类）
-- 方法参数 ≤ 5 个，超过时封装为参数对象
+- 变量按需不可变（`final` 或不可变类）；**项目既有代码未使用 `final` 时不作为问题**
 - 集合/数组返回空集合而非 `null`（`Collections.emptyList()`）
-- `Optional` 不用作参数或字段，只用返回值表示"可能为空"
+- `Optional` 用法见 KB「集合与空值」：只用返回值表示「可能为空」，不用作参数或字段
+- **分支间重复逻辑**：同一条件/同一取值表达式在多个分支重复、可提前计算一次的，判 **WARNING**（如两个分支各写一遍 `StringUtils.isBlank(x)`，应提为 `hasXxx` 布尔量）；复制粘贴的分支组装判 **INFO～WARNING**（仅泛型/类型不同无法合并的除外），给出合并后的写法
+- **新代码不照抄项目惯例**：新增/修改代码中的接口、注解、基类、序列化等结构须能说明实际用途；「项目里大家都这么写」不构成理由，无法说明用途即判 **WARNING**；既有代码不追溯，只约束新增与修改的代码
 
 **Lombok（如项目使用）：**
 - Entity/DTO 使用 `@Getter`/`@Setter`/`@Data`，不手写 getter/setter
@@ -121,6 +124,7 @@ git diff --cached --name-only
 - 使用 IDE 生成或手写 getter/setter，保持一致性
 - 日志声明：`private static final Logger log = LoggerFactory.getLogger(Xxx.class);`
 - 依赖注入使用 `@Autowired` 注解注入（字段注入），与项目既有写法一致
+
 
 ### 2.6 测试（MEDIUM）
 
@@ -139,6 +143,7 @@ git diff --cached --name-only
   - `info`：业务关键节点（订单状态变更、任务完成）
   - `debug`：方法入参/出参、调试细节
 - 日志信息包含足够上下文（如订单 ID、用户 ID），但不过量
+- 日志细则以 KB 为准：方法进出**成对**、参数段 `key={}`、异常放**最后一个参数位**、禁止纯句子日志（详见 `backend/java/logging-standard.md`；项目规则优先）
 
 ### 2.8 注释（MEDIUM）—— 通俗易懂
 
@@ -148,6 +153,7 @@ git diff --cached --name-only
 - **`@param` / `@return` 必须写「口径」，不是复述参数名**：**公开与受保护方法必须有** `@param`/`@return`/`@throws`（项目 `backend/java/development-standard.md`「文档注释（Javadoc）」明文）——只写一个名词的复述（`@param detail 明细`、`@return 影响行数`）**等于没写**，要写清口径/约束/边界，如 `@param rioaNos RIOA 编号列表，为空则不限定编号`。**缺 `@param` 或只复述参数名 → 至少 WARNING**。
 - **私有方法**：无分支、无循环的单行转发可只写一句话；含分支、解析、落库等非平凡逻辑的**必须**写 `@param`。
 - **不复述代码**：`// 设置 taskId` 这类与代码同义的行内注释删掉；只留「为什么这么做」和「边界/坑在哪」
+- **Map 入参逐 key 注释**：构建 Map 形式的请求/入参（`map.put("key", value)`，尤其对接外部系统、智能体的请求体）时，**每个 key 必须有行内注释说明业务含义**，带单位或示例值更佳（如 `// 采集数据，如 120条`）；空手 `put("key", value)` 连排时评审与排错都无从判断语义、也易与接口文档字段错配；缺 key 注释 → 至少 WARNING
 - **注释必须自包含**：不得写「示例见 X」「详见文档 Y」「见 §x.y」这类指向文档/路径的引用——注释与文档是两条维护线，路径会失效、章节会重排，读代码的人拿不到答案；该说明的信息就写在注释里。
 - **不堆术语**：用业务大白话写。`契约就位`、`就地贴附`、`本方法按逻辑节点拆私有方法`、`依据 §x.y` 这类只有写文档的人才懂的话，判为不通俗
 - **不写正确的废话**：`/** 处理逻辑 */`、`// TODO 后续优化` 等于没写；待实现/待确认的地方必须留可检索的 `TODO(用户实现)` / `TODO(待确认)`，缺失则单独指出
@@ -186,6 +192,16 @@ git diff --cached --name-only
 - 定级：**违背项目明文注释规约的，至少 WARNING**（如 KB `backend/java/development-standard.md`「文档注释（Javadoc）」与 `backend/java/code-review-checklist.md` 第 2 条：无信息量复述、版本号/流程痕迹、注释与实现或 SQL 口径矛盾、wrapper 与底层重复注释等）；仅「写得略冗余但未违背明文规约」→ INFO。注释密度是否超标，以项目既有同类文件为准。
 
 ---
+
+### 2.9 命名（HIGH）
+
+命名不只是大小写风格，须对照 KB 三份命名规范逐方法核对新增/修改的代码：
+
+- **公开方法**：动词落在 `backend/java/development-standard.md`「方法命名」的集合内（get / list / page / create / update / delete / validate / is / has）；`recreate`、`parse`、`format` 等表外动词视为违规；方法名表达业务动作，不泄漏 SQL 语义（Service 侧不得叫 `selectXxxList`）。
+- **私有辅助方法**：对照 `backend/java/method-naming.md` 前缀表（build / resolve / load / fill / validate / is / match / select / list / save / insert / handle / try / read / cache）；`validate*` 与 `is*`/`has*` 不得互替，`build*` 与 `fill*` 不得混用。
+- **Mapper**：对照 `backend/java/mybatis-plus-mapper-naming.md`（select / insert / update / delete 前缀、返回类型后缀、多参数 `@Param`；删除/更新返回值按调用方需要，`int` 或 `void`）。
+- **既有方法**按「既有代码不追溯」标注 ⚠️，但**不得**因此忽略新代码的同类违规。
+- 结论中单列命名核对结果：核了哪些方法、依据哪条规则、哪些属既有不追溯。
 
 ## Phase 3 — REPORT（输出报告）
 

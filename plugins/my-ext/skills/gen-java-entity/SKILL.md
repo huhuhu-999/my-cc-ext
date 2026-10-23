@@ -15,6 +15,8 @@ description: 当需要根据建表 DDL 或表结构生成对应的 Java Entity �
 
 生成前必须确认项目使用的 ORM 框架，按优先级：
 
+> **知识库规范**：动手前先调用 `kb-loader` 技能获取加载清单并按其读取；KB 明文规约优先于本技能中的示例与默认口径。
+
 1. 读取项目 `AGENTS.md`，若存在平台专用规则文件则继续读取，确认其中声明的 ORM 框架
 2. 检查 `pom.xml` 或 `build.gradle` 中的依赖：
    - `mybatis-plus-boot-starter` → MyBatis-Plus
