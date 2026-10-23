@@ -34,12 +34,13 @@ Agent 正文维护在仓库 `agents/`，共享技能维护在 `skills/`。完整
 
 插件带一个 `UserPromptSubmit` Hook：每次提交输入时，按当前工作目录匹配知识库项目注册表，命中则把项目标识注入上下文，提醒先加载规范；未声明知识库根时静默跳过，不影响其他使用方式。
 
-- 知识库根解析顺序：环境变量 `KB_ROOT` → 当前平台用户级指令文件中的「知识库根：」声明
-- 项目匹配依据：`projects/index.md` 项目注册表的「代码目录」列，取路径范围最具体的匹配项
+- 知识库根解析顺序：环境变量 `KB_ROOT` → 从当前目录向上到 Git 根目录的最近项目声明（`CLAUDE.md`，不存在或为空时使用 `.claude/CLAUDE.md`）→ 用户级 `$CLAUDE_CONFIG_DIR/CLAUDE.md`，未设置时使用 `~/.claude/CLAUDE.md`。无 Git 标记时查找到文件系统根目录；不读取 Codex 的用户配置
+- 声明格式：``知识库根：`实际路径` ``；相对路径以声明文件所在目录为基准。Hook 只提取路径提醒，不代替 `kb-loader` 正式加载规范，不处理指令中的导入或会话内临时声明
+- 项目匹配依据：`projects/index.md` 项目注册表的「代码目录」列，支持 Windows / POSIX 绝对路径及分号分隔的多个目录，按完整目录边界取路径范围最具体的匹配项
 - 命中后注入一行提醒，内容含项目标识（例如「当前工作目录属于知识库项目 [paic]」）
-- 定义位置：`hooks/hooks.json`；脚本 `hooks/kb-project-detect.ps1`，需要 PowerShell 7 及以上
+- 定义位置：`hooks/hooks.json`，使用完整 `command` 字符串传参；共用脚本 `hooks/kb-project-detect.ps1 -Platform claude`，需要 PowerShell 7 及以上
 
-缺少 PowerShell 7 的环境不会执行该 Hook，其余能力不受影响。
+Windows、macOS 和 Linux 的执行环境均需将 `pwsh` 加入 PATH。缺少运行时时宿主可能报告 Hook 启动失败，可禁用该 Hook 后通过 `kb-loader` 加载规范。配置缺失、读取失败、事件无效或未命中时，脚本静默退出，不阻断输入。
 
 ## 卸载插件
 

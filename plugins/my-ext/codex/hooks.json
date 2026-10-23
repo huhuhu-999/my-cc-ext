@@ -1,0 +1,17 @@
+{
+  "description": "知识库项目识别：使用 Codex 指令来源，在提交提示词时提醒加载项目规范。",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -NonInteractive -Command \"& (Join-Path ([Environment]::GetEnvironmentVariable('PLUGIN_ROOT')) 'hooks/kb-project-detect.ps1') -Platform codex\"",
+            "timeout": 10,
+            "statusMessage": "识别知识库项目..."
+          }
+        ]
+      }
+    ]
+  }
+}
