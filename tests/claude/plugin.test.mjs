@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
-import { access, readFile, readdir } from "node:fs/promises";
+import { access, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import { assertProject, createHookFixture, runHook } from "../helpers/kb-hook.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const { version } = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
@@ -124,4 +125,13 @@ test("hooks.json 结构合法且引用的脚本文件存在", async () => {
       }
     }
   }
+});
+
+test("Claude prompt hook executes its command and reads Claude project instructions", async (t) => {
+  const hooks = await readJson("hooks/hooks.json");
+  const hook = hooks.hooks.UserPromptSubmit[0].hooks[0];
+  assert.equal(hook.args, undefined, "arguments belong in the command string");
+  const fixture = await createHookFixture(t);
+  await writeFile(path.join(fixture.cwd, "CLAUDE.md"), `知识库根：\`${fixture.kb}\``);
+  assertProject(runHook({ cwd: fixture.cwd, command: hook.command }), "fixture");
 });

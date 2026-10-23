@@ -39,6 +39,24 @@ Agent 通过以下工作流 Skill 暴露，正文仍只维护在 `agents/<name>/
 
 薄入口源码位于 `codex/skills/<name>-agent/SKILL.md`，仅在 Codex 安装包中位于 `skills/<name>-agent/SKILL.md`。入口统一先读取 [Agent 执行契约](../codex/agent-adapter.md)，再读取上表对应的 Agent 原文。
 
+## 知识库项目识别 Hook
+
+插件清单显式加载 `codex/hooks.json`，在 `UserPromptSubmit` 时调用随包分发的 `hooks/kb-project-detect.ps1 -Platform codex`。Windows、macOS 和 Linux 的执行环境均需要将 PowerShell 7（`pwsh`）加入 PATH。
+
+安装或升级插件后，开启新任务，通过 `/hooks` 或客户端的 Hook 管理界面核对并信任当前定义。插件启用不等于 Hook 已获信任；新定义或变更后的定义在审核前不会执行。不要通过绕过信任检查的启动参数启用。
+
+知识库根按以下顺序解析，声明格式为 ``知识库根：`实际路径` ``：
+
+- 环境变量 `KB_ROOT`。
+- 从当前目录向上到 Git 根目录，使用最近的项目声明。每层优先读取非空 `AGENTS.override.md`，否则读取 `AGENTS.md`；无 Git 标记时查找到文件系统根目录。
+- Codex 用户指令：`$CODEX_HOME/AGENTS.override.md` 或 `AGENTS.md`；未设置 `CODEX_HOME` 时使用用户目录的 `.codex/`。不读取 Claude 的用户配置。
+
+匹配 `projects/index.md` 的代码目录时，支持 Windows 和 POSIX 绝对路径、分号分隔的多个目录，按完整目录边界取最具体的匹配。命中后只注入项目标识与加载规范的提醒；配置缺失、文件不可读、事件无效或未命中时静默跳过。相对知识库声明以指令文件所在目录为基准。
+
+该 Hook 不代替 `kb-loader` 的正式规范加载，也不解析会话内临时声明或自定义指令文件名。Hook 不可用时仍可直接调用 `kb-loader`。执行环境、用户信任或管理员策略禁用 Hook 时，须遵循宿主限制。
+
+维护者本地验证使用 `npm run test:codex`；测试会执行源码和组装包中的 Hook 命令并检查输出。发布后还应在实际 Codex 客户端查看 `/hooks`，信任后在已登记项目中提交提示词，确认出现项目识别提醒。
+
 ## 升级与卸载
 
 维护者发布新版本后，执行：

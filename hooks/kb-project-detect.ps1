@@ -1,59 +1,124 @@
-# kb-project-detect.ps1 — UserPromptSubmit hook（随 my-ext 插件分发）
-# 作用：按当前工作目录匹配知识库项目注册表，命中则把项目标识注入上下文，提醒先加载规范。
-# KB 根解析顺序：环境变量 KB_ROOT → 用户级指令文件里的「知识库根：」声明；解析不到则静默退出。
-# 注：脚本内一律用正斜杠与 [char] 码点，避免反斜杠字面量在多层转义中失真。
+# UserPromptSubmit hook：共用项目识别逻辑，配置来源由平台入口显式选择。
+# 只提供加载规范的提醒，不执行知识库中的命令，也不修改用户配置。
+param(
+    [ValidateSet('claude', 'codex')]
+    [string]$Platform = 'claude'
+)
+
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
-$OutputEncoding            = [System.Text.UTF8Encoding]::new($false)
+$OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+$ErrorActionPreference = 'Stop'
 
-$BS = [char]92      # 反斜杠
-$BT = [char]96      # 反引号
-$PIPE = [char]124   # 竖线
+function Read-KbDeclaration {
+    param([string[]]$Candidates)
 
-# ---- 1. 解析 KB 根 ----
-$kb = $env:KB_ROOT
-if (-not $kb) {
-    $md = Join-Path $env:USERPROFILE '.claude/CLAUDE.md'
-    if (Test-Path -LiteralPath $md) {
-        $pattern = '知识库根：' + $BT + '([^' + $BT + ']+)' + $BT
-        foreach ($line in Get-Content -LiteralPath $md -Encoding UTF8) {
-            if ($line -match $pattern) { $kb = $Matches[1]; break }
+    $tick = [char]96
+    $pattern = '知识库根[：:]\s*' + $tick + '([^' + $tick + ']+)' + $tick
+    foreach ($file in $Candidates) {
+        if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { continue }
+        $content = Get-Content -LiteralPath $file -Raw -Encoding UTF8
+        if ([string]::IsNullOrWhiteSpace($content)) { continue }
+        if ($content -match $pattern) {
+            $declared = $Matches[1].Trim()
+            return [System.IO.Path]::GetFullPath($declared, (Split-Path -Parent $file))
         }
+        # 同层 override 文件替代普通指令；不从被替代文件提取声明。
+        return $null
     }
-}
-if (-not $kb) { exit 0 }
-$kb  = $kb.TrimEnd('/', $BS)
-$reg = Join-Path $kb 'projects/index.md'
-if (-not (Test-Path -LiteralPath $reg)) { exit 0 }
-
-# ---- 2. 按 cwd 匹配注册表「代码目录」列 ----
-$raw = [Console]::In.ReadToEnd()
-$cwd = $null
-if ($raw) { try { $cwd = ($raw | ConvertFrom-Json).cwd } catch { } }
-if (-not $cwd) { $cwd = (Get-Location).Path }
-$cwdN = $cwd.Replace($BS, '/')
-
-$hit = $null; $best = -1
-foreach ($line in Get-Content -LiteralPath $reg -Encoding UTF8) {
-    if (-not $line.StartsWith('|')) { continue }
-    $cells = $line.Split($PIPE)
-    if ($cells.Count -lt 5) { continue }
-    $id  = $cells[1].Trim().Trim($BT)
-    $dir = $cells[3].Trim().Trim($BT)
-    if ($dir -notmatch '^[A-Za-z]:') { continue }          # 跳过“不适用/未登记”等非路径
-    $dirN = $dir.Replace($BS, '/')
-    if ($cwdN.StartsWith($dirN, [System.StringComparison]::OrdinalIgnoreCase) -and $dirN.Length -gt $best) {
-        $hit = $id; $best = $dirN.Length
-    }
+    return $null
 }
 
-# ---- 3. 命中则注入提醒 ----
-if ($hit) {
-    $ctx = "当前工作目录 [$cwd] 属于知识库项目 [$hit]。开发任务前先按「知识库加载」规范调用 kb-loader 出加载清单（含验证方式）。"
-    [pscustomobject]@{
-        hookSpecificOutput = [pscustomobject]@{
-            hookEventName     = 'UserPromptSubmit'
-            additionalContext = $ctx
+function Find-KnowledgeBase {
+    param([string]$WorkingDirectory, [string]$HostPlatform)
+
+    if (-not [string]::IsNullOrWhiteSpace($env:KB_ROOT)) { return $env:KB_ROOT }
+
+    # 从当前目录向上查找，Git 根目录（含 worktree 的 .git 文件）为边界。
+    $directory = [System.IO.Path]::GetFullPath($WorkingDirectory)
+    while ($directory) {
+        $candidates = if ($HostPlatform -eq 'codex') {
+            @((Join-Path $directory 'AGENTS.override.md'), (Join-Path $directory 'AGENTS.md'))
+        } else {
+            @((Join-Path $directory 'CLAUDE.md'), (Join-Path $directory '.claude/CLAUDE.md'))
         }
-    } | ConvertTo-Json -Compress -Depth 5
+        $declared = Read-KbDeclaration -Candidates $candidates
+        if ($declared) { return $declared }
+        if (Test-Path -LiteralPath (Join-Path $directory '.git')) { break }
+        $directory = Split-Path -Parent $directory
+    }
+
+    $profileRoot = [Environment]::GetFolderPath([Environment+SpecialFolder]::UserProfile)
+    if ($HostPlatform -eq 'codex') {
+        $configRoot = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $profileRoot '.codex' }
+        return Read-KbDeclaration -Candidates @(
+            (Join-Path $configRoot 'AGENTS.override.md'), (Join-Path $configRoot 'AGENTS.md')
+        )
+    }
+    $configRoot = if ($env:CLAUDE_CONFIG_DIR) { $env:CLAUDE_CONFIG_DIR } else { Join-Path $profileRoot '.claude' }
+    return Read-KbDeclaration -Candidates @((Join-Path $configRoot 'CLAUDE.md'))
+}
+
+function ConvertTo-MatchPath {
+    param([string]$Value)
+
+    $normalized = $Value.Trim().Trim([char]96).Replace([char]92, '/')
+    if ($normalized -notmatch '^(?:[A-Za-z]:/|/)') { return $null }
+    $unc = $normalized.StartsWith('//')
+    $normalized = $normalized -replace '/+', '/'
+    if ($unc) { $normalized = '/' + $normalized }
+    if ($normalized -eq '/' -or $normalized -match '^[A-Za-z]:/$') { return $normalized }
+    return $normalized.TrimEnd('/')
+}
+
+function Find-RegisteredProject {
+    param([string]$Registry, [string]$WorkingDirectory)
+
+    $cwdPath = ConvertTo-MatchPath $WorkingDirectory
+    if (-not $cwdPath) { return $null }
+    $hit = $null
+    $best = -1
+    foreach ($line in Get-Content -LiteralPath $Registry -Encoding UTF8) {
+        if (-not $line.TrimStart().StartsWith('|')) { continue }
+        $cells = $line.Trim().Split([char]124)
+        if ($cells.Count -lt 5) { continue }
+        $id = $cells[1].Trim().Trim([char]96)
+        if (-not $id) { continue }
+        foreach ($candidate in ($cells[3] -split '[;；]')) {
+            $registered = ConvertTo-MatchPath $candidate
+            if (-not $registered) { continue }
+            $comparison = if ($registered -match '^[A-Za-z]:/' -or $registered.StartsWith('//')) {
+                [System.StringComparison]::OrdinalIgnoreCase
+            } else {
+                [System.StringComparison]::Ordinal
+            }
+            $prefix = $registered.TrimEnd('/') + '/'
+            if (($cwdPath.Equals($registered, $comparison) -or $cwdPath.StartsWith($prefix, $comparison)) -and $registered.Length -gt $best) {
+                $hit = $id
+                $best = $registered.Length
+            }
+        }
+    }
+    return $hit
+}
+
+try {
+    $eventData = [Console]::In.ReadToEnd() | ConvertFrom-Json
+    if ($eventData.cwd -isnot [string] -or [string]::IsNullOrWhiteSpace($eventData.cwd)) { exit 0 }
+    $cwd = $eventData.cwd
+    $kb = Find-KnowledgeBase -WorkingDirectory $cwd -HostPlatform $Platform
+    if (-not $kb) { exit 0 }
+    $registry = Join-Path $kb 'projects/index.md'
+    if (-not (Test-Path -LiteralPath $registry -PathType Leaf)) { exit 0 }
+    $hit = Find-RegisteredProject -Registry $registry -WorkingDirectory $cwd
+    if ($hit) {
+        [pscustomobject]@{
+            hookSpecificOutput = [pscustomobject]@{
+                hookEventName = 'UserPromptSubmit'
+                additionalContext = "当前工作目录 [$cwd] 属于知识库项目 [$hit]。开发任务前先按「知识库加载」规范调用 kb-loader 出加载清单（含验证方式）。"
+            }
+        } | ConvertTo-Json -Compress -Depth 5
+    }
+} catch {
+    # 缺少配置、读取失败或事件无效时不阻断提示词；kb-loader 负责正式加载和报错。
 }
 exit 0

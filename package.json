@@ -1,12 +1,14 @@
 {
   "name": "my-ext",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "Java development agents and shared skills for Claude Code, OpenCode and Codex",
   "type": "module",
   "main": ".opencode/plugins/my-ext.js",
   "files": [
     ".codex-plugin/plugin.json",
     "codex/agent-adapter.md",
+    "codex/hooks.json",
+    "hooks/kb-project-detect.ps1",
     "agents/*/AGENT.md",
     ".opencode/plugins/my-ext.js",
     ".opencode/bootstrap.md",

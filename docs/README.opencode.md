@@ -26,14 +26,14 @@ node --version
 ```json
 {
   "plugin": [
-    "my-ext@git+https://github.com/huhuhu-999/my-cc-ext.git#v1.2.6"
+    "my-ext@git+https://github.com/huhuhu-999/my-cc-ext.git#v1.2.7"
   ]
 }
 ```
 
 项目级安装时，将该配置加入项目的 `opencode.json`；用户级安装时，将其加入用户级 `opencode.json`。不要从默认分支安装。发布元数据也可以指定完整的 40 位 commit，此时只能用该不可变完整 commit 替换标签。
 
-OpenCode 当前委托 Bun 安装包，因此 Git 安装是已验证的兼容路径，但该行为不是永久的 OpenCode API 保证。如果 Git 包安装变得不兼容，可在同一包发布后使用 `my-ext@1.2.6` 作为 npm 兜底安装方式；两种方式使用相同的 `package.json` 入口。
+OpenCode 当前委托 Bun 安装包，因此 Git 安装是已验证的兼容路径，但该行为不是永久的 OpenCode API 保证。如果 Git 包安装变得不兼容，可在同一包发布后使用 `my-ext@1.2.7` 作为 npm 兜底安装方式；两种方式使用相同的 `package.json` 入口。
 
 ## 注册机制
 
@@ -57,6 +57,8 @@ OpenCode 当前委托 Bun 安装包，因此 Git 安装是已验证的兼容路�
 共享 Skill 保留现有的不带前缀名称。其他插件注册同名 Skill 时会发生冲突，需要移除其中一个冲突包。对于 Agent，存在同名用户 Agent 时以用户配置为准，插件不会覆盖它。
 
 ## 知识库与权限
+
+本平台入口仅注册 `config` 钩子，不执行 Claude / Codex 的 `UserPromptSubmit` 配置。包内的 Codex Hook 配置与共用识别脚本不会自动注册到 OpenCode；知识库识别继续通过共享 `kb-loader` 和当前平台指令完成，不要求安装 PowerShell。
 
 在目标项目的 `AGENTS.md` 或当前平台用户指令中声明「知识库根：」和实际路径。Agent 的外部目录访问默认询问授权；确认提示时核对路径，只批准当前任务需要的知识库目录。拒绝授权后不会绕过限制，按 `kb-loader` 的不可用分支处理。
 

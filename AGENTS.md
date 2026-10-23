@@ -36,6 +36,8 @@ This repository packages reusable Java development skills and platform-specific 
 
 ## Extension Boundaries
 
+- For every plugin change, assess its impact on Claude Code, Codex, and OpenCode, including discovery, runtime behavior, packaging, and documentation. Record unsupported capabilities explicitly instead of assuming platform parity.
+- Keep platform-specific hooks and configuration in their adapters, share reusable behavior where appropriate, and run the affected platform checks. Changes to shared runtime code or distribution require the full `npm test` gate.
 - Keep platform adapters in their platform directories.
 - Do not copy shared skills into platform directories.
 - Do not hardcode a model provider or model ID in shared content.

@@ -4,6 +4,7 @@ import { cp, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { assertProject, createHookFixture, runHook } from "../helpers/kb-hook.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const read = (file, base = root) => readFile(path.join(base, file), "utf8");
@@ -74,6 +75,7 @@ test("npm package contains the complete Codex resource closure", async () => {
   const files = new Set(JSON.parse(result.stdout)[0].files.map((file) => file.path.replaceAll("\\", "/")));
   for (const file of [
     ".codex-plugin/plugin.json", "codex/agent-adapter.md", "docs/README.codex.md",
+    "codex/hooks.json", "hooks/kb-project-detect.ps1",
     "skills/design-doc-writer/templates/spec-skeleton.md",
     "skills/design-doc-writer/templates/plan-skeleton.md",
     ...agentNames.map((name) => `agents/${name}/AGENT.md`),
@@ -119,6 +121,11 @@ test("local marketplace staging installs from a subdirectory and refuses to over
   assert.deepEqual(catalog.plugins[0].source, { source: "local", path: "./plugins/my-ext" });
   const plugin = path.join(output, "plugins/my-ext");
   assert.equal(await read(".codex-plugin/plugin.json", plugin), await read(".codex-plugin/plugin.json"));
+  const installedManifest = await json(".codex-plugin/plugin.json", plugin);
+  assert.equal(installedManifest.hooks, "./codex/hooks.json");
+  const hookConfig = await json(installedManifest.hooks, plugin);
+  const fixture = await createHookFixture(t);
+  assertProject(runHook({ ...fixture, pluginRoot: plugin, command: hookConfig.hooks.UserPromptSubmit[0].hooks[0].command }), "fixture");
   for (const name of agentNames) {
     assert.equal(await read(`agents/${name}/AGENT.md`, plugin), await read(`agents/${name}/AGENT.md`));
     const installed = await read(`skills/${name}-agent/SKILL.md`, plugin);
