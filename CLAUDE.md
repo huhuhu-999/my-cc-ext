@@ -177,7 +177,7 @@ Java 代码审查。对 git diff 变更进行 7 维审查（分层架构、JPA/D
 
 ### Skill: kb-loader
 
-知识库规范解析器。编码/审查/生成代码前，按「项目标识 + 任务类型」从工程知识库解析应加载的规范文档清单（KB 根取用户级 CLAUDE.md 声明的知识库根，项目标识经 `projects/index.md` 注册表按工作目录自动匹配）。规范正文唯一事实源在工程知识库，本 Skill 只做定位与解析，不复制规则正文。
+知识库规范解析器。编码/审查/生成代码前，按「项目标识 + 任务类型」解析应加载的规范清单。KB 根的来源、优先级和不可用处理统一遵循 `skills/kb-loader/SKILL.md`；根据最终选中的根，通过 `projects/index.md` 注册表重新匹配目标工作目录。详细规范正文唯一事实源在工程知识库，本 Skill 只做定位与解析。
 
 详细流程见 `skills/kb-loader/SKILL.md`。
 
@@ -213,7 +213,7 @@ Java TDD 工作流命令。5 Phase 流程：Detect 探测测试基础设施 → 
 
 ### Hook: 知识库项目识别
 
-`UserPromptSubmit` Hook：每次提交输入时按当前工作目录匹配知识库项目注册表（`projects/index.md` 的「代码目录」列，取路径最具体的匹配项），命中则把项目标识注入上下文，提醒先加载规范。知识库根解析顺序为「环境变量 `KB_ROOT` → 当前平台用户级指令文件中的「知识库根：」声明」，解析不到即静默退出，不影响没有知识库的环境。
+`UserPromptSubmit` Hook：按当前工作目录匹配知识库项目注册表，命中时提示项目标识、实际 KB 根及来源。Hook 使用 `KB_ROOT` 或当前平台适用指令声明，不从自然语言猜测任务显式路径；正式加载由 `kb-loader` 按其统一约定重新解析根并匹配项目。未配置或未匹配项目时静默退出；已选配置不可访问时提示原因，不静默回退其他根。
 
 定义在 `hooks/hooks.json`，脚本 `hooks/kb-project-detect.ps1`（需 PowerShell 7 及以上）。仅 Claude Code 侧生效，Codex 与 OpenCode 不读取该目录。
 
@@ -250,7 +250,7 @@ Agent（独立子进程）
 |---------|---------------|-----------|
 | 扩展开发（写/改 Skill、Agent、Plugin、MCP、Hook、Workflow） | `my-ext:cc-ext-dev:cc-ext-dev` | 写skill、创建agent、开发插件、MCP、Hook、扩展 |
 | 数据库操作（DDL建表、DML查询、Entity/Mapper生成、SQL审查） | `my-ext:db-ops:db-ops` | 建表、DDL、SQL、Entity、Mapper、数据库、查询 |
-| 功能开发流水线（已有 PRD → 设计→计划→编码→审查） | `my-ext:feature-dev:feature-dev` | 开发功能、实现需求、按PRD、参数调整、需求变更、调整接口、修改参数、新增字段、对接调整、根据文档修改、按需求改 |
+| 多阶段功能开发（已有 PRD → 设计→计划→编码→审查） | `my-ext:feature-dev:feature-dev` | 按PRD开发、完整功能开发流水线；简单字段/参数小改不自动进入，已有有效且批准的 plan 可直接交 `implement-from-design` |
 | 复杂缺陷修复（跨模块排查、根因不明） | `my-ext:fix:fix` | 排查bug、复杂bug、深入看一下、跨模块 |
 | 全维度深度代码审查（7 维全面 + 代码样式 + 重大逻辑缺陷，跨文件追踪） | `my-ext:code-review:code-review` | 代码审查、审查代码、深度审查、样式检查、逻辑审查、N+1、循环查库、性能审查、review 整个模块 |
 | 设计规划（原始需求→头脑风暴→方案对比→计划） | `my-ext:superpowers-planner:superpowers-planner` | 设计方案、规划、头脑风暴、需求分析 |

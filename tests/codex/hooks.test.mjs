@@ -37,8 +37,13 @@ test("Codex finds ancestor instructions and honors the nearest override and expl
   await writeFile(path.join(fixture.cwd, "AGENTS.md"), `知识库根：\`${fixture.kb}\``);
   assertProject(runHook({ cwd: nested }), "fixture");
   await writeFile(path.join(nested, "AGENTS.override.md"), `知识库根：\`${path.join(fixture.root, "absent")}\``);
-  assert.equal(runHook({ cwd: nested }), null);
-  assertProject(runHook({ cwd: nested, kb: fixture.kb }), "fixture");
+  const unavailable = runHook({ cwd: nested });
+  assert.ok(unavailable.hookSpecificOutput.additionalContext.includes("不可访问"));
+  assert.ok(unavailable.hookSpecificOutput.additionalContext.includes("AGENTS.override.md"));
+  const fromEnvironment = runHook({ cwd: nested, kb: fixture.kb });
+  assertProject(fromEnvironment, "fixture");
+  assert.ok(fromEnvironment.hookSpecificOutput.additionalContext.includes(fixture.kb));
+  assert.ok(fromEnvironment.hookSpecificOutput.additionalContext.includes("KB_ROOT"));
 });
 
 test("registry matching uses directory boundaries and selects the most specific multi-path entry", async (t) => {
@@ -61,9 +66,15 @@ test("registry supports Windows and POSIX paths with their own case semantics", 
   assert.equal(runHook({ ...fixture, input: JSON.stringify({ cwd: "/work/project/src" }) }), null);
 });
 
-test("missing registry and malformed event input are non-blocking and silent", async (t) => {
+test("invalid configured root reports its source without falling back; malformed events stay silent", async (t) => {
   const fixture = await createHookFixture(t);
-  assert.equal(runHook({ ...fixture, kb: path.join(fixture.root, "absent") }), null);
+  await writeFile(path.join(fixture.cwd, "AGENTS.md"), `知识库根：\`${fixture.kb}\``);
+  const missing = path.join(fixture.root, "absent");
+  const result = runHook({ ...fixture, kb: missing });
+  assert.ok(result.hookSpecificOutput.additionalContext.includes(missing));
+  assert.ok(result.hookSpecificOutput.additionalContext.includes("KB_ROOT"));
+  assert.ok(result.hookSpecificOutput.additionalContext.includes("不可访问"));
+  assert.ok(!result.hookSpecificOutput.additionalContext.includes("项目 [fixture]"));
   assert.equal(runHook({ ...fixture, input: "not-json" }), null);
   assert.equal(runHook({ ...fixture, input: JSON.stringify({ cwd: 42 }) }), null);
 });

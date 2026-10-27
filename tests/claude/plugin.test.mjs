@@ -91,6 +91,10 @@ test("每个 AGENT.md 的 frontmatter 合法（model / tools / permissionMode）
       Array.isArray(fields.tools) && fields.tools.length > 0,
       `${file}: tools must be a nonempty list`,
     );
+    if (name === "code-review") {
+      assert.ok(fields.tools.includes("Skill"), "code-review must load knowledge-base skills");
+      assert.ok(!fields.tools.includes("Write") && !fields.tools.includes("Edit"), "code-review stays read-only");
+    }
     const model = fields.model;
     assert.ok(
       typeof model === "string" && (model === "inherit" || /^claude-[a-z0-9.-]+$/.test(model)),

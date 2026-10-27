@@ -20,7 +20,10 @@ function Read-KbDeclaration {
         if ([string]::IsNullOrWhiteSpace($content)) { continue }
         if ($content -match $pattern) {
             $declared = $Matches[1].Trim()
-            return [System.IO.Path]::GetFullPath($declared, (Split-Path -Parent $file))
+            return [pscustomobject]@{
+                Root = [System.IO.Path]::GetFullPath($declared, (Split-Path -Parent $file))
+                Source = $file
+            }
         }
         # 同层 override 文件替代普通指令；不从被替代文件提取声明。
         return $null
@@ -31,7 +34,17 @@ function Read-KbDeclaration {
 function Find-KnowledgeBase {
     param([string]$WorkingDirectory, [string]$HostPlatform)
 
-    if (-not [string]::IsNullOrWhiteSpace($env:KB_ROOT)) { return $env:KB_ROOT }
+    # Hook 不从自然语言 prompt 猜任务路径；kb-loader 会按任务路径优先重新解析。
+    if (-not [string]::IsNullOrWhiteSpace($env:KB_ROOT)) {
+        return [pscustomobject]@{
+            Root = if ([System.IO.Path]::IsPathFullyQualified($env:KB_ROOT)) {
+                [System.IO.Path]::GetFullPath($env:KB_ROOT)
+            } else {
+                [System.IO.Path]::GetFullPath($env:KB_ROOT, $WorkingDirectory)
+            }
+            Source = 'KB_ROOT'
+        }
+    }
 
     # 从当前目录向上查找，Git 根目录（含 worktree 的 .git 文件）为边界。
     $directory = [System.IO.Path]::GetFullPath($WorkingDirectory)
@@ -107,18 +120,31 @@ try {
     $cwd = $eventData.cwd
     $kb = Find-KnowledgeBase -WorkingDirectory $cwd -HostPlatform $Platform
     if (-not $kb) { exit 0 }
-    $registry = Join-Path $kb 'projects/index.md'
-    if (-not (Test-Path -LiteralPath $registry -PathType Leaf)) { exit 0 }
-    $hit = Find-RegisteredProject -Registry $registry -WorkingDirectory $cwd
-    if ($hit) {
+    $registry = Join-Path $kb.Root 'projects/index.md'
+    $context = "知识库根 [$($kb.Root)]，来源 [$($kb.Source)]。"
+    if (-not (Test-Path -LiteralPath $registry -PathType Leaf)) {
+        $context += "注册表不可访问 [$registry]；不回退其他根，请由 kb-loader 报告并处理。"
+    } else {
+        $hit = Find-RegisteredProject -Registry $registry -WorkingDirectory $cwd
+        if (-not $hit) { exit 0 }
+        $context += "当前工作目录 [$cwd] 属于知识库项目 [$hit]。"
+    }
+    $context += 'Hook 未解析任务显式路径；开发前由 kb-loader 按任务路径 > KB_ROOT > 当前平台指令重新解析根、匹配项目并出加载清单（含验证方式）。'
+    [pscustomobject]@{
+        hookSpecificOutput = [pscustomobject]@{
+            hookEventName = 'UserPromptSubmit'
+            additionalContext = $context
+        }
+    } | ConvertTo-Json -Compress -Depth 5
+} catch {
+    # 事件无效时静默；已选配置的读取失败应可见，不回退、不绕过访问权限。
+    if ($cwd -and $kb) {
         [pscustomobject]@{
             hookSpecificOutput = [pscustomobject]@{
                 hookEventName = 'UserPromptSubmit'
-                additionalContext = "当前工作目录 [$cwd] 属于知识库项目 [$hit]。开发任务前先按「知识库加载」规范调用 kb-loader 出加载清单（含验证方式）。"
+                additionalContext = "知识库根 [$($kb.Root)]，来源 [$($kb.Source)] 不可访问：$($_.Exception.Message)。未回退其他根；请由 kb-loader 重新解析任务路径并处理。"
             }
         } | ConvertTo-Json -Compress -Depth 5
     }
-} catch {
-    # 缺少配置、读取失败或事件无效时不阻断提示词；kb-loader 负责正式加载和报错。
 }
 exit 0
