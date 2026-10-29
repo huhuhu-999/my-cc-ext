@@ -222,11 +222,13 @@ public interface <EntityName>Mapper {
 
     int updateById(<EntityName>Entity entity);
 
-    int deleteById(@Param("id") Long id);
+    int deleteById(@Param("id") Long id, @Param("updatedBy") String updatedBy);
 
     List<<EntityName>Entity> selectByCondition(<EntityName>Query query);
 }
 ```
+
+逻辑删除的 `updatedBy` 参数类型必须与 Entity 的审计字段一致（本模板为 `String`），并用 `@Param("updatedBy")` 与 XML 的 `#{updatedBy}` 显式绑定。调用方必须从项目既有认证上下文/操作者来源获取真实操作者后传入，不传占位字符串、固定默认用户或以 null 代替；来源不明确时先询问。生成后逐项核对 XML 引用参数与接口签名及调用方实参。
 
 #### Mapper XML（与 Mapper 接口同目录，同名 `.xml`）
 

@@ -35,7 +35,16 @@ test("declarative mappings and permission baseline are closed", () => {
   ]);
   assert.deepEqual(PERMISSION_BASELINE, {
     read: "allow", glob: "allow", grep: "allow", skill: "allow", edit: "ask",
-    bash: { "*": "ask", "git status*": "allow", "git diff*": "allow", "git log*": "allow", "git show*": "allow", "git rev-parse*": "allow" },
+    bash: {
+      "*": "ask",
+      "git status --short": "allow",
+      "git diff --no-ext-diff --no-textconv": "allow",
+      "git diff --cached --no-ext-diff --no-textconv": "allow",
+      "git log -5 --oneline --no-ext-diff --no-textconv": "allow",
+      "git show --no-ext-diff --no-textconv": "allow",
+      "git rev-parse --show-toplevel": "allow",
+      "git rev-parse --abbrev-ref HEAD": "allow",
+    },
     external_directory: "ask",
   });
 });
@@ -77,8 +86,13 @@ test("generated review resolves shared skills and platform-neutral knowledge-bas
   assert.match(review, /`fix` skill/);
   const permission = JSON.parse(review.match(/^permission: (.+)$/m)[1]);
   assert.equal(permission.edit, "deny");
-  assert.equal(permission.bash["*"], "deny");
-  assert.equal(permission.bash["git diff --no-ext-diff --no-textconv"], "allow");
+  assert.deepEqual(permission.bash, {
+    "*": "deny",
+    "git status --short": "allow",
+    "git diff --no-ext-diff --no-textconv": "allow",
+    "git diff --cached --no-ext-diff --no-textconv": "allow",
+    "git log -5 --oneline": "allow",
+  });
   assert.equal(permission.external_directory, "ask");
   assert.deepEqual(permission.task, { "*": "deny" });
 });

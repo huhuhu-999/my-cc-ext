@@ -5,7 +5,7 @@ mode: subagent
 permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"deny","bash":{"*":"deny","git status --short":"allow","git diff --no-ext-diff --no-textconv":"allow","git diff --cached --no-ext-diff --no-textconv":"allow","git log -5 --oneline":"allow"},"external_directory":"ask","task":{"*":"deny"}}
 ---
 <!-- generated-from: agents/code-review/AGENT.md -->
-<!-- source-sha256: df70402f9548f6728f06dff07dad723f2f8f1f83b3517b0633e2e78da757f74a -->
+<!-- source-sha256: d5c3bbe379b08603ad2c4073bef26605da427af62e19d4707403bb2d328f80f1 -->
 
 OpenCode 只读执行：编辑与委派被禁止。读取文件使用读取/搜索能力；Git 检查仅使用权限清单中的完整命令，不追加参数。
 允许的 shell 命令：
@@ -53,7 +53,7 @@ OpenCode 只读执行：编辑与委派被禁止。读取文件使用读取/搜�
 
 - 使用 `Read`、`Grep`、`Glob`、`Bash`（仅限只读命令）；`Skill` 仅用于加载规范和只读审查指引，不得借 Skill 执行修改、构建或修复
 - **绝对禁止修改任何代码文件**：不使用 `Write` / `Edit`，不创建、修改、删除任何文件
-- `Bash` 仅用于只读命令（Git 查询：`git diff`、`git log`、`git show`、`git status`；文件检索用 `Grep` / `Glob` 工具，不用 shell 的 `grep` / `find`），禁止执行任何写操作（`git checkout`、`git apply`、写文件、构建发布、重启服务等）
+- `Bash` 仅用于只读命令（Git 查询：`git diff`、`git log`、`git show`、`git status`、`git ls-files --others --exclude-standard`；文件检索用 `Grep` / `Glob` 工具，不用 shell 的 `grep` / `find`），禁止执行任何写操作（`git checkout`、`git apply`、写文件、构建发布、重启服务等）
 - 审查产出只有**审查报告**，直接在会话中输出，不写入文件
 - 问题只报告不修改；如用户需要修复，在报告末尾建议委托 `my-ext-fix` Agent 或使用 `fix` skill
 
@@ -89,11 +89,13 @@ OpenCode 只读执行：编辑与委派被禁止。读取文件使用读取/搜�
 
 | 范围形态 | 处理方式 |
 |----------|----------|
-| **git diff** | `git diff HEAD`、`git diff <base>..<head>`；未提交变更优先 `git diff --cached`，获取变更文件列表 |
+| **git diff** | 默认未提交工作区范围合并 `git diff HEAD`、`git diff --cached` 与 `git ls-files --others --exclude-standard` 的文件清单并去重；显式提交区间 `<base>..<head>` 或仅 staged 则只审对应内容，不混入工作区其他变更或未跟踪文件。diff 命令加 `--no-ext-diff --no-textconv` |
 | **文件 / 目录** | 用户指定文件或目录，用 `Glob` 展开目录下的源码文件 |
 | **功能 / 调用链** | 用户指定功能入口（如某 Service 方法），沿调用链展开涉及的文件 |
 
 范围确定后：
+- 指定文件/目录时只收集该路径内文件（Git 查询用 `-- <路径>` 限定），功能范围只纳入相关调用链；不把无关未跟踪文件带入审查。范围内未跟踪源码必须用 `Read` 读取全文，按新增文件审查，禁止自动 `git add`（含 `git add -N`）。
+- 平台权限不允许 `git ls-files` 等查询时，使用已允许的 status 与 Glob/Read 补充核对（status 只显示目录时继续展开）；无法完整枚举则报告缺口并请求用户提供清单，不绕过权限或据空 diff 宣称没有变更。
 - 变更文件较多（>50）时聚焦 `.java` / `.js` / `.ts` / `.py` 等源码文件，跳过配置（除非涉安全）
 - 排除生成代码（`target/`、`build/`、`dist/`、`generated/`）与第三方依赖
 - 先向用户复述审查范围（一句话），无异议后开始审查
@@ -346,7 +348,7 @@ OpenCode 只读执行：编辑与委派被禁止。读取文件使用读取/搜�
 
 | 场景 | 处理方式 |
 |------|----------|
-| `git diff` 为空 | 检查 `git diff --cached`；仍为空则询问用户指定审查范围 |
+| 已跟踪 diff 为空 | 按 Scope 核对当前范围适用的 staged 与未跟踪源码，清单均为空才询问用户指定范围；枚举受限须报告缺口 |
 | 项目无规范文档 | 依赖依赖探测和通用规则，并在报告开头标注「未检测到项目规范」 |
 | 变更文件 > 50 | 聚焦源码文件，跳过配置（除非涉安全） |
 | 循环内调用「本地方法」 | 追踪确认是否最终触达 Mapper；仅内存计算则不报告 |

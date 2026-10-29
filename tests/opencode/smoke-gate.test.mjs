@@ -42,11 +42,13 @@ function createValidConfig() {
           "git log -5 --oneline": "allow",
         } : {
           "*": "ask",
-          "git status*": "allow",
-          "git diff*": "allow",
-          "git log*": "allow",
-          "git show*": "allow",
-          "git rev-parse*": "allow",
+          "git status --short": "allow",
+          "git diff --no-ext-diff --no-textconv": "allow",
+          "git diff --cached --no-ext-diff --no-textconv": "allow",
+          "git log -5 --oneline --no-ext-diff --no-textconv": "allow",
+          "git show --no-ext-diff --no-textconv": "allow",
+          "git rev-parse --show-toplevel": "allow",
+          "git rev-parse --abbrev-ref HEAD": "allow",
         },
         external_directory: "ask",
         task: Object.fromEntries([["*", "deny"], ...(taskAllow[name] ?? []).map((task) => [task, "allow"])]),
@@ -138,9 +140,13 @@ test("enabled smoke cleans its temporary project after a successful injected run
 
 test("resolved agents require the exact granular read-only Git bash baseline", () => {
   const cases = [
-    ["missing git permission", (permission) => { delete permission.bash["git status*"]; }],
-    ["wrong git permission", (permission) => { permission.bash["git diff*"] = "ask"; }],
+    ["missing git permission", (permission) => { delete permission.bash["git status --short"]; }],
+    ["wrong git permission", (permission) => { permission.bash["git diff --no-ext-diff --no-textconv"] = "ask"; }],
     ["unexpected wildcard grant", (permission) => { permission.bash["git *"] = "allow"; }],
+    ["legacy diff wildcard grant", (permission) => { permission.bash["git diff*"] = "allow"; }],
+    ["output file grant", (permission) => { permission.bash["git diff --no-ext-diff --no-textconv --output=patch.diff"] = "allow"; }],
+    ["external diff grant", (permission) => { permission.bash["git show --ext-diff"] = "allow"; }],
+    ["textconv grant", (permission) => { permission.bash["git show --textconv"] = "allow"; }],
   ];
 
   for (const [label, mutate] of cases) {

@@ -2,7 +2,7 @@
 name: my-ext-fix
 description: "当用户报告复杂 Bug（跨模块/根因不明/需深度排查）时，先输出匹配提示再自动委托此 Agent。触发词：排查bug、深入看一下、复杂bug、跨模块。"
 mode: subagent
-permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"ask","bash":{"*":"ask","git status*":"allow","git diff*":"allow","git log*":"allow","git show*":"allow","git rev-parse*":"allow"},"external_directory":"ask","task":{"*":"deny"}}
+permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"ask","bash":{"*":"ask","git status --short":"allow","git diff --no-ext-diff --no-textconv":"allow","git diff --cached --no-ext-diff --no-textconv":"allow","git log -5 --oneline --no-ext-diff --no-textconv":"allow","git show --no-ext-diff --no-textconv":"allow","git rev-parse --show-toplevel":"allow","git rev-parse --abbrev-ref HEAD":"allow"},"external_directory":"ask","task":{"*":"deny"}}
 ---
 <!-- generated-from: agents/fix/AGENT.md -->
 <!-- source-sha256: 550e16513e0e8a44a15f77dbc9bc49eb52e3daa1442c4edb4f4f2db89f8a5652 -->

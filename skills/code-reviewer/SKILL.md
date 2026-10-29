@@ -11,19 +11,20 @@ description: 对 Java 代码进行代码审查。检查分层架构、JPA/MyBati
 
 ### 1.1 获取变更
 
+先确定用户要求的是工作区变更、仅 staged、显式提交区间还是指定路径；不将这些范围混用。默认审查未提交工作区变更时，合并已跟踪变更与未跟踪新增文件：
+
 ```bash
-git diff --name-only HEAD
-git diff --stat HEAD
+git diff --no-ext-diff --no-textconv --name-only HEAD
+git diff --no-ext-diff --no-textconv --stat HEAD
+git diff --cached --no-ext-diff --no-textconv --name-only
+git ls-files --others --exclude-standard
 git rev-parse --abbrev-ref HEAD
 ```
 
-如果 `git diff HEAD` 为空，检查 staged：
-
-```bash
-git diff --cached --name-only
-```
-
-如仍为空，终止并输出："没有待审查的变更。"
+- 按路径去重，排除生成物/第三方依赖；对范围内未跟踪源码使用文件读取工具（Read）读取全文，按新增文件审查，不能只看 diff。
+- 指定文件/目录时，只收集该路径范围内的变更与新增文件（Git 命令用 `-- <路径>` 限定）；仅 staged 或显式 `<base>..<head>` 时只审对应内容，不混入未跟踪文件或其他工作区修改。调用链文件可作上下文，不自动扩大报告范围。
+- 禁止为获取 diff 自动执行 `git add`（含 `git add -N`）。只有当前范围的已跟踪变更与适用的未跟踪源码清单均为空，才输出“没有待审查的变更”。
+- 平台权限不允许上述命令时，不绕过限制：用已允许的 status 与文件搜索/读取能力核对新增文件；无法完整枚举时标注范围缺口并请求用户提供清单，不能宣称无变更。下文“本次 diff”包含此处已纳入范围的未跟踪新增源码。
 
 ### 1.2 探测技术栈
 
@@ -258,7 +259,7 @@ git diff --cached --name-only
 
 | 场景 | 处理方式 |
 |------|----------|
-| `git diff` 为空（无未提交变更） | 检查 `git diff --cached`；如也为空则终止 |
+| 已跟踪 diff 为空 | 按 1.1 核对当前范围适用的 staged 与未跟踪源码；仅清单均为空才终止，枚举受限须报告缺口 |
 | `AGENTS.md` 不存在 | 继续检查平台专用规则；两者都不存在时仅依赖依赖探测和通用规则，并在报告开头标注“未检测到项目规则” |
 | 变更文件 > 50 个 | 仅审查 `.java` 文件；跳过配置文件除非有安全关注 |
 | 变更仅包含 `pom.xml` / `build.gradle` | 检查依赖来源、版本锁定和仓库配置；只有项目已有漏洞扫描器且实际执行后，才能报告已知漏洞 |

@@ -2,10 +2,10 @@
 name: my-ext-feature-dev
 description: "用于已有 PRD 的多阶段功能开发（设计→计划→编码→审查→修复）。默认逐阶段确认，明确连续授权时才连续推进。简单字段/参数小改不自动启动完整流水线；已有有效且批准的 plan 可直接交 implement-from-design 实现。触发词：按PRD开发、完整功能开发流水线。"
 mode: subagent
-permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"ask","bash":{"*":"ask","git status*":"allow","git diff*":"allow","git log*":"allow","git show*":"allow","git rev-parse*":"allow"},"external_directory":"ask","task":{"*":"deny","my-ext-superpowers-planner":"allow","my-ext-code-review":"allow"}}
+permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"ask","bash":{"*":"ask","git status --short":"allow","git diff --no-ext-diff --no-textconv":"allow","git diff --cached --no-ext-diff --no-textconv":"allow","git log -5 --oneline --no-ext-diff --no-textconv":"allow","git show --no-ext-diff --no-textconv":"allow","git rev-parse --show-toplevel":"allow","git rev-parse --abbrev-ref HEAD":"allow"},"external_directory":"ask","task":{"*":"deny","my-ext-superpowers-planner":"allow","my-ext-code-review":"allow"}}
 ---
 <!-- generated-from: agents/feature-dev/AGENT.md -->
-<!-- source-sha256: bf6be27fefcc7fdbd641c564ec87e984794adadb8cfc4c2d32d166aee80bbadd -->
+<!-- source-sha256: cdf9f0c6c09d047b9267cc47cf047d6a15bb02eb07eaf0656abdd5801a3b8d05 -->
 
 # Feature Developer
 
@@ -70,7 +70,7 @@ last_updated: <yyyy-MM-dd HH:mm>
 规则：
 - 一次 feature-dev 流程只推进一个 `sub_feature`；同一功能月目录 `doc/features/<yyyy-MM>/<feature-name>/` 可以包含多组 `*-design.md` / `*-plan.md`（按日期前缀区分不同迭代）
 - 状态文件中的 `sub_feature`、`design_file`、`plan_file` 是当前正在推进的唯一子功能；切换子功能前必须先确认当前状态是否已完成或中止
-- 每次调用先读取 `.feature-dev-state.md`，结合文档是否有效与用户确认记录判断当前阶段；状态不替代授权
+- 每次调用先读取 `.feature-dev-state.md`；若开头标记“已交接，不在此续作”，先按第四步定位唯一目标状态，不使用来源快照检测或推进阶段。结合文档是否有效与用户确认记录判断当前阶段；状态不替代授权
 - 如果状态文件不存在，在 `doc/features/<yyyy-MM>/<feature-name>/` 内查找状态文件并扫描该目录中的 `*-design.md` / `*-plan.md` 推断阶段并初始化状态文件；**忽略同夹 `archive/`** 内归档文件（视为历史，不作当前推断依据）。若该功能历史工作分散在多个功能月目录（`doc/features/*/<feature-name>/`）或多个版本无法唯一推断，以最新的 `<yyyy-MM>/<yyyy-MM-dd>` 为当前进行中文档，并向用户确认后再初始化
 - 每完成一个阶段，必须更新状态文件，再 STOP 或进入下一阶段
 - 用户要求“修改设计”或“调整计划”时，回退对应状态，例如 `design: pending` 或 `plan: pending`
@@ -285,7 +285,15 @@ git worktree add .worktrees/<feature-name> <base-ref>
 - 如果用户选择不新建，记录“在当前分支直接开发”
 - 后续命令都在用户确认的开发目录中执行
 
-确认后更新状态文件：
+**新 worktree 的文档交接（编码前必须完成）**：worktree 只带基准提交的文件，不会自动带入当前未提交或未跟踪的设计/计划。
+
+- 创建前列出当前已授权的 `design_file`、`plan_file`、`.feature-dev-state.md` 及实现必需的已授权引用文件，明确源仓库根、目标 worktree 根和保留的相对路径；只交接这份清单，不复制整个脏工作区，不以临时提交搬运。
+- 校验各路径均为相对仓库根的路径，规范化后（含符号链接解析）不得越出对应根目录；源文件必须存在，design/plan 必须仍是当前批准版本。路径越界、文件缺失、引用依赖未授权或确认记录不明时停止询问。
+- 创建后，逐项检查目标路径：不存在才复制；已存在且内容一致则复用；内容不同或无法确认是否一致时停止并列出冲突，禁止覆盖或删除目标文件。随后从目标根读取 design/plan/state，核对内容和相对引用均可解析；必要引用缺失时先补确认，不开始编码。
+- 交接成功后，目标 worktree 内同一相对路径的 `.feature-dev-state.md` 是**唯一续作状态位置**，在该文件更新下方开发目录字段（`workdir: current` 表示相对目标根），后续阶段只更新目标状态。源状态保留为来源快照，在开头明确写“已交接，不在此续作”及相对源仓库根的目标 worktree/状态路径；源 design/plan 可保留快照，不作为后续续作入口。再次从源状态恢复时先定位目标，目标不可访问则停止询问，不在源处重新初始化或推进。
+- 任一交接步骤未完成，保持 `workdir_confirmed: pending`，报告已复制项与阻塞原因；不擅自清理、提交或开始实现。交接授权不等于 git add / commit 授权。
+
+确认且交接完成后更新唯一续作状态文件（不新建 worktree 时仍更新当前状态）：
 
 ```markdown
 workdir: current | .worktrees/<feature-name>
