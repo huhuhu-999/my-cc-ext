@@ -2,7 +2,7 @@
 name: my-ext-superpowers-planner
 description: "当用户描述原始需求并需要设计+规划流水线（头脑风暴→方案对比→设计规范→实施计划）时，先输出匹配提示再自动委托此 Agent。触发词：设计方案、规划、头脑风暴、需求分析。"
 mode: subagent
-permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"ask","bash":{"*":"ask","git status*":"allow","git diff*":"allow","git log*":"allow","git show*":"allow","git rev-parse*":"allow"},"external_directory":"ask","task":{"*":"deny","my-ext-feature-dev":"allow"}}
+permission: {"read":"allow","glob":"allow","grep":"allow","skill":"allow","edit":"ask","bash":{"*":"ask","git status --short":"allow","git diff --no-ext-diff --no-textconv":"allow","git diff --cached --no-ext-diff --no-textconv":"allow","git log -5 --oneline --no-ext-diff --no-textconv":"allow","git show --no-ext-diff --no-textconv":"allow","git rev-parse --show-toplevel":"allow","git rev-parse --abbrev-ref HEAD":"allow"},"external_directory":"ask","task":{"*":"deny","my-ext-feature-dev":"allow"}}
 ---
 <!-- generated-from: agents/superpowers-planner/AGENT.md -->
 <!-- source-sha256: b2a9aa670c594dbec0df9645937604824957638cb3d01e8ec34665e117113c87 -->

@@ -26,14 +26,14 @@ node --version
 ```json
 {
   "plugin": [
-    "my-ext@git+https://github.com/huhuhu-999/my-cc-ext.git#v1.2.7"
+    "my-ext@git+https://github.com/huhuhu-999/my-cc-ext.git#v1.3.3"
   ]
 }
 ```
 
 项目级安装时，将该配置加入项目的 `opencode.json`；用户级安装时，将其加入用户级 `opencode.json`。不要从默认分支安装。发布元数据也可以指定完整的 40 位 commit，此时只能用该不可变完整 commit 替换标签。
 
-OpenCode 当前委托 Bun 安装包，因此 Git 安装是已验证的兼容路径，但该行为不是永久的 OpenCode API 保证。如果 Git 包安装变得不兼容，可在同一包发布后使用 `my-ext@1.2.7` 作为 npm 兜底安装方式；两种方式使用相同的 `package.json` 入口。
+OpenCode 当前委托 Bun 安装包，因此 Git 安装是已验证的兼容路径，但该行为不是永久的 OpenCode API 保证。如果 Git 包安装变得不兼容，可在同一包发布后使用 `my-ext@1.3.3` 作为 npm 兜底安装方式；两种方式使用相同的 `package.json` 入口。
 
 ## 注册机制
 
@@ -66,7 +66,9 @@ OpenCode 当前委托 Bun 安装包，因此 Git 安装是已验证的兼容路�
 
 `my-ext-code-review` 禁止编辑和委派，只允许权限清单中固定的只读 Git 命令。加载 Skill 不会授予写权限。其他 Agent 的编辑与一般 shell 操作仍需授权。同名用户 Agent 会完整覆盖插件入口，使用自定义入口时须自行保留这些约束。
 
-宿主未提供委派能力或当前任务禁止委派时，共享技能按其串行流程执行，不通过扩大权限绕过限制。
+需要分维度审查时，在主会话加载 `code-reviewer`，例如「使用 code-reviewer，按业务逻辑和代码风格并行审查当前改动」。主会话分别委派 `my-ext-code-review`，传递相同范围与基线及各自维度，复核证据后统一汇总；不修改审查 Agent 的权限。未指定维度的 `my-ext-code-review` 仍做全维度审查。
+
+宿主未提供或未授权所需能力时，按对应 Skill 的回退分支执行并说明实际方式；用户明确要求并行或独立审查时，不能自动降级为串行或内联，应报告阻塞并等待决定，不通过扩大权限绕过限制。
 
 ## 本地开发
 

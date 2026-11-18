@@ -222,11 +222,13 @@ public interface <EntityName>Mapper {
 
     int updateById(<EntityName>Entity entity);
 
-    int deleteById(@Param("id") Long id);
+    int deleteById(@Param("id") Long id, @Param("updatedBy") String updatedBy);
 
     List<<EntityName>Entity> selectByCondition(<EntityName>Query query);
 }
 ```
+
+逻辑删除的 `updatedBy` 参数类型必须与 Entity 的审计字段一致（本模板为 `String`），并用 `@Param("updatedBy")` 与 XML 的 `#{updatedBy}` 显式绑定。调用方必须从项目既有认证上下文/操作者来源获取真实操作者后传入，不传占位字符串、固定默认用户或以 null 代替；来源不明确时先询问。生成后逐项核对 XML 引用参数与接口签名及调用方实参。
 
 #### Mapper XML（与 Mapper 接口同目录，同名 `.xml`）
 
@@ -253,7 +255,7 @@ public interface <EntityName>Mapper {
     <select id="selectById" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM <table_name>
-        WHERE id = #{id}
+        WHERE id = #{id} AND is_delete = 0
     </select>
 
     <insert id="insert" parameterType="<Entity 全限定名>" useGeneratedKeys="true" keyProperty="id">
@@ -268,7 +270,7 @@ public interface <EntityName>Mapper {
             updated_date = now(),
             updated_by = #{updatedBy},
         </set>
-        WHERE id = #{id}
+        WHERE id = #{id} AND is_delete = 0
     </update>
 
     <update id="deleteById">
@@ -278,8 +280,23 @@ public interface <EntityName>Mapper {
             updated_by = #{updatedBy}
         WHERE id = #{id}
     </update>
+
+    <select id="selectByCondition" parameterType="<Entity 全限定名>Query" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM <table_name>
+        <where>
+            is_delete = 0
+            <if test="字段名 != null and 字段名 != ''">
+                AND <snake_case 列名> = #{字段名}
+            </if>
+            <其余业务条件：Query 每个可选字段一条 if test 判非空，AND 列名 = #{字段名}；范围/日期条件按项目写法>
+        </where>
+        ORDER BY <排序列> <ASC | DESC>
+    </select>
 </mapper>
 ```
+
+> `<EntityName>Query` 为查询 DTO，字段与过滤条件一一对应；项目已有可用查询对象时复用，不新建重复类。`ORDER BY` 按调用方需要填写，列表/分页查询须有稳定排序。
 
 ### 3. JPA / Hibernate 项目
 
@@ -397,9 +414,19 @@ public interface <EntityName>Repository extends JpaRepository<<EntityName>Entity
 
 - 与 Mapper 接口同包路径，同名 `.xml`
 - 禁止 `${}` 拼接变量值，统一使用 `#{}` 参数化
-- 逻辑删除用 `UPDATE SET is_delete = 1`，不用物理 `DELETE`
+- 逻辑删除用 `UPDATE SET is_delete = 1`，不用物理 `DELETE`；普通查询与更新的 `WHERE` 落实 `is_delete = 0`（含条件/列表查询，见下「逻辑删除过滤」）
 - 显式列出字段，禁止 `SELECT *`
 - `<sql>` 片段和 `<resultMap>` 定义完整的列映射
+
+### 逻辑删除过滤（MUST，生成后逐项核对）
+
+删除标记语义按项目 DDL / 知识库约定（通用口径 `0-未删除，1-已删除`）。只写删除动作不等于过滤闭环——普通业务读取和更新必须落实未删除条件，否则已删记录仍会被查出、被改到：
+
+- **MyBatis 项目**：模板中 `selectById` / `updateById` / `selectByCondition` 已落实 `is_delete = 0`（条件查询以它为固定首条件，各可选字段再按 `if` 过滤）；新增自定义查询时同样落实，不逐条遗漏。
+- **MyBatis-Plus 项目**：内置方法是否自动过滤取决于项目配置——先核实 Entity 是否标注 `@TableLogic`、全局 `logic-delete-field` 配置或统一拦截器**实际生效**；任一生效时不重复手写条件，都未生效时手写 Wrapper 的查询/更新必须显式加 `is_delete = 0`（也可建议补 `@TableLogic`，属行为变更，先经用户确认）。
+- **JPA 项目**：核实项目是否用 Hibernate `@Where` / `@SQLRestriction`、`@SQLDelete` 或查询层显式过滤；都未生效时 `findById` / Specification 查询不会排除已删记录，按项目约定补过滤机制，**不能仅凭 Entity 存在 `isDelete` 字段就认为已过滤**。
+- **例外入口**：回收站、恢复、审计追溯等确需访问已删除数据的功能，单独说明用途并显式查询，不受本条限制。
+- 生成汇报中写明各 ORM 入口的过滤落实方式与核实结论；项目配置无法确认时询问用户，不猜测。
 
 ### Lombok
 

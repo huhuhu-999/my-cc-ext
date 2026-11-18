@@ -81,8 +81,8 @@ last_updated: <yyyy-MM-dd HH:mm>
 |----------|----------|----------|
 | `investigation: pending` | **阶段 1：问题理解与根因定位** | 执行第一步、第二步，完成后更新 `investigation: done` 并 **STOP** |
 | `investigation: done` 且 `fix_execution: pending` | **阶段 2：复现测试 + 修复** | 执行第三步，完成后更新 `fix_execution: done` 并 **STOP** |
-| `fix_execution: done` 且 `review: pending` | **阶段 3：审查与回归** | 执行第四步，完成后更新 `review: done`、`regression: done` 并 **STOP** |
-| `review: done` 且 `report: pending` | **阶段 4：输出修复报告** | 执行第五步，完成后更新 `report: done` |
+| `fix_execution: done` 且（`review: pending` 或 `regression: pending`） | **阶段 3：审查与回归** | 执行第四步；审查已通过且代码未再修改时从 4.2 继续。按实际结果更新状态，回归未收口时保持 `regression: pending` 并 **STOP** |
+| `review: done` 且 `regression: done` 且 `report: pending` | **阶段 4：输出修复报告** | 执行第五步，完成后更新 `report: done` |
 | `report: done` | **已完成** | 输出修复报告摘要，不重复执行 |
 
 ## 工作流
@@ -267,26 +267,35 @@ Skill(skill: "code-reviewer")
 <gradle> :<module>:test
 ```
 
-如果没有失败的测试与该修复相关，确认全部通过。
+按实际退出码和测试报告记录结果，不以失败是否与本次修复相关代替测试是否通过：
 
-更新状态文件：
+- 所需测试已完整执行且全部通过，才报告回归 `PASS`。
+- 存在失败时如实报告 `FAIL`；已确认的既有/无关失败单列基线或日志依据及影响，不擅自扩大修复范围。尚未运行、执行不完整或无法取得有效报告时，明确标注未执行或受阻，不能报告 `PASS`。
+- 测试失败、归因未明或验证受阻时，保持 `regression: pending`，记录实际结果、失败项、证据及待处理事项并暂停。用户明确接受有依据的既有/无关失败、允许本次回归收口时，可记为 `regression: done`，但必须在状态文件中保留失败记录与确认依据；测试结果仍为 `FAIL`，不得改称全部通过。
+- 若回归后又修改代码，回退 `review: pending`、`regression: pending`、`report: pending`，重新审查并验证。
+
+审查已通过时，按上述条件更新状态文件；`done` 表示回归已通过或已获明确确认收口，不单独证明测试全绿：
 
 ```markdown
 review: done
-regression: done
+regression: <pending 或 done，按上述条件填写>
 critical: 0
 warning: <N>
 info: <N>
 last_updated: <yyyy-MM-dd HH:mm>
 ```
 
-输出：
+在状态文件正文记录执行命令、退出码、测试报告位置、实际结果、未解决项及用户确认（如有），供恢复任务和最终报告使用，不新增阶段状态。
 
-> 审查通过，回归测试 PASS。CRITICAL: 0, WARNING: N, INFO: M。
+输出真实结果及影响：
+
+> 审查通过；回归测试：<PASS / FAIL / 未执行 / 受阻，按实际结果填写>。CRITICAL: 0, WARNING: N, INFO: M。
 >
-> **下一步**：回复"继续"输出修复报告。
+> <失败、跳过或受阻项及其依据与影响；用户已接受既有失败时同时注明，不改写测试结果。>
+>
+> **下一步**：仅 `regression: done` 时提示回复“继续”输出修复报告；否则说明待处理事项并等待用户决定，不进入完成报告。
 
-## 🛑 STOP HERE — 阶段 3 完成。等待用户确认。禁止继续执行第五步。
+## 🛑 STOP HERE — 阶段 3 本轮结束。回归未收口时保持待处理；已收口时等待用户确认。禁止继续执行第五步。
 
 ### 第五步：输出修复报告
 
@@ -318,7 +327,10 @@ last_updated: <yyyy-MM-dd HH:mm>
 
 ### 回归验证
 
-- 模块测试：PASS（N tests）
+- 模块测试：<实际结果及测试统计；未经执行不得填 PASS>
+- 执行依据：<命令、退出码及测试报告位置>
+- 未解决项与影响：<失败/跳过/受阻项及归因证据；无则注明无>
+- 回归收口依据：<全部通过，或用户明确接受既有/无关失败的确认记录；后者保留 FAIL，不称全部通过>
 
 ### 根因分类
 
