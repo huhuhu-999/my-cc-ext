@@ -153,7 +153,7 @@ Java `code ↔ msg` 枚举生成执行入口。探测项目包路径、Lombok �
 - **MyBatis-Plus** — Entity 用 `@TableName` + `@TableId`，Mapper 继承 `BaseMapper<Entity>`，无需 XML
 - **MyBatis** — Entity 纯 POJO，Mapper 接口声明 CRUD + 同名 XML 包含 `resultMap`/`sql` 片段
 - **JPA/Hibernate** — Entity 用 `@Entity` + `@Table` + `@Getter`（不暴露 setter），Repository 继承 `JpaRepository` + `JpaSpecificationExecutor`
-- **统一规范** — 审计字段齐全、`LocalDateTime` 不用 `Date`、逻辑删除用 `UPDATE SET is_delete = 1`、禁止 `SELECT *`
+- **统一规范** — 审计字段齐全、`LocalDateTime` 不用 `Date`、逻辑删除用 `UPDATE SET is_delete = 1`、普通查询/更新落实 `is_delete = 0`（统一过滤已生效时不重复拼）、禁止 `SELECT *`
 
 详细模板见 `skills/gen-java-entity/SKILL.md`。
 
