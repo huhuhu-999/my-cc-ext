@@ -127,17 +127,17 @@ Claude Code 扩展开发专家。覆盖 Claude Code 全部扩展机制：Skill�
 
 ### Agent: code-review
 
-全维度深度代码审查，是 `code-reviewer` skill 的**超集**。独立子进程执行，审查覆盖三大部分：**7 维全面检查**（分层架构、ORM/数据库、异常处理、安全性、代码质量、测试、日志——继承 `code-reviewer` skill 全部检查项）、**代码样式**（命名、格式、注释、分层等是否符合项目规范）和**重大逻辑缺陷**（循环内数据库操作/N+1、事务边界、并发安全、资源未释放、空指针、死循环、索引失效等）。支持 git diff、文件/目录、功能调用链三种审查范围，跨文件追踪调用链后定性，输出 CRITICAL/WARNING/INFO 三级报告。**只读审查**——只报告问题，不修改代码；修复委托 `fix` Agent 或 `fix` skill。
+默认执行全维度深度审查，覆盖代码样式、重大逻辑缺陷及分层、ORM/数据库、异常、安全、代码质量、测试、日志等适用主题。Java 详细判据统一加载 KB `backend/java/code-review-checklist.md` 及其引用；Agent 只保留取证动作、跨文件调用链追踪、覆盖核对和报告流程，不维护第二份规范。支持 git diff、文件/目录、功能调用链范围，输出 CRITICAL/WARNING/INFO 报告。**只读审查**——只报告问题，不修改代码；修复由另行授权的 `fix` Agent 或 Skill 执行。
 
-与 `code-reviewer` skill 的关系：`code-reviewer` skill 是内联轻量审查（基于 git diff 在当前会话执行 7 维检查，适合提交前快速检查）；`code-review` Agent 是独立子进程全维度深度审查（独立上下文 + 跨文件调用链追踪，能力**包含** skill 的全部 7 维，并叠加代码样式与重大逻辑缺陷深度检查）。
+与 `code-reviewer` skill 的关系：Skill 在主会话收集范围和规范，小改动内联审查，需要分工时分别委派业务逻辑与代码风格审查，再复核、去重和汇总。`code-review` Agent 是只读执行者，支持指定「业务逻辑」或「代码风格」维度；未指定时仍做全维度深度审查（独立上下文 + 跨文件调用链追踪），覆盖 Skill 的全部检查项并叠加重大逻辑缺陷检查，不向下派发。
 
 详细流程见 `agents/code-review/AGENT.md`。
 
 ### Skill: gen-java-enum
 
-Java `code ↔ msg` 枚举生成模板。自动探测项目包路径，生成含 `getCodeByMsg`/`getMsgByCode` 双向查找的枚举类。
+Java `code ↔ msg` 枚举生成执行入口。探测项目包路径、Lombok 与字符串工具依赖，经 `kb-loader` 实际加载 KB `backend/java/enum-standard.md` 的唯一模板后生成，并核对查找方法、缓存、空值与排序。
 
-详细模板见 `skills/gen-java-enum/SKILL.md`。
+执行流程见 `skills/gen-java-enum/SKILL.md`；详细规则与示例只在 KB 维护，插件 `EXAMPLES.md` 为兼容引导页。
 
 ### Skill: gen-api-doc
 
@@ -159,9 +159,9 @@ Java `code ↔ msg` 枚举生成模板。自动探测项目包路径，生成含
 
 ### Skill: code-reviewer
 
-Java 代码审查。对 git diff 变更进行 7 维审查（分层架构、JPA/DB、异常处理、安全、代码质量、测试、日志），输出 CRITICAL/WARNING/INFO 三级报告。内联轻量快速检查，适合提交前自查；`code-review` Agent 是其超集（全维度深度审查），深度审查任务请委托 Agent。
+Java 代码审查。对指定变更范围检查分层架构、ORM/DB、异常、安全、代码质量、测试、日志及命名注释，输出 CRITICAL/WARNING/INFO 报告。小改动内联执行；用户明确要求分维度并行，或跨模块/复杂逻辑适合独立分工时，由主会话分别委派 `code-review` Agent 做业务逻辑与代码风格审查，核实证据并去重汇总。实际执行方式与覆盖缺口必须说明，不能把缺少子报告当成无问题。
 
-详细规则见 `skills/code-reviewer/SKILL.md`。
+详细判据统一加载 KB `backend/java/code-review-checklist.md` 与所引正文；编排、取证及报告流程见 `skills/code-reviewer/SKILL.md`。
 
 ### Skill: implement-from-design
 
@@ -189,9 +189,9 @@ Java 代码审查。对 git diff 变更进行 7 维审查（分层架构、JPA/D
 
 ### Skill: add-javadoc
 
-为 Service 接口和实现类补充 JavaDoc 文档注释。自动扫描未注释方法，生成符合项目风格的中文 JavaDoc（`@param`、`@return`、`@throws`）。
+为 Service 接口和实现类补充 JavaDoc。按授权扫描或人工读取候选，实际加载 KB `backend/java/development-standard.md`「文档注释（Javadoc）」及项目规则后补充；保留继承、私有简单转发例外，不把扫描无缺失当作语义完整。
 
-详细模板见 `skills/add-javadoc/SKILL.md`。
+执行流程见 `skills/add-javadoc/SKILL.md`；详细风格与示例只在 KB 维护，插件模板路径保留为兼容引导页。
 
 ### Skill: write-a-skill
 
@@ -222,11 +222,11 @@ Java TDD 工作流命令。5 Phase 流程：Detect 探测测试基础设施 → 
 ```
 用户输入
   ↓ 自动匹配 description 关键词
-Skill（内联执行）
+Skill（当前会话加载与编排）
   ├── 代码生成：gen-pgsql-ddl / gen-java-entity / gen-java-enum / gen-api-doc
   ├── 质量保障：code-reviewer / fix / build-fix / tdd / add-javadoc
   ├── 流程编排：implement-from-design / write-a-skill
-  └── 所有 Skill 在当前会话直接执行，多 Phase + bash + 护栏
+  └── Skill 在当前会话加载；code-reviewer 可由主会话组织分维度子代理审查
 
 用户输入
   ↓ 主会话自动判断 + Agent 工具委托
@@ -239,7 +239,7 @@ Agent（独立子进程）
   └── superpowers-planner：设计规划（头脑风暴→Spec→Plan）
 ```
 
-- **Skill（13 个）**：内联执行，自动触发，覆盖代码生成、质量保障、流程编排、规范加载
+- **Skill（13 个）**：在当前会话加载，可按需委派，覆盖代码生成、质量保障、流程编排、规范加载
 - **Agent（6 个）**：独立子进程，根据用户输入自动匹配委托，探查项目上下文后执行复杂多步骤任务
 
 ## Agent 自动路由
@@ -252,16 +252,16 @@ Agent（独立子进程）
 | 数据库操作（DDL建表、DML查询、Entity/Mapper生成、SQL审查） | `my-ext:db-ops:db-ops` | 建表、DDL、SQL、Entity、Mapper、数据库、查询 |
 | 多阶段功能开发（已有 PRD → 设计→计划→编码→审查） | `my-ext:feature-dev:feature-dev` | 按PRD开发、完整功能开发流水线；简单字段/参数小改不自动进入，已有有效且批准的 plan 可直接交 `implement-from-design` |
 | 复杂缺陷修复（跨模块排查、根因不明） | `my-ext:fix:fix` | 排查bug、复杂bug、深入看一下、跨模块 |
-| 全维度深度代码审查（7 维全面 + 代码样式 + 重大逻辑缺陷，跨文件追踪） | `my-ext:code-review:code-review` | 代码审查、审查代码、深度审查、样式检查、逻辑审查、N+1、循环查库、性能审查、review 整个模块 |
+| 全维度深度代码审查（7 维全面 + 代码样式 + 重大逻辑缺陷，跨文件追踪） | `my-ext:code-review:code-review`；显式分维度/并行请求由主会话 `code-reviewer` 编排 | 代码审查、审查代码、深度审查、样式检查、逻辑审查、N+1、循环查库、性能审查、review 整个模块 |
 | 设计规划（原始需求→头脑风暴→方案对比→计划） | `my-ext:superpowers-planner:superpowers-planner` | 设计方案、规划、头脑风暴、需求分析 |
 
 **判断标准**：
 - 用户请求涉及**多步骤、跨文件、需要独立上下文**的复杂任务 → 自动使用 `Agent` 工具委托
 - 简单单步任务（读文件、问问题、小修改、单文件编辑）→ 直接处理，不委托
 - 不确定时优先委托 — Agent 有独立上下文，执行更专注
-- 代码审查类请求的区分：**提交前对 `git diff` 做快速检查** → 直接使用 `code-reviewer` skill（内联执行，不委托）；**需要全维度深度审查（7 维全面 + 代码样式 + 重大逻辑缺陷，跨文件追踪调用链）或审查指定模块/功能** → 委托 `code-review` Agent（能力包含 skill 全部 7 维，是其超集）
+- 代码审查类请求的区分：**提交前快速检查** → 使用 `code-reviewer` skill，小改动内联；**明确要求业务逻辑与代码风格分工/并行审查** → 优先由主会话运行 `code-reviewer`，分别委派 `my-ext:code-review:code-review`，指定维度后汇总，不能先把编排整体交给只读审查 Agent；**未要求分工的全维度深度审查或指定模块/功能审查** → 委托 `code-review` Agent，不指定维度时保留全部检查项。
 
-**委托 `code-review` Agent 时必须传递任务上下文**：调用 `my-ext:code-review:code-review` 时，需一并转述本次任务的**背景及目标**，并给出**设计文档 / PRD / 路径**（若有）——Agent 需据此对照设计意图审查实现是否偏离；缺少时 Agent 会基于代码现状审查并在报告开头标注。主会话不得只丢一句「审查这个模块」就委托。
+**委托 `code-review` Agent 时必须传递任务上下文**：调用 `my-ext:code-review:code-review` 时，需转述**背景及目标**，给出**设计文档 / PRD 路径**（若有）、目标开发目录、审查基线与文件清单、审查维度及适用 KB 文档路径；分维度审查复用相同范围，要求子代理实际读取各自适用规范并只读执行。资料缺失须注明，不能以推断代替业务规则。主会话不得只丢一句「审查这个模块」就委托。
 
 **委托时必须提示**：调用 Agent 工具前，先输出一行提示告知用户命中了哪个 Agent，格式：
 > 🎯 已匹配 Agent `my-ext:xxx:xxx`，正在委托...

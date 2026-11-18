@@ -22,11 +22,14 @@ claude plugins enable my-ext
 ```text
 使用 feature-dev，根据需求文档推进功能开发。
 使用 code-review 审查当前改动，只报告问题。
+使用 code-reviewer，按业务逻辑和代码风格并行审查当前改动，只报告问题。
 使用 db-ops，根据表结构生成 Entity 和 Mapper。
 使用 add-javadoc，为 Service 补充文档注释。
 ```
 
 Agent 正文维护在仓库 `agents/`，共享技能维护在 `skills/`。完整能力列表见 [仓库 README](../readme.md#能力概览)。
+
+`my-ext:code-reviewer` 由主会话组织审查：小改动内联，需要分工时分别调用 `my-ext:code-review:code-review`，指定业务逻辑或代码风格维度；主会话复核证据并合并报告。子代理不修改代码、不运行测试或构建、不继续派发。直接调用 `code-review` 而不指定维度时仍执行全维度深度审查。实际委派能力以当前宿主为准；显式并行要求无法满足时报告阻塞，不静默降级。
 
 需要知识库规范的任务，应在当前平台适用的项目或用户指令中声明「知识库根：」及实际路径，也可在任务中明确提供；知识库不随插件分发。
 

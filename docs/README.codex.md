@@ -19,6 +19,7 @@ codex plugin list --marketplace my-cc-ext --json
 ```text
 使用 $feature-dev-agent，根据需求文档开发功能。
 使用 $code-review-agent 审查当前改动，只报告问题。
+使用 $code-reviewer，按业务逻辑和代码风格并行审查当前改动，只报告问题。
 使用 $add-javadoc，为 Service 补充文档注释。
 ```
 
@@ -36,6 +37,8 @@ Agent 通过以下工作流 Skill 暴露，正文仍只维护在 `agents/<name>/
 共享技能也可直接使用，例如 `$gen-java-entity`、`$add-javadoc`。需要知识库时，在目标项目的 `AGENTS.md` 中声明「知识库根：」和实际路径，并允许访问。未配置且项目没有强制要求时，按项目已有规范执行。
 
 这些入口以工作流 Skill 运行，模型、权限和子代理能力由当前 Codex 会话决定。适配细节见 [Agent 执行契约](../codex/agent-adapter.md)。
+
+`$code-reviewer` 是主会话审查入口：小改动内联；需要分工且宿主支持时，将业务逻辑、代码风格交给独立只读子代理，复用 `code-review-agent` 的执行契约与唯一 Agent 正文，主会话复核汇总。`code-review-agent` 并非要求宿主注册同名子代理类型，具体派发由当前会话能力决定；不指定维度时仍做全维度审查。显式并行/独立要求无法满足时报告阻塞，不冒称已经并行完成。
 
 薄入口源码位于 `codex/skills/<name>-agent/SKILL.md`，仅在 Codex 安装包中位于 `skills/<name>-agent/SKILL.md`。入口统一先读取 [Agent 执行契约](../codex/agent-adapter.md)，再读取上表对应的 Agent 原文。
 
