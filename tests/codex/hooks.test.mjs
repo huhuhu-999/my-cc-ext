@@ -42,8 +42,14 @@ test("Codex finds ancestor instructions and honors the nearest override and expl
   assert.ok(unavailable.hookSpecificOutput.additionalContext.includes("AGENTS.override.md"));
   const fromEnvironment = runHook({ cwd: nested, kb: fixture.kb });
   assertProject(fromEnvironment, "fixture");
-  assert.ok(fromEnvironment.hookSpecificOutput.additionalContext.includes(fixture.kb));
-  assert.ok(fromEnvironment.hookSpecificOutput.additionalContext.includes("KB_ROOT"));
+  assert.ok(
+    fromEnvironment.hookSpecificOutput.additionalContext.includes(fixture.kb),
+    `context: ${fromEnvironment.hookSpecificOutput.additionalContext}`,
+  );
+  assert.ok(
+    fromEnvironment.hookSpecificOutput.additionalContext.includes("KB_ROOT"),
+    `context: ${fromEnvironment.hookSpecificOutput.additionalContext}`,
+  );
 });
 
 test("registry matching uses directory boundaries and selects the most specific multi-path entry", async (t) => {
@@ -71,8 +77,14 @@ test("invalid configured root reports its source without falling back; malformed
   await writeFile(path.join(fixture.cwd, "AGENTS.md"), `知识库根：\`${fixture.kb}\``);
   const missing = path.join(fixture.root, "absent");
   const result = runHook({ ...fixture, kb: missing });
-  assert.ok(result.hookSpecificOutput.additionalContext.includes(missing));
-  assert.ok(result.hookSpecificOutput.additionalContext.includes("KB_ROOT"));
+  assert.ok(
+    result.hookSpecificOutput.additionalContext.includes(missing),
+    `context: ${result.hookSpecificOutput.additionalContext}`,
+  );
+  assert.ok(
+    result.hookSpecificOutput.additionalContext.includes("KB_ROOT"),
+    `context: ${result.hookSpecificOutput.additionalContext}`,
+  );
   assert.ok(result.hookSpecificOutput.additionalContext.includes("不可访问"));
   assert.ok(!result.hookSpecificOutput.additionalContext.includes("项目 [fixture]"));
   assert.equal(runHook({ ...fixture, input: "not-json" }), null);

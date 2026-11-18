@@ -43,6 +43,9 @@ export function runHook({ cwd, kb = "", platform = "codex", input, command, plug
 
 export function assertProject(result, id) {
   assert.equal(result?.hookSpecificOutput?.hookEventName, "UserPromptSubmit");
-  assert.ok(result.hookSpecificOutput.additionalContext.includes(`项目 [${id}]`), JSON.stringify(result));
+  assert.ok(
+    result.hookSpecificOutput.additionalContext.includes(`项目 [${id}]`),
+    `context: ${result.hookSpecificOutput.additionalContext}; raw: ${JSON.stringify(result)}`,
+  );
   assert.equal(result.decision, undefined);
 }

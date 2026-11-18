@@ -36,12 +36,13 @@ function Find-KnowledgeBase {
 
     # Hook 不从自然语言 prompt 猜任务路径；kb-loader 会按任务路径优先重新解析。
     if (-not [string]::IsNullOrWhiteSpace($env:KB_ROOT)) {
+        $kbRoot = if ([System.IO.Path]::IsPathFullyQualified($env:KB_ROOT)) {
+            [System.IO.Path]::GetFullPath($env:KB_ROOT)
+        } else {
+            [System.IO.Path]::GetFullPath($env:KB_ROOT, $WorkingDirectory)
+        }
         return [pscustomobject]@{
-            Root = if ([System.IO.Path]::IsPathFullyQualified($env:KB_ROOT)) {
-                [System.IO.Path]::GetFullPath($env:KB_ROOT)
-            } else {
-                [System.IO.Path]::GetFullPath($env:KB_ROOT, $WorkingDirectory)
-            }
+            Root = $kbRoot
             Source = 'KB_ROOT'
         }
     }
