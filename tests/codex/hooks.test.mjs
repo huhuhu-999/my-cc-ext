@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { realpathSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -43,10 +42,11 @@ test("Codex finds ancestor instructions and honors the nearest override and expl
   assert.ok(unavailable.hookSpecificOutput.additionalContext.includes("AGENTS.override.md"));
   const fromEnvironment = runHook({ cwd: nested, kb: fixture.kb });
   assertProject(fromEnvironment, "fixture");
-  // CI 的 Windows runner 上 os.tmpdir() 返回 8.3 短路径，Hook 的 GetFullPath 展开为长路径，按真实路径断言
-  const declaredRoot = realpathSync(fixture.kb);
+  // CI 的 Windows runner 上 os.tmpdir() 为 8.3 短路径而 Hook 的 GetFullPath 输出长路径，
+  // Node 的 realpathSync 也不展开短名——改用随机临时目录名后缀断言，长短形态一致且唯一
+  const kbSuffix = path.join(path.basename(fixture.root), "knowledge base");
   assert.ok(
-    fromEnvironment.hookSpecificOutput.additionalContext.includes(declaredRoot),
+    fromEnvironment.hookSpecificOutput.additionalContext.includes(kbSuffix),
     `context: ${fromEnvironment.hookSpecificOutput.additionalContext}`,
   );
   assert.ok(
@@ -78,11 +78,11 @@ test("registry supports Windows and POSIX paths with their own case semantics", 
 test("invalid configured root reports its source without falling back; malformed events stay silent", async (t) => {
   const fixture = await createHookFixture(t);
   await writeFile(path.join(fixture.cwd, "AGENTS.md"), `知识库根：\`${fixture.kb}\``);
-  // 同上：fixture.root 在 runner 上可能是 8.3 短路径，Hook 输出的是展开后的长路径
-  const missing = path.join(realpathSync(fixture.root), "absent");
-  const result = runHook({ ...fixture, kb: missing });
+  // 同上：以随机临时目录名后缀断言，规避短/长路径形态差异
+  const missingSuffix = path.join(path.basename(fixture.root), "absent");
+  const result = runHook({ ...fixture, kb: path.join(fixture.root, "absent") });
   assert.ok(
-    result.hookSpecificOutput.additionalContext.includes(missing),
+    result.hookSpecificOutput.additionalContext.includes(missingSuffix),
     `context: ${result.hookSpecificOutput.additionalContext}`,
   );
   assert.ok(
