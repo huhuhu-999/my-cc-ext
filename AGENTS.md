@@ -25,7 +25,7 @@ This repository packages reusable Java development skills and platform-specific 
 - Match the target repository's naming, formatting, framework, and test patterns.
 - Keep Controller, Service, and data-access responsibilities separated.
 - Use TDD for behavior changes: demonstrate RED, implement the smallest GREEN change, then run regression checks.
-- Run the relevant build, tests, or executable validation after editing.
+- Run the relevant build, tests, or executable validation after editing only with the required command authorization and after applicable review gates; otherwise record that validation was not run. This does not authorize bypassing user confirmation or code-review requirements.
 
 ## Continuous Integration
 

@@ -26,7 +26,8 @@ gen-pgsql-ddl/
 4. 从项目配置或已有 DDL 获取授权角色；无法确定时询问用户，用户不需要授权时省略 GRANT
 5. 从 `template/` 复制对应模板
 6. 按 REFERENCE.md 中的列定义规则替换 `<占位符>`
-7. 输出到 `doc/features/<yyyy-MM>/<feature-name>/sql/` 目录（`<yyyy-MM>` 为生成当天所在年月（如 `2026-09`，`doc/features/` 下第一层目录），`<feature-name>` 为其下功能目录名；目录不存在则创建；不属于功能开发流程时向用户确认目标目录）
+7. 正式交付 SQL 输出到 `doc/features/<yyyy-MM>/<feature-name>/sql/` 目录（`<yyyy-MM>` 为生成当天所在年月（如 `2026-09`，`doc/features/` 下第一层目录），`<feature-name>` 为其下功能目录名；目录不存在则创建）；项目另有明确迁移目录约定时从其约定。非功能任务目录不明确时先询问用户
+8. 一次性校验或中间 SQL 不放入正式交付目录：有 `$CLAUDE_JOB_DIR` 时放其 `tmp/`，否则放 `~/.tmp/<会话标识>/`，任务完成后删除
 
 ## 核心规则
 
@@ -73,7 +74,8 @@ gen-pgsql-ddl/
 
 ### 文件
 
-- 存放路径 `doc/features/<yyyy-MM>/<feature-name>/sql/`（`<yyyy-MM>` = 生成当天年月，`doc/features/` 下第一层目录，功能名目录在其下；目录不存在则创建），文件名 `<yyyy-MM-dd>-<业务>-init.sql`
+- 正式交付 SQL 存放路径 `doc/features/<yyyy-MM>/<feature-name>/sql/`（`<yyyy-MM>` = 生成当天年月，`doc/features/` 下第一层目录，功能名目录在其下；目录不存在则创建），文件名 `<yyyy-MM-dd>-<业务>-init.sql`；项目另有明确迁移目录约定时从其约定，非功能任务目录不明确时先询问用户
+- 一次性校验或中间 SQL 只放会话临时目录（有 `$CLAUDE_JOB_DIR` 时为其 `tmp/`，否则为 `~/.tmp/<会话标识>/`），任务完成后删除，不作为正式交付文件保留
 - 默认建表脚本不得包含 `DROP TABLE`、`TRUNCATE` 等破坏性语句
 - 重建模式必须在脚本头部标注目标环境和用户确认结果
 - ALTER TABLE 不需要重复 GRANT

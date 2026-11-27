@@ -27,7 +27,7 @@ Java 开发全流程 Agent 和 Skill 工具集，支持 Claude Code、OpenCode �
 
 | Skill | 说明 |
 |------|------|
-| `gen-pgsql-ddl` | 生成 PostgreSQL DDL，schema 需询问用户，授权角色需确认并默认使用项目固定角色 |
+| `gen-pgsql-ddl` | 生成 PostgreSQL DDL，schema 需询问用户，授权角色取项目现有约定，无法确定时由用户确认 |
 | `gen-java-entity` | 根据 DDL 或表结构生成 Entity、Mapper 或 Repository |
 | `gen-java-enum` | 探测项目环境，按知识库唯一规范与模板生成 `code` / `msg` 枚举 |
 | `gen-api-doc` | 从 Controller 代码生成前端对接用的接口文档（入参 / 出参 / 示例 / 错误码） |

@@ -74,6 +74,20 @@ test("exact prose replacements do not leave a search whitespace artifact", async
   assert.doesNotMatch(fix, /逐层\s+搜索/);
 });
 
+test("generated tool examples map registered Claude skills and backticked Agent tool wording", async () => {
+  const generated = await generateAll(root);
+  const fix = generated.find((item) => item.mapping.name === "my-ext-fix").content;
+  const featureDev = generated.find((item) => item.mapping.name === "my-ext-feature-dev").content;
+
+  assert.match(fix, /load skill: fix/);
+  assert.match(fix, /load skill: code-reviewer/);
+  assert.doesNotMatch(fix, /Skill\(skill:|my-ext:(?:fix|code-reviewer)/);
+  assert.match(featureDev, /通过宿主子代理委托能力调用/);
+  for (const item of generated) {
+    assert.doesNotMatch(item.content, /`Agent` 工具/, item.mapping.output);
+  }
+});
+
 test("generated bodies contain no trailing whitespace", async () => {
   for (const item of await generateAll(root)) {
     assert.doesNotMatch(item.content, /[ \t]+$/m, item.mapping.output);

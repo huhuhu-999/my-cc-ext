@@ -43,7 +43,7 @@ Agent 正文维护在仓库 `agents/`，共享技能维护在 `skills/`。完整
 - 命中后注入一行提醒，内容含项目标识（例如「当前工作目录属于知识库项目 [paic]」）
 - 定义位置：`hooks/hooks.json`，使用完整 `command` 字符串传参；共用脚本 `hooks/kb-project-detect.ps1 -Platform claude`，需要 PowerShell 7 及以上
 
-Windows、macOS 和 Linux 的执行环境均需将 `pwsh` 加入 PATH。缺少运行时时宿主可能报告 Hook 启动失败，可禁用该 Hook 后通过 `kb-loader` 加载规范。配置缺失、读取失败、事件无效或未命中时，脚本静默退出，不阻断输入。
+Windows、macOS 和 Linux 的执行环境均需将 `pwsh` 加入 PATH。缺少运行时时宿主可能报告 Hook 启动失败，可禁用该 Hook 后通过 `kb-loader` 加载规范。未配置知识库、事件无效或未命中项目时静默退出；已选配置的读取、规范化或注册表访问失败会输出可见诊断，不回退其他根，也不阻断输入。
 
 ## 卸载插件
 

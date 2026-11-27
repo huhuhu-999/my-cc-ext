@@ -55,6 +55,19 @@ test("Codex finds ancestor instructions and honors the nearest override and expl
   );
 });
 
+test("Codex selected declaration with an invalid path reports a visible diagnostic without fallback", async (t) => {
+  const fixture = await createHookFixture(t);
+  await writeFile(path.join(fixture.cwd, "AGENTS.md"), "知识库根：`bad\u0000root`");
+
+  const result = runHook({ cwd: fixture.cwd, platform: "codex" });
+
+  assert.equal(result?.hookSpecificOutput?.hookEventName, "UserPromptSubmit");
+  assert.ok(result.hookSpecificOutput.additionalContext.includes("AGENTS.md"));
+  assert.ok(result.hookSpecificOutput.additionalContext.includes("不可访问"));
+  assert.ok(result.hookSpecificOutput.additionalContext.includes("未回退其他根"));
+  assert.ok(!result.hookSpecificOutput.additionalContext.includes("项目 [fixture]"));
+});
+
 test("registry matching uses directory boundaries and selects the most specific multi-path entry", async (t) => {
   const fixture = await createHookFixture(t);
   const nested = path.join(fixture.cwd, "src");

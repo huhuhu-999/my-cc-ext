@@ -189,7 +189,7 @@ export function createHooks({ packageRoot = PACKAGE_ROOT, localEntry, logger = c
   const resolvedRoot = path.resolve(packageRoot);
   const skillsPath = path.join(resolvedRoot, "skills");
   const bootstrapPath = path.join(resolvedRoot, ".opencode", "bootstrap.md");
-  const isLocalEntry = localEntry ?? isDirectory(path.join(PACKAGE_ROOT, ".git"));
+  const isLocalEntry = localEntry ?? (isDirectory(path.join(resolvedRoot, ".git")) || isFile(path.join(resolvedRoot, ".git")));
 
   return {
     async config(config) {

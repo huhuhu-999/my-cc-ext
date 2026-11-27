@@ -29,10 +29,12 @@ permissionMode: acceptEdits
 
 在动手之前：
 
-1. 读取目标仓库的 `CLAUDE.md` 了解项目全局约束
-2. 扫描现有 `agents/`、`skills/`、`.claude-plugin/` 目录了解已有扩展
-3. 阅读同类型的现有扩展文件，确保风格一致
-4. 确认目标仓库是独立插件项目（有 `.claude-plugin/plugin.json`）还是普通项目的 `.claude/` 配置
+1. 先读取目标仓库的 `AGENTS.md`，了解跨平台公共约束
+2. 再按当前平台的指令发现机制读取平台专用规则（如 Claude Code 的 `CLAUDE.md`），以其补充平台安装、注册和运行约定；不读取其他平台的用户级配置
+3. 扫描现有 `agents/`、`skills/`、`.claude-plugin/` 及目标仓库已有的 Codex / OpenCode 适配目录，了解已有扩展与分发结构
+4. 阅读同类型的现有扩展文件，确保风格一致
+5. 确认目标仓库是独立插件项目（有 `.claude-plugin/plugin.json`）还是普通项目的 `.claude/` 配置
+6. 评估本次改动对 Claude Code、Codex、OpenCode 的**发现、运行、打包和文档**影响，按仓库适配约定处理源文件与镜像；不支持的能力显式记录，不假设三个平台能力一致
 
 ## 扩展类型总览
 
@@ -57,7 +59,7 @@ permissionMode: acceptEdits
 
 ```bash
 # 通过 Skill 工具调用
-Skill(skill: "write-a-skill")
+Skill(skill: "my-ext:write-a-skill")
 ```
 
 当 `write-a-skill` 不可用或仅需小幅修改时，手动编辑。
@@ -85,7 +87,7 @@ description: <一句话描述触发场景和使用时机>
 - 明确适用场景
 - 提供模板（SQL、代码、配置等）
 - 列出规则清单（用表格）
-- 引用项目中的参考文件（如 `doc/features/<feature-name>/sql/xxx.sql`）
+- 引用项目中的参考文件（如 `doc/features/<yyyy-MM>/<feature-name>/sql/xxx.sql`）
 - 输出路径约定
 
 ### Skill 调用
@@ -171,7 +173,7 @@ permissionMode: acceptEdits  # 权限模式：acceptEdits | default | bypassPerm
 }
 ```
 
-- `name`: 安装后的命名空间前缀，Agent/Skill 以 `plugin-name:agent-name` 形式注册
+- `name`: 安装后的命名空间前缀。Skill 以 `plugin-name:skill-name` 形式注册；Agent 以 `plugin-name:dir-name:frontmatter-name` 形式注册，其中 `dir-name` 为 `agents/` 下的目录名，`frontmatter-name` 为 AGENT.md 的 frontmatter `name`
 - `version`: 遵循 semver
 - 插件安装后，其 `agents/` 和 `skills/` 目录自动注册到 Claude Code
 
@@ -301,6 +303,7 @@ const verified = await parallel(result.map(r => () => agent(`verify: ${r}`, { sc
 ## 通用约束
 
 - 新增扩展前，先阅读同目录下的现有扩展，保持风格一致
+- 每次插件改动均评估 Claude Code、Codex、OpenCode 的发现、运行、打包与文档影响；遵循仓库的单一事实源和镜像生成约定，不手改生成文件
 - Skill/Agent 的 `name` 必须与目录名一致
 - Frontmatter 是 YAML，注意缩进和转义
 - `description` 字段决定触发时机，需精确描述触发条件

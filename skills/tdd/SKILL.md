@@ -7,6 +7,13 @@ description: Java TDD 工作流。Red-Green-Refactor 三阶段，自动检测 Ma
 
 测试驱动开发流程。在当前会话内联执行整个 Red-Green-Refactor 循环。
 
+## 授权与执行边界（最高优先级）
+
+- 只有用户明确调用 TDD、明确要求 RED/GREEN 或立即测试时，才可在授权范围内适用「先测试、后审查」的例外；Skill 因关键词被自动匹配不等于用户作出上述明确选择，普通业务代码修改不自动获得例外。
+- 所有测试、编译和覆盖率命令执行前均须核对本次明确授权；宿主支持时后台执行并等待完成通知，再读取实际结果。授权使用本 Skill 不等于授权执行其中每条命令；未授权时只列命令并标注「未执行」。
+- 未获运行 RED 测试的明确授权时，不得声称已确认 RED 或已完成 TDD；需要 RED 才能继续时暂停，不继续编写生产实现。
+- 不适用上述例外的普通业务代码修改，顺序为「改代码 → 提示用户运行 code-reviewer 并完成修复 → 编译/测试」，不得因加载本 Skill 而越过审查门禁。
+
 ## Phase 1 — DETECT（探测测试基础设施）
 
 递归搜索所有模块的 `**/pom.xml`、`**/build.gradle`、`**/build.gradle.kts`、`**/src/test/**` 和 `**/*Test.java`。在构建文件中搜索 JUnit、TestNG、Mockito 和 JaCoCo。根据被测类所属模块选择对应构建文件，排除 `target/`、`build/` 和生成目录。
@@ -23,11 +30,15 @@ description: Java TDD 工作流。Red-Green-Refactor 三阶段，自动检测 Ma
 
 单模块 Maven 项目省略 `-pl <module> -am`；单模块 Gradle 项目省略 `:<module>:` 任务前缀。
 
-### 1.1 定位目标
+### 1.1 加载项目知识库规范
+
+首次编写测试前调用 `kb-loader` 技能获取加载清单并按其读取，任务类型按本次测试覆盖的开发或缺陷修复改动归类；不得延迟到 GREEN 阶段才加载。KB 明文规约优先于本技能中的示例与默认口径，同时读取当前项目的 `AGENTS.md` 和平台专用规则。
+
+### 1.2 定位目标
 
 递归搜索 `**/*Service.java` 和 `**/*ServiceImpl.java`，根据包名、接口实现关系以及用户指定目标确定被测类，不能默认取搜索结果前五个。
 
-### 1.2 读取风格参考
+### 1.3 读取风格参考
 
 读取 1-2 个已有测试文件，了解：
 - 使用的测试框架和扩展（`@ExtendWith(MockitoExtension.class)` vs `@SpringBootTest`）
@@ -94,6 +105,8 @@ class XxxServiceImplTest {
 
 ### 运行测试确认 RED
 
+执行前核对本次 RED 授权；宿主支持时后台执行并等待完成通知。未授权只列下列命令并标注「未执行」，不得进入需要有效 RED 的生产实现。
+
 ```bash
 # Maven
 <maven> test -Dtest=<TestClassName> -pl <module> -am
@@ -102,7 +115,7 @@ class XxxServiceImplTest {
 <gradle-wrapper> :<module>:test --tests "*<TestClassName>"
 ```
 
-预期：**FAIL**，且失败原因必须是目标行为尚未实现或断言不满足。编译错误、依赖下载失败、环境错误不能作为有效 RED。
+预期：**FAIL**，且失败原因必须是目标行为尚未实现或断言不满足。编译错误、依赖下载失败、环境错误不能作为有效 RED；实际结果按退出码和测试报告填写，未执行不得填 FAIL 或 PASS。
 
 ---
 
@@ -115,15 +128,17 @@ class XxxServiceImplTest {
 - 依赖注入用 `@Autowired` 注解注入（字段注入）+ 项目业务异常类
 - 优先复用已有枚举、常量、工具类
 - 生成代码前先读取当前项目的 `AGENTS.md` 和平台专用规则，再检查同模块现有代码，确认行宽、链式调用、注解和格式习惯
-- > **知识库规范**：动手前先调用 `kb-loader` 技能获取加载清单并按其读取；KB 明文规约优先于本技能中的示例与默认口径。
+- 遵循 Phase 1 已加载的 kb-loader 清单及项目规范，不重复加载已读文档
 
 ### 运行测试确认 GREEN
+
+执行前核对本次 GREEN 授权；宿主支持时后台执行并等待完成通知，未授权只列命令并标注「未执行」。
 
 ```bash
 <maven> test -Dtest=<TestClassName> -pl <module> -am
 ```
 
-预期：**PASS** — 所有测试通过。
+预期：**PASS** — 所有测试通过；实际结果按退出码和测试报告填写，未执行或失败不得写 PASS。
 
 ---
 
@@ -139,17 +154,21 @@ class XxxServiceImplTest {
 
 ### 重构后验证
 
+重构会改变代码并使此前验证失效。执行前重新核对本次授权；宿主支持时后台执行并等待完成通知，未授权只列命令并标注「未执行」。
+
 ```bash
 <maven> test -Dtest=<TestClassName> -pl <module> -am
 ```
 
-预期：**PASS** — 重构后所有测试仍通过。
+预期：**PASS** — 重构后所有测试仍通过；实际结果按退出码和测试报告填写，未执行或失败不得写 PASS。
 
 ---
 
 ## Phase 5 — COVERAGE（覆盖率）
 
 ### 生成覆盖率报告
+
+执行前核对本次覆盖率命令授权；宿主支持时后台执行并等待完成通知，未授权只列命令并标注「未执行」，不得编造覆盖率。
 
 ```bash
 # Maven + JaCoCo
@@ -165,7 +184,7 @@ class XxxServiceImplTest {
 |--------|------|------|
 | ≥ 80% line | PASS | 输出汇总报告 |
 | < 80% line | 需补充 | 列出未覆盖的分支/方法，回到 Phase 2 补充测试 |
-| 无 JaCoCo | SKIP | 仅确认测试全部通过 |
+| 无 JaCoCo | SKIP | 仅按实际测试报告判断；未执行时标注未执行，不声称全部通过 |
 
 ---
 
@@ -179,25 +198,25 @@ class XxxServiceImplTest {
 **测试框架**: JUnit 5 / JUnit 4 + Mockito
 
 ### RED Phase
-- 编写测试: N 个方法
-- 覆盖场景: 正常路径 / null / 业务异常 / 边界值
-- 预期失败: ✅
+- 编写测试: <按实际测试方法逐项计数>
+- 覆盖场景: <实际覆盖的正常路径 / null / 业务异常 / 边界值>
+- 执行结果: <FAIL 且原因符合预期 / FAIL（环境或编译等原因） / PASS / BLOCKED / 未执行；附实际依据>
 
 ### GREEN Phase
 - 新增/修改文件: <列表>
-- 测试结果: N passed, 0 failed
+- 测试结果: <实际统计及 PASS / FAIL / BLOCKED / 未执行；未经执行不得填通过>
 
 ### REFACTOR Phase
-- 重构项: <消除重复 / 拆分方法 / 提取常量>
-- 重构后测试: ✅ N passed
+- 重构项: <实际完成的消除重复 / 拆分方法 / 提取常量；无则注明无>
+- 重构后测试: <实际统计及结果；代码变化后未重跑必须写未执行>
 
 ### 覆盖率
 | 指标 | 数值 |
 |------|------|
-| Line Coverage | XX% |
-| Branch Coverage | XX% |
+| Line Coverage | <实际百分比 / 未执行 / 无报告> |
+| Branch Coverage | <实际百分比 / 未执行 / 无报告> |
 
-**结论**: ✅ PASS / ⚠️ BELOW 80%
+**结论**: <PASS / FAIL / BLOCKED / 未执行 / BELOW 80%，按实际结果填写>
 ```
 
 ---

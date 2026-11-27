@@ -43,10 +43,14 @@ export const COMMON_REPLACEMENTS = [
   ["Read 关键", "读取关键"],
   ["使用 `Bash` 执行", "使用 shell 执行"],
   ["通过 Skill 工具调用", "使用当前平台的 skill 加载能力加载"],
+  ["Skill(skill: \"my-ext:fix\")", "load skill: fix"],
+  ["Skill(skill: \"my-ext:code-reviewer\")", "load skill: code-reviewer"],
   ["Skill(skill: \"fix\")", "load skill: fix"],
   ["Skill(skill: \"code-reviewer\")", "load skill: code-reviewer"],
   ["Skill:implement-from-design", "skill:implement-from-design"],
   ["Skill:code-reviewer", "skill:code-reviewer"],
+  ["通过 `Agent` 工具", "通过宿主子代理委托能力"],
+  ["`Agent` 工具", "宿主子代理委托能力"],
   ["Agent 工具", "子代理委托能力"],
 ];
 

@@ -139,3 +139,17 @@ test("Claude prompt hook executes its command and reads Claude project instructi
   await writeFile(path.join(fixture.cwd, "CLAUDE.md"), `知识库根：\`${fixture.kb}\``);
   assertProject(runHook({ cwd: fixture.cwd, command: hook.command }), "fixture");
 });
+
+test("Claude prompt hook reports selected declaration normalization failures", async (t) => {
+  const hooks = await readJson("hooks/hooks.json");
+  const hook = hooks.hooks.UserPromptSubmit[0].hooks[0];
+  const fixture = await createHookFixture(t);
+  await writeFile(path.join(fixture.cwd, "CLAUDE.md"), "知识库根：`bad\u0000root`");
+
+  const result = runHook({ cwd: fixture.cwd, command: hook.command });
+
+  assert.equal(result?.hookSpecificOutput?.hookEventName, "UserPromptSubmit");
+  assert.ok(result.hookSpecificOutput.additionalContext.includes("CLAUDE.md"));
+  assert.ok(result.hookSpecificOutput.additionalContext.includes("不可访问"));
+  assert.ok(result.hookSpecificOutput.additionalContext.includes("未回退其他根"));
+});

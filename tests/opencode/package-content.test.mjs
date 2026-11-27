@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
@@ -19,25 +19,19 @@ const requiredFiles = [
   "skills/gen-java-enum/EXAMPLES.md",
   "skills/gen-api-doc/EXAMPLES.md",
   "skills/gen-api-doc/REFERENCE.md",
+  "skills/design-doc-writer/templates/overview-skeleton.md",
+  "skills/design-doc-writer/templates/plan-skeleton.md",
+  "skills/design-doc-writer/templates/spec-skeleton.md",
   "skills/gen-pgsql-ddl/EXAMPLES.md",
   "skills/gen-pgsql-ddl/REFERENCE.md",
   "skills/gen-pgsql-ddl/template/alter-table.sql",
   "skills/gen-pgsql-ddl/template/create-table.sql",
 ];
 
-const skillNames = [
-  "add-javadoc",
-  "build-fix",
-  "code-reviewer",
-  "fix",
-  "gen-api-doc",
-  "gen-java-entity",
-  "gen-java-enum",
-  "gen-pgsql-ddl",
-  "implement-from-design",
-  "tdd",
-  "write-a-skill",
-];
+const skillNames = readdirSync(path.join(root, "skills"), { withFileTypes: true })
+  .filter((entry) => entry.isDirectory() && existsSync(path.join(root, "skills", entry.name, "SKILL.md")))
+  .map((entry) => entry.name)
+  .sort();
 
 test("npm package contains production files and excludes caches, tests and development docs", () => {
   const result = spawnSync("npm", ["pack", "--json", "--dry-run"], {

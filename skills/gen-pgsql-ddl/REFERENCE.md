@@ -8,7 +8,8 @@
 | 操作模式 | 默认仅创建；删除并重建必须由用户明确确认目标环境和表名 |
 | DML 授权角色 | 优先读取项目已有 DDL/配置；无法确定时询问用户；不需要授权时省略 |
 | QRY 授权角色 | 优先读取项目已有 DDL/配置；无法确定时询问用户；不需要授权时省略 |
-| 输出文件名 | `doc/features/<yyyy-MM>/<feature-name>/sql/<yyyy-MM-dd>-<业务>-init.sql`，业务名使用英文 kebab-case（`<yyyy-MM>` = 生成当天年月，`doc/features/` 下第一层目录，功能名目录在其下；目录不存在则创建） |
+| 正式输出文件名 | `doc/features/<yyyy-MM>/<feature-name>/sql/<yyyy-MM-dd>-<业务>-init.sql`，业务名使用英文 kebab-case（`<yyyy-MM>` = 生成当天年月，`doc/features/` 下第一层目录，功能名目录在其下；目录不存在则创建）；项目另有明确迁移目录约定时从其约定，非功能任务目录不明确时先询问用户 |
+| 临时 SQL | 一次性校验或中间 SQL 不放入正式交付目录；有 `$CLAUDE_JOB_DIR` 时放其 `tmp/`，否则放 `~/.tmp/<会话标识>/`，任务完成后删除 |
 
 ## 列定义
 
@@ -58,7 +59,8 @@
 
 ## 文件
 
-- 存放路径：`doc/features/<yyyy-MM>/<feature-name>/sql/` 目录（`<yyyy-MM>` = 生成当天年月，`doc/features/` 下第一层目录；`<feature-name>` 为其下功能目录名；目录不存在则创建；不属于功能开发流程时向用户确认目标目录）
+- 正式交付 SQL 存放路径：`doc/features/<yyyy-MM>/<feature-name>/sql/` 目录（`<yyyy-MM>` = 生成当天年月，`doc/features/` 下第一层目录；`<feature-name>` 为其下功能目录名；目录不存在则创建）；项目另有明确迁移目录约定时从其约定，非功能任务目录不明确时先询问用户
+- 一次性校验或中间 SQL 只放会话临时目录（有 `$CLAUDE_JOB_DIR` 时为其 `tmp/`，否则为 `~/.tmp/<会话标识>/`），任务完成后删除
 - 默认脚本从 `CREATE TABLE` 开始，不包含任何删除语句
 - 仅在用户明确确认“删除并重建”后加入 `DROP TABLE IF EXISTS`，并在脚本头部记录目标环境和确认信息
 - 文件名：`<yyyy-MM-dd>-<业务>-init.sql`

@@ -182,7 +182,7 @@ GET /wxrelease/rentUnitInfo?buildingId=1&tenantId=10086
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|:---:|------|
 | `ownerType` | String | 是 | 物品所有权：`INTERNAL` / `EXTERNAL` / `CONSTRUCTOR` |
-| `contractorName` | String | 条件 | **`ownerType = CONSTRUCTOR` 时必填**，最大 200 字 |
+| `contractorName` | String | 条件必填 | **`ownerType = CONSTRUCTOR` 时必填**，最大 200 字 |
 | `goodsList` | List&lt;Object&gt; | 是 | 物品明细，**至少 1 条**，见下方「元素结构」 |
 
 **`goodsList` 元素结构**

@@ -31,6 +31,14 @@ permissionMode: acceptEdits
 
 **本 Agent 分阶段执行，每次调用只推进一个阶段。禁止跨阶段连续执行。**
 
+### 验证授权与 Git 边界（最高优先级）
+
+- 只有用户明确调用 TDD、明确要求 RED/GREEN 或立即测试时，才可在授权范围内先执行测试；普通复杂缺陷修复不自动获得该例外。
+- 所有测试、编译命令执行前均须核对本次明确授权；宿主支持时后台执行并等待完成通知，再读取实际结果。阶段确认“继续”只授权进入对应阶段，不等于命令执行授权；未授权只列命令并标注未执行。
+- 未获 RED 授权且修复必须先确认 RED 时，保持 `fix_execution: pending`，不得继续生产修复或把该阶段标为 `done`。
+- 普通业务代码修改在回归前必须先提示用户运行 `code-reviewer` 并完成修复；审查门禁通过后才可申请编译/回归测试授权。
+- 默认不执行 git add / commit，也不在状态或输出中预填 commit hash。只有用户明确授予 Git 提交权限且实际提交成功后，才可在状态正文记录该次真实 hash。
+
 ### 状态文件（最高优先级）
 
 为支持跨会话恢复，每个修复任务维护一个状态文件：
@@ -55,7 +63,6 @@ root_cause_file: <根因文件路径>
 root_cause_summary: <根因简述>
 
 fix_execution: pending | done
-fix_commit: <修复 commit hash>
 
 review: pending | done
 regression: pending | done
@@ -120,7 +127,6 @@ root_cause_file:
 root_cause_summary:
 
 fix_execution: pending
-fix_commit:
 
 review: pending
 regression: pending
@@ -203,7 +209,7 @@ last_updated: <yyyy-MM-dd HH:mm>
 通过 Skill 工具调用 `fix` skill：
 
 ```
-Skill(skill: "fix")
+Skill(skill: "my-ext:fix")
 ```
 
 Skill 会执行：编写复现测试(RED) → 实现修复(GREEN) → 验证通过。
@@ -215,17 +221,16 @@ Skill 会执行：编写复现测试(RED) → 实现修复(GREEN) → 验证通�
 - [ ] 修复是否为**根因修复**（用正确逻辑覆盖错误来源）——无绕行/屏蔽/「让当前用例通过」的补丁式 hack
 - [ ] 新逻辑与既有逻辑/数据形态冲突处是否已统一为正确模型（迁移/兼容一并考虑）；「只对某分支/某场景生效、其余仍错」的悬空补丁视为不合格，须重构为根因逻辑
 
-修复完成后更新状态文件：
+修复完成且满足验证授权门禁后更新状态文件；需要 RED 而未获授权时保持 `fix_execution: pending`，不执行以下更新：
 
 ```markdown
 fix_execution: done
-fix_commit: <commit hash>
 last_updated: <yyyy-MM-dd HH:mm>
 ```
 
 输出：
 
-> 修复已完成，commit `<hash>`。
+> 修复已按实际完成范围更新；验证与审查状态以真实结果为准。默认未提交 Git；仅在有明确 Git 授权且实际提交成功时，才在状态正文补充真实 commit hash。
 >
 > **下一步**：回复"继续"进入审查和回归验证阶段。
 
@@ -237,10 +242,10 @@ last_updated: <yyyy-MM-dd HH:mm>
 
 #### 4.1 代码审查
 
-调用 `code-reviewer` skill 对本次 diff 进行审查：
+普通流程先提示用户调用 `code-reviewer` skill 对本次 diff 进行审查并完成问题修复；用户另行明确授权本 Agent 执行审查时，也按相同门禁处理。审查未完成前不得进入 4.2 回归验证：
 
 ```
-Skill(skill: "code-reviewer")
+Skill(skill: "my-ext:code-reviewer")
 ```
 
 审查结果处理：
@@ -257,7 +262,7 @@ Skill(skill: "code-reviewer")
 
 #### 4.2 回归验证
 
-运行受影响模块的测试，确保无回归：
+审查通过后，申请明确命令授权；获准后按宿主后台执行规则运行受影响模块的测试并等待完成通知。未获授权时只列下列命令并标注未执行：
 
 ```bash
 # Maven（单模块项目省略 -pl/-am）
@@ -363,6 +368,6 @@ last_updated: <yyyy-MM-dd HH:mm>
 - **审查门禁**：CRITICAL 必须清零，不能带着 CRITICAL 问题结束
 - **最小变更**：修复只改必要代码，不顺手重构无关代码
 - **风格一致**：修复代码保持与现有代码风格一致，不引入新规范
-- **回归安全**：修复后必须跑相关模块测试，确保不引入新问题
+- **回归安全**：审查与修复完成后，在获得明确命令授权时后台运行相关模块测试；未获授权、未执行或受阻时如实记录，不得声称无回归
 - 简单 bug（单文件、根因明确）建议直接用 `fix` skill，不必启动本 Agent
 - 修复过程中如果发现根因分析有误，回退 `investigation: pending` 重新定位

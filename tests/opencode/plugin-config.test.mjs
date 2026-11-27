@@ -232,6 +232,23 @@ test("missing skills directory and bootstrap file fail before registration", asy
   });
 });
 
+test("worktree .git file enables local-entry auto detection without an explicit override", async (t) => {
+  const root = await createPackageFixture(t);
+  await writeFile(path.join(root, ".git"), "gitdir: /tmp/my-ext-worktree.git\n");
+  const { createHooks } = await importPlugin(root);
+  const warnings = [];
+  const config = { plugin: ["my-ext@1.1.0"] };
+
+  await createHooks({
+    packageRoot: root,
+    logger: { info() {}, warn(message) { warnings.push(message); } },
+  }).config(config);
+
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /local plugin entry and package entry/);
+  assert.equal(Object.keys(config.agent).length, 6);
+});
+
 test("local repository plus self Git or package spec warns while registration stays idempotent", async (t) => {
   for (const specifier of [
     "https://github.com/huhuhu-999/my-cc-ext.git#v1.1.0",

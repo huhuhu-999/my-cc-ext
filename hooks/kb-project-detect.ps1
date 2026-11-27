@@ -8,6 +8,7 @@ param(
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $ErrorActionPreference = 'Stop'
+$script:selectedKb = $null
 
 function Read-KbDeclaration {
     param([string[]]$Candidates)
@@ -16,16 +17,25 @@ function Read-KbDeclaration {
     $pattern = '知识库根[：:]\s*' + $tick + '([^' + $tick + ']+)' + $tick
     foreach ($file in $Candidates) {
         if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { continue }
+        # 在读取前保存来源；Get-Content 失败时外层 catch 也能给出可见诊断。
+        $script:selectedKb = [pscustomobject]@{
+            Root = $null
+            Source = $file
+        }
         $content = Get-Content -LiteralPath $file -Raw -Encoding UTF8
-        if ([string]::IsNullOrWhiteSpace($content)) { continue }
+        if ([string]::IsNullOrWhiteSpace($content)) {
+            $script:selectedKb = $null
+            continue
+        }
         if ($content -match $pattern) {
             $declared = $Matches[1].Trim()
-            return [pscustomobject]@{
-                Root = [System.IO.Path]::GetFullPath($declared, (Split-Path -Parent $file))
-                Source = $file
-            }
+            # 在规范化前保存声明值；GetFullPath 失败不得静默或回退。
+            $script:selectedKb.Root = $declared
+            $script:selectedKb.Root = [System.IO.Path]::GetFullPath($declared, (Split-Path -Parent $file))
+            return $script:selectedKb
         }
         # 同层 override 文件替代普通指令；不从被替代文件提取声明。
+        $script:selectedKb = $null
         return $null
     }
     return $null
@@ -36,15 +46,18 @@ function Find-KnowledgeBase {
 
     # Hook 不从自然语言 prompt 猜任务路径；kb-loader 会按任务路径优先重新解析。
     if (-not [string]::IsNullOrWhiteSpace($env:KB_ROOT)) {
+        # 先保存已选来源与原始值，确保规范化异常不会丢失诊断上下文。
+        $script:selectedKb = [pscustomobject]@{
+            Root = $env:KB_ROOT
+            Source = 'KB_ROOT'
+        }
         $kbRoot = if ([System.IO.Path]::IsPathFullyQualified($env:KB_ROOT)) {
             [System.IO.Path]::GetFullPath($env:KB_ROOT)
         } else {
             [System.IO.Path]::GetFullPath($env:KB_ROOT, $WorkingDirectory)
         }
-        return [pscustomobject]@{
-            Root = $kbRoot
-            Source = 'KB_ROOT'
-        }
+        $script:selectedKb.Root = $kbRoot
+        return $script:selectedKb
     }
 
     # 从当前目录向上查找，Git 根目录（含 worktree 的 .git 文件）为边界。
@@ -138,12 +151,13 @@ try {
         }
     } | ConvertTo-Json -Compress -Depth 5
 } catch {
-    # 事件无效时静默；已选配置的读取失败应可见，不回退、不绕过访问权限。
-    if ($cwd -and $kb) {
+    # 未配置、事件无效时静默；已选配置的读取或规范化失败必须可见，不回退、不绕过访问权限。
+    if ($cwd -and $null -ne $script:selectedKb) {
+        $selectedRoot = if ([string]::IsNullOrWhiteSpace($script:selectedKb.Root)) { '未解析' } else { $script:selectedKb.Root }
         [pscustomobject]@{
             hookSpecificOutput = [pscustomobject]@{
                 hookEventName = 'UserPromptSubmit'
-                additionalContext = "知识库根 [$($kb.Root)]，来源 [$($kb.Source)] 不可访问：$($_.Exception.Message)。未回退其他根；请由 kb-loader 重新解析任务路径并处理。"
+                additionalContext = "知识库根 [$selectedRoot]，来源 [$($script:selectedKb.Source)] 不可访问：$($_.Exception.Message)。未回退其他根；请由 kb-loader 重新解析任务路径并处理。"
             }
         } | ConvertTo-Json -Compress -Depth 5
     }

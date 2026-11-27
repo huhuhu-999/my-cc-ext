@@ -37,7 +37,8 @@
 - **禁连库/禁执行 DML**：不得直连数据库执行 DDL/DML（DDL/DML 交用户或 DB 运维执行）
 - **只改下列文件**：<明确列出允许创建/修改的文件清单>；清单外文件一律不动
 - **注释与代码简洁性规范**：遵循「注释精简口径（MUST）」与「代码简洁性（MUST）」（见 feature-dev 约束区）
-- **完成即留工作区**：实现完成并验证通过后不自动提交，与 design/plan 一并交用户审阅
+- **验证授权与审查顺序**：仅用户明确调用 TDD、要求 RED/GREEN 或立即验证时，可在授权范围内先执行验证；普通业务代码修改后先提示用户运行 code-reviewer 并完成修复，再申请验证授权。所有命令执行前核对本次授权，宿主支持时后台执行并等待完成通知；未授权只列命令并标注未执行
+- **完成即留工作区**：实现完成后不自动提交，与 design/plan 一并交用户审阅；验证通过、失败、受阻或未执行均按实际结果记录，不以测试通过作为留待审阅的固定前置
 ```
 
 ## 文件结构映射
@@ -94,12 +95,14 @@ class TemplateValidationServiceTest {
 }
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [ ] **步骤 2：运行测试验证失败（须明确授权）**
+
+执行前核对本次 RED 授权；宿主支持时后台执行并等待完成通知。未获授权时只保留下列命令并标注「未执行」，不得声称已确认 RED；需要 RED 才能继续时暂停，不进入步骤 3。
 
 ```bash
 mvn -pl pare-lmp-integrate-component -am test -Dtest=XxxServiceTest#shouldReturnErrorWhenTemplateMismatch
 ```
-预期：FAIL
+预期：FAIL（仅为预期；实际结果按命令退出码和测试报告填写，未执行不得填 FAIL/PASS）
 
 - [ ] **步骤 3：编写最小实现**
 
@@ -140,16 +143,18 @@ public class TemplateValidationResult {
 }
 ```
 
-- [ ] **步骤 4：运行测试验证通过**
+- [ ] **步骤 4：运行测试验证通过（须明确授权）**
+
+显式 TDD/立即验证例外可在授权范围内执行；普通业务代码须先由用户运行 code-reviewer 并完成修复，再执行本步。宿主支持时后台执行并等待完成通知；未授权只列命令并标注「未执行」。
 
 ```bash
 mvn -pl pare-lmp-integrate-component -am test -Dtest=XxxServiceTest#shouldReturnErrorWhenTemplateMismatch
 ```
-预期：PASS
+预期：PASS（仅为预期；实际结果按命令退出码和测试报告填写，未执行不得填 PASS）
 
 - [ ] **步骤 5：留工作区待审阅（不自动提交）**
 
-实现完成且测试通过后，本步骤**不执行任何 git add / git commit**：文件留在工作区，与设计/计划文档一起交用户审阅；提交与否由用户决定，仅在用户明确指示时才执行 git add / git commit。
+实现完成后，本步骤**不执行任何 git add / git commit**：文件留在工作区，与设计/计划文档一起交用户审阅；提交与否由用户决定，仅在用户明确指示时才执行 git add / git commit。测试通过、失败、受阻或未执行按实际结果标注，不得为进入审阅而虚构验证结论。
 
 **验收标准**：<可验证完成条件，如某测试通过 / 某接口返回符合预期 / 某 SQL 结果正确>
 ````
