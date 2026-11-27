@@ -105,6 +105,8 @@ Lombok 使用状态影响：getter/setter 生成方式、日志声明方式（�
 
 列出具体文件清单。如涉及修改已有文件，需特别标注。建议将文件清单呈现给用户确认后再开始编码。
 
+**业务逻辑归属（MUST）**：操作特定表的业务逻辑（如关系同步、状态变更、批量写入）应放在该表对应的 Service 中，不得混在其他业务 Service 中作为私有方法实现。例如：同步 `lmp_spend_cost_user` 表的逻辑应归属 `LmpSpendCostUserService`，而非 `FspendCostManagerServiceImpl` 的私有方法。调用方通过注入目标 Service 完成业务编排，保持事务边界一致。
+
 ### 第四步：按 TDD 波次实现
 
 基础类型和持久化契约就绪后，每个业务行为都必须按以下顺序执行，禁止先完成生产实现再补测试：
@@ -199,11 +201,13 @@ Entity 和 Mapper 的生成模板统一委托给 `gen-java-entity` skill，该 s
 
 需要生成 Entity/Mapper 时，先通过文件模式搜索探测项目 ORM 框架和包路径，然后按 `gen-java-entity` 的模板生成。核心规范摘要：
 
-- Entity 实现 `Serializable`，显式 `serialVersionUID`
+- Entity 序列化：仅当确实进入序列化场景（缓存值、RPC 传输体、会话属性）时才实现 `Serializable`；仅用于本地 MyBatis/MyBatis-Plus 增删改查的实体不实现。基类未实现时子类不得单方面添加。
 - 审计字段齐全：`createdDate`, `createdBy`, `updatedDate`, `updatedBy`, `isDelete`
 - 时间字段用 `LocalDateTime`，不用 `Date`
 - MyBatis-Plus Entity 用 `@Data`，JPA Entity 用 `@Getter`（不暴露 setter）
 - 逻辑删除用 `UPDATE SET is_delete = 1`，XML 禁止 `SELECT *`
+
+**禁止多余防御性校验**：上游已保证的前提（如方法返回值非空、集合已初始化、必填字段已校验），下游不得重复判空、重复 trim、重复范围检查。多余校验会掩盖真实 bug，让调用方误以为"已处理异常"而实际只是静默跳过。判断依据是入参来源和上游契约，不是"保险起见"。
 
 #### 异常处理
 

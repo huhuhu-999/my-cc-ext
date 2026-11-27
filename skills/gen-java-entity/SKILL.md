@@ -65,7 +65,6 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -76,9 +75,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @TableName("<table_name>")
-public class <EntityName>Entity implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class <EntityName>Entity {
 
     @TableId(type = IdType.AUTO)
     private Long id;
@@ -101,6 +98,8 @@ public class <EntityName>Entity implements Serializable {
     private Integer isDelete;
 }
 ```
+
+> **Serializable 规则**：仅当实体确实进入序列化场景（缓存值、RPC 传输体、会话属性）时才实现 `Serializable` 并声明 `serialVersionUID`；仅用于本地 MyBatis/MyBatis-Plus 增删改查的实体不实现该接口。若基类（如 `BaseEntity`）未实现 `Serializable`，子类不得单方面添加。
 
 #### Mapper 接口
 
@@ -167,7 +166,6 @@ package <动态确定的 entity 包路径>;
 
 import lombok.Data;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -177,9 +175,7 @@ import java.time.LocalDateTime;
  * @since <yyyy-MM-dd>
  */
 @Data
-public class <EntityName>Entity implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class <EntityName>Entity {
 
     private Long id;
 
@@ -310,7 +306,6 @@ package <动态确定的 entity 包路径>;
 import lombok.Getter;
 
 import jakarta.persistence.*;
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -322,9 +317,7 @@ import java.time.LocalDateTime;
 @Getter
 @Entity
 @Table(name = "<table_name>")
-public class <EntityName>Entity implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class <EntityName>Entity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -397,7 +390,7 @@ public interface <EntityName>Repository extends JpaRepository<<EntityName>Entity
 ### Entity 规范
 
 - 类名：`<TableName>Entity`（单表名转 PascalCase + Entity 后缀）
-- 实现 `Serializable`，显式声明 `serialVersionUID = 1L`
+- **序列化**：仅当实体确实进入序列化场景（缓存值、RPC 传输体、会话属性）时才实现 `Serializable` 并声明 `serialVersionUID`；仅用于本地 MyBatis/MyBatis-Plus 增删改查的实体不实现该接口。若基类未实现 `Serializable`，子类不得单方面添加。
 - 审计字段齐全：`createdDate`, `createdBy`, `updatedDate`, `updatedBy`, `isDelete`
 - 时间字段用 `LocalDateTime`，不用 `Date`
 - 禁止使用 `@Data` + `@AllArgsConstructor` 组合（会被序列化框架利用）
